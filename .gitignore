@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and databases
+*.log
+*.db
+*.sqlite3
+
+# Local data files (не включаем чувствительные данные)
+bot_stats.json
+selected_matches.json
+football_bot.log
+
+# Backups
+backups/
+*.zip
+*.tar
+
+# OS
+.DS_Store
+Thumbs.db
