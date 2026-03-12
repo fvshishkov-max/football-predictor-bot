@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2026-03-11T17:22:00.000000",
+    "match_id": 1457693,
+    "home_team": "Team A",
+    "away_team": "Team B",
+    "signal_minute": 90,
+    "signal_probability": 75.5,
+    "actual_goal_minute": null,
+    "was_correct": null,
+    "match_minute": 65,
+    "score": "1:0"
+  },
+  {
+    "timestamp": "2026-03-11T17:23:00.000000",
+    "match_id": 1403785,
+    "home_team": "Team C",
+    "away_team": "Team D",
+    "signal_minute": 90,
+    "signal_probability": 72.3,
+    "actual_goal_minute": null,
+    "was_correct": null,
+    "match_minute": 55,
+    "score": "0:0"
+  }
+]

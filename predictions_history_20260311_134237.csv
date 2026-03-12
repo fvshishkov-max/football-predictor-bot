@@ -1,0 +1,101 @@
+timestamp,match_id,home_team,away_team,minute,score,next_goal_minute,next_goal_probability
+2026-03-11T07:20:26.570781,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:20:56.597637,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:21:26.582867,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:21:56.528394,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:22:26.525268,1526640,Los Angeles FC,LD Alajuelense,,,82,
+2026-03-11T07:22:56.605885,1526640,Los Angeles FC,LD Alajuelense,,,82,
+2026-03-11T07:23:26.477317,1526640,Los Angeles FC,LD Alajuelense,,,82,
+2026-03-11T07:23:56.595464,1526640,Los Angeles FC,LD Alajuelense,,,82,
+2026-03-11T07:24:26.567959,1526640,Los Angeles FC,LD Alajuelense,,,85,
+2026-03-11T07:24:56.517567,1526640,Los Angeles FC,LD Alajuelense,,,85,
+2026-03-11T07:25:26.566613,1526640,Los Angeles FC,LD Alajuelense,,,85,
+2026-03-11T07:25:56.641605,1526640,Los Angeles FC,LD Alajuelense,,,85,
+2026-03-11T07:26:26.525688,1526640,Los Angeles FC,LD Alajuelense,,,86,
+2026-03-11T07:26:56.503263,1526640,Los Angeles FC,LD Alajuelense,,,86,
+2026-03-11T07:27:26.611335,1526640,Los Angeles FC,LD Alajuelense,,,88,
+2026-03-11T07:27:56.595390,1526640,Los Angeles FC,LD Alajuelense,,,88,
+2026-03-11T07:28:26.609800,1526640,Los Angeles FC,LD Alajuelense,,,88,
+2026-03-11T07:28:56.522881,1526640,Los Angeles FC,LD Alajuelense,,,88,
+2026-03-11T07:29:26.870463,1526640,Los Angeles FC,LD Alajuelense,,,88,
+2026-03-11T07:29:56.482916,1526640,Los Angeles FC,LD Alajuelense,,,88,
+2026-03-11T07:30:26.557083,1526640,Los Angeles FC,LD Alajuelense,,,88,
+2026-03-11T07:30:56.611366,1526640,Los Angeles FC,LD Alajuelense,,,88,
+2026-03-11T07:31:26.512949,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:31:56.451187,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:32:26.464758,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:32:56.551719,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:33:26.532515,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:33:56.439944,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:34:26.516619,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:34:56.588970,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:35:26.596081,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:35:56.641064,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:36:26.552776,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:36:56.601967,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:37:26.578941,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:37:56.503599,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:38:26.633417,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:38:56.505014,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:39:26.576705,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:39:56.552434,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:40:26.619780,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:40:56.625085,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:41:26.623393,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:41:56.580190,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:42:26.581566,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:42:56.585373,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:43:26.535232,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:43:56.571487,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:44:26.606412,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:44:56.632019,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:45:26.635609,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:45:56.605772,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:46:26.614428,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:46:56.571768,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:47:26.648114,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:47:56.667831,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:48:26.537778,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:48:56.608072,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:49:26.513812,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:49:56.526584,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:50:26.617730,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:50:56.608637,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:51:26.558634,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:51:56.566202,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:52:26.517939,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:52:56.631993,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:53:26.535775,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:53:56.670177,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:54:26.680012,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:54:56.647962,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:55:26.610120,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:55:56.686781,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:56:26.546096,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:56:56.567585,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:57:26.758101,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:57:56.572813,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:58:26.556431,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:58:56.573504,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:59:26.584993,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T07:59:56.587545,1526640,Los Angeles FC,LD Alajuelense,,,,
+2026-03-11T13:42:05.636015,1503475,Hantharwady United,Rakhine United,86,0:0,,0
+2026-03-11T13:42:05.742114,1503477,I.S.P.E,Dagon Port,54,0:0,,0
+2026-03-11T13:42:05.859596,1441941,Elazığspor,Muğlaspor,37,0:0,,0
+2026-03-11T13:42:05.961740,1441943,Erbaaspor,Kepez Belediyespor,42,0:0,,0
+2026-03-11T13:42:06.058776,1490654,Sparta Praha U19,Pardubice U19,37,1:1,,0
+2026-03-11T13:42:06.196357,1525478,Sanfrecce Hiroshima,Johor Darul Takzim FC,41,0:0,,0
+2026-03-11T13:42:06.320277,1525479,Vissel Kobe,FC Seoul,41,0:1,90,80.2
+2026-03-11T13:42:07.095755,1398607,Hatayspor,Sivasspor,12,0:0,45,71.0
+2026-03-11T13:42:07.213046,1398609,İstanbulspor,Amed,11,0:0,,0
+2026-03-11T13:42:07.317066,1441937,Batman Petrolspor,Karacabey Belediyespor,9,0:0,,0
+2026-03-11T13:42:07.437725,1441939,24 Erzincanspor,Tuzlaspor,9,0:0,,0
+2026-03-11T13:42:07.537517,1441942,Adana 1954 FK,Ankaraspor,9,0:0,,0
+2026-03-11T13:42:07.635757,1448582,12 Bingölspor,Ağrı 1970,7,1:0,,0
+2026-03-11T13:42:35.374067,1503475,Hantharwady United,Rakhine United,87,0:0,,0
+2026-03-11T13:42:35.929394,1503477,I.S.P.E,Dagon Port,55,0:0,,0
+2026-03-11T13:42:36.041371,1441941,Elazığspor,Muğlaspor,38,0:0,,0
+2026-03-11T13:42:36.539409,1441943,Erbaaspor,Kepez Belediyespor,42,0:0,,0
+2026-03-11T13:42:36.647386,1490654,Sparta Praha U19,Pardubice U19,38,1:1,,0
+2026-03-11T13:42:37.174703,1525478,Sanfrecce Hiroshima,Johor Darul Takzim FC,42,0:0,,0
+2026-03-11T13:42:37.300599,1525479,Vissel Kobe,FC Seoul,42,0:1,90,76.7

@@ -1,0 +1,4602 @@
+[
+  {
+    "timestamp": "2026-03-11T13:42:05.636015",
+    "match_id": 1503475,
+    "home_team": "Hantharwady United",
+    "away_team": "Rakhine United",
+    "minute": 86,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 86,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:05.742114",
+    "match_id": 1503477,
+    "home_team": "I.S.P.E",
+    "away_team": "Dagon Port",
+    "minute": 54,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 54,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:05.859596",
+    "match_id": 1441941,
+    "home_team": "Elazığspor",
+    "away_team": "Muğlaspor",
+    "minute": 37,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 37,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:05.961740",
+    "match_id": 1441943,
+    "home_team": "Erbaaspor",
+    "away_team": "Kepez Belediyespor",
+    "minute": 42,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 42,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:06.058776",
+    "match_id": 1490654,
+    "home_team": "Sparta Praha U19",
+    "away_team": "Pardubice U19",
+    "minute": 37,
+    "score": "1:1",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 37,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:06.196357",
+    "match_id": 1525478,
+    "home_team": "Sanfrecce Hiroshima",
+    "away_team": "Johor Darul Takzim FC",
+    "minute": 41,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 41,
+      "shots": {
+        "home": 5,
+        "away": 1,
+        "total": 6,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 63.0,
+        "away": 37.0
+      },
+      "corners": {
+        "home": 4,
+        "away": 1,
+        "total": 5
+      },
+      "fouls": {
+        "home": 6,
+        "away": 8
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 2,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:06.320277",
+    "match_id": 1525479,
+    "home_team": "Vissel Kobe",
+    "away_team": "FC Seoul",
+    "minute": 41,
+    "score": "0:1",
+    "next_goal_minute": 90,
+    "next_goal_probability": 80.2,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 41,
+      "shots": {
+        "home": 4,
+        "away": 3,
+        "total": 7,
+        "ontarget_home": 2,
+        "ontarget_away": 1,
+        "ontarget_total": 3,
+        "accuracy": 42.857142857142854
+      },
+      "possession": {
+        "home": 57.0,
+        "away": 43.0
+      },
+      "corners": {
+        "home": 2,
+        "away": 1,
+        "total": 3
+      },
+      "fouls": {
+        "home": 5,
+        "away": 9
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:07.095755",
+    "match_id": 1398607,
+    "home_team": "Hatayspor",
+    "away_team": "Sivasspor",
+    "minute": 12,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 71.0,
+    "attack_potential": "Очень высокий",
+    "stats": {
+      "minute": 12,
+      "shots": {
+        "home": 0,
+        "away": 3,
+        "total": 3,
+        "ontarget_home": 0,
+        "ontarget_away": 2,
+        "ontarget_total": 2,
+        "accuracy": 66.66666666666666
+      },
+      "possession": {
+        "home": 42.0,
+        "away": 58.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 0,
+        "total": 1
+      },
+      "fouls": {
+        "home": 2,
+        "away": 1
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 1,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:07.213046",
+    "match_id": 1398609,
+    "home_team": "İstanbulspor",
+    "away_team": "Amed",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 2,
+        "total": 2,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 61.0,
+        "away": 39.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 2,
+        "total": 2
+      },
+      "fouls": {
+        "home": 0,
+        "away": 2
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:07.317066",
+    "match_id": 1441937,
+    "home_team": "Batman Petrolspor",
+    "away_team": "Karacabey Belediyespor",
+    "minute": 9,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 9,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:07.437725",
+    "match_id": 1441939,
+    "home_team": "24 Erzincanspor",
+    "away_team": "Tuzlaspor",
+    "minute": 9,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 9,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:07.537517",
+    "match_id": 1441942,
+    "home_team": "Adana 1954 FK",
+    "away_team": "Ankaraspor",
+    "minute": 9,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 9,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:07.635757",
+    "match_id": 1448582,
+    "home_team": "12 Bingölspor",
+    "away_team": "Ağrı 1970",
+    "minute": 7,
+    "score": "1:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 7,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:35.374067",
+    "match_id": 1503475,
+    "home_team": "Hantharwady United",
+    "away_team": "Rakhine United",
+    "minute": 87,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 87,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:35.929394",
+    "match_id": 1503477,
+    "home_team": "I.S.P.E",
+    "away_team": "Dagon Port",
+    "minute": 55,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 55,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:36.041371",
+    "match_id": 1441941,
+    "home_team": "Elazığspor",
+    "away_team": "Muğlaspor",
+    "minute": 38,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 38,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:36.539409",
+    "match_id": 1441943,
+    "home_team": "Erbaaspor",
+    "away_team": "Kepez Belediyespor",
+    "minute": 42,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 42,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:36.647386",
+    "match_id": 1490654,
+    "home_team": "Sparta Praha U19",
+    "away_team": "Pardubice U19",
+    "minute": 38,
+    "score": "1:1",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 38,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:37.174703",
+    "match_id": 1525478,
+    "home_team": "Sanfrecce Hiroshima",
+    "away_team": "Johor Darul Takzim FC",
+    "minute": 42,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 42,
+      "shots": {
+        "home": 5,
+        "away": 1,
+        "total": 6,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 63.0,
+        "away": 37.0
+      },
+      "corners": {
+        "home": 4,
+        "away": 1,
+        "total": 5
+      },
+      "fouls": {
+        "home": 6,
+        "away": 8
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 2,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:37.300599",
+    "match_id": 1525479,
+    "home_team": "Vissel Kobe",
+    "away_team": "FC Seoul",
+    "minute": 42,
+    "score": "0:1",
+    "next_goal_minute": 90,
+    "next_goal_probability": 76.7,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 42,
+      "shots": {
+        "home": 4,
+        "away": 3,
+        "total": 7,
+        "ontarget_home": 2,
+        "ontarget_away": 1,
+        "ontarget_total": 3,
+        "accuracy": 42.857142857142854
+      },
+      "possession": {
+        "home": 58.0,
+        "away": 42.0
+      },
+      "corners": {
+        "home": 2,
+        "away": 1,
+        "total": 3
+      },
+      "fouls": {
+        "home": 5,
+        "away": 9
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:37.786561",
+    "match_id": 1398607,
+    "home_team": "Hatayspor",
+    "away_team": "Sivasspor",
+    "minute": 12,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 71.0,
+    "attack_potential": "Очень высокий",
+    "stats": {
+      "minute": 12,
+      "shots": {
+        "home": 0,
+        "away": 3,
+        "total": 3,
+        "ontarget_home": 0,
+        "ontarget_away": 2,
+        "ontarget_total": 2,
+        "accuracy": 66.66666666666666
+      },
+      "possession": {
+        "home": 42.0,
+        "away": 58.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 0,
+        "total": 1
+      },
+      "fouls": {
+        "home": 2,
+        "away": 1
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 1,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:38.262833",
+    "match_id": 1398609,
+    "home_team": "İstanbulspor",
+    "away_team": "Amed",
+    "minute": 13,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 65.6,
+    "attack_potential": "Очень высокий",
+    "stats": {
+      "minute": 13,
+      "shots": {
+        "home": 1,
+        "away": 2,
+        "total": 3,
+        "ontarget_home": 1,
+        "ontarget_away": 0,
+        "ontarget_total": 1,
+        "accuracy": 33.33333333333333
+      },
+      "possession": {
+        "home": 68.0,
+        "away": 32.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 2,
+        "total": 2
+      },
+      "fouls": {
+        "home": 0,
+        "away": 2
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:41.674767",
+    "match_id": 1441937,
+    "home_team": "Batman Petrolspor",
+    "away_team": "Karacabey Belediyespor",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:41.786416",
+    "match_id": 1441939,
+    "home_team": "24 Erzincanspor",
+    "away_team": "Tuzlaspor",
+    "minute": 10,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 10,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:42.310726",
+    "match_id": 1441942,
+    "home_team": "Adana 1954 FK",
+    "away_team": "Ankaraspor",
+    "minute": 9,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 9,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:42:42.420444",
+    "match_id": 1448582,
+    "home_team": "12 Bingölspor",
+    "away_team": "Ağrı 1970",
+    "minute": 8,
+    "score": "1:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 8,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:05.378148",
+    "match_id": 1503475,
+    "home_team": "Hantharwady United",
+    "away_team": "Rakhine United",
+    "minute": 87,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 87,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:05.482434",
+    "match_id": 1503477,
+    "home_team": "I.S.P.E",
+    "away_team": "Dagon Port",
+    "minute": 55,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 55,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:05.579628",
+    "match_id": 1441941,
+    "home_team": "Elazığspor",
+    "away_team": "Muğlaspor",
+    "minute": 38,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 38,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:05.683827",
+    "match_id": 1441943,
+    "home_team": "Erbaaspor",
+    "away_team": "Kepez Belediyespor",
+    "minute": 42,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 42,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:06.807173",
+    "match_id": 1490654,
+    "home_team": "Sparta Praha U19",
+    "away_team": "Pardubice U19",
+    "minute": 38,
+    "score": "1:1",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 38,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:06.943389",
+    "match_id": 1525478,
+    "home_team": "Sanfrecce Hiroshima",
+    "away_team": "Johor Darul Takzim FC",
+    "minute": 42,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 42,
+      "shots": {
+        "home": 5,
+        "away": 1,
+        "total": 6,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 63.0,
+        "away": 37.0
+      },
+      "corners": {
+        "home": 4,
+        "away": 1,
+        "total": 5
+      },
+      "fouls": {
+        "home": 6,
+        "away": 8
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 2,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:08.081970",
+    "match_id": 1525479,
+    "home_team": "Vissel Kobe",
+    "away_team": "FC Seoul",
+    "minute": 42,
+    "score": "0:1",
+    "next_goal_minute": 90,
+    "next_goal_probability": 76.7,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 42,
+      "shots": {
+        "home": 4,
+        "away": 3,
+        "total": 7,
+        "ontarget_home": 2,
+        "ontarget_away": 1,
+        "ontarget_total": 3,
+        "accuracy": 42.857142857142854
+      },
+      "possession": {
+        "home": 58.0,
+        "away": 42.0
+      },
+      "corners": {
+        "home": 2,
+        "away": 1,
+        "total": 3
+      },
+      "fouls": {
+        "home": 5,
+        "away": 9
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:09.223706",
+    "match_id": 1398607,
+    "home_team": "Hatayspor",
+    "away_team": "Sivasspor",
+    "minute": 12,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 71.0,
+    "attack_potential": "Очень высокий",
+    "stats": {
+      "minute": 12,
+      "shots": {
+        "home": 0,
+        "away": 3,
+        "total": 3,
+        "ontarget_home": 0,
+        "ontarget_away": 2,
+        "ontarget_total": 2,
+        "accuracy": 66.66666666666666
+      },
+      "possession": {
+        "home": 42.0,
+        "away": 58.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 0,
+        "total": 1
+      },
+      "fouls": {
+        "home": 2,
+        "away": 1
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 1,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:10.369922",
+    "match_id": 1398609,
+    "home_team": "İstanbulspor",
+    "away_team": "Amed",
+    "minute": 13,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 65.6,
+    "attack_potential": "Очень высокий",
+    "stats": {
+      "minute": 13,
+      "shots": {
+        "home": 1,
+        "away": 2,
+        "total": 3,
+        "ontarget_home": 1,
+        "ontarget_away": 0,
+        "ontarget_total": 1,
+        "accuracy": 33.33333333333333
+      },
+      "possession": {
+        "home": 68.0,
+        "away": 32.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 2,
+        "total": 2
+      },
+      "fouls": {
+        "home": 0,
+        "away": 2
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:10.467431",
+    "match_id": 1441937,
+    "home_team": "Batman Petrolspor",
+    "away_team": "Karacabey Belediyespor",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:11.590143",
+    "match_id": 1441939,
+    "home_team": "24 Erzincanspor",
+    "away_team": "Tuzlaspor",
+    "minute": 10,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 10,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:11.701108",
+    "match_id": 1441942,
+    "home_team": "Adana 1954 FK",
+    "away_team": "Ankaraspor",
+    "minute": 9,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 9,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:12.808135",
+    "match_id": 1448582,
+    "home_team": "12 Bingölspor",
+    "away_team": "Ağrı 1970",
+    "minute": 8,
+    "score": "1:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 8,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:35.391055",
+    "match_id": 1503475,
+    "home_team": "Hantharwady United",
+    "away_team": "Rakhine United",
+    "minute": 87,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 87,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:35.500574",
+    "match_id": 1503477,
+    "home_team": "I.S.P.E",
+    "away_team": "Dagon Port",
+    "minute": 56,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 56,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:36.624965",
+    "match_id": 1441941,
+    "home_team": "Elazığspor",
+    "away_team": "Muğlaspor",
+    "minute": 39,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 39,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:36.742376",
+    "match_id": 1441943,
+    "home_team": "Erbaaspor",
+    "away_team": "Kepez Belediyespor",
+    "minute": 44,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 44,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:37.858153",
+    "match_id": 1490654,
+    "home_team": "Sparta Praha U19",
+    "away_team": "Pardubice U19",
+    "minute": 39,
+    "score": "1:2",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 39,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:37.986125",
+    "match_id": 1525478,
+    "home_team": "Sanfrecce Hiroshima",
+    "away_team": "Johor Darul Takzim FC",
+    "minute": 43,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 43,
+      "shots": {
+        "home": 5,
+        "away": 1,
+        "total": 6,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 63.0,
+        "away": 37.0
+      },
+      "corners": {
+        "home": 4,
+        "away": 1,
+        "total": 5
+      },
+      "fouls": {
+        "home": 6,
+        "away": 8
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 2,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:39.137187",
+    "match_id": 1525479,
+    "home_team": "Vissel Kobe",
+    "away_team": "FC Seoul",
+    "minute": 43,
+    "score": "0:1",
+    "next_goal_minute": 90,
+    "next_goal_probability": 73.4,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 43,
+      "shots": {
+        "home": 4,
+        "away": 3,
+        "total": 7,
+        "ontarget_home": 2,
+        "ontarget_away": 1,
+        "ontarget_total": 3,
+        "accuracy": 42.857142857142854
+      },
+      "possession": {
+        "home": 58.0,
+        "away": 42.0
+      },
+      "corners": {
+        "home": 2,
+        "away": 1,
+        "total": 3
+      },
+      "fouls": {
+        "home": 5,
+        "away": 9
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:40.284393",
+    "match_id": 1398607,
+    "home_team": "Hatayspor",
+    "away_team": "Sivasspor",
+    "minute": 14,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 63.0,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 14,
+      "shots": {
+        "home": 0,
+        "away": 3,
+        "total": 3,
+        "ontarget_home": 0,
+        "ontarget_away": 2,
+        "ontarget_total": 2,
+        "accuracy": 66.66666666666666
+      },
+      "possession": {
+        "home": 42.0,
+        "away": 58.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 0,
+        "total": 1
+      },
+      "fouls": {
+        "home": 2,
+        "away": 1
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 1,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:40.409438",
+    "match_id": 1398609,
+    "home_team": "İstanbulspor",
+    "away_team": "Amed",
+    "minute": 14,
+    "score": "0:0",
+    "next_goal_minute": 60,
+    "next_goal_probability": 80.9,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 14,
+      "shots": {
+        "home": 1,
+        "away": 2,
+        "total": 3,
+        "ontarget_home": 1,
+        "ontarget_away": 0,
+        "ontarget_total": 1,
+        "accuracy": 33.33333333333333
+      },
+      "possession": {
+        "home": 68.0,
+        "away": 32.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 2,
+        "total": 2
+      },
+      "fouls": {
+        "home": 0,
+        "away": 2
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:41.531712",
+    "match_id": 1441937,
+    "home_team": "Batman Petrolspor",
+    "away_team": "Karacabey Belediyespor",
+    "minute": 12,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 12,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:42.655760",
+    "match_id": 1441939,
+    "home_team": "24 Erzincanspor",
+    "away_team": "Tuzlaspor",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:42.773746",
+    "match_id": 1441942,
+    "home_team": "Adana 1954 FK",
+    "away_team": "Ankaraspor",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:43:43.888720",
+    "match_id": 1448582,
+    "home_team": "12 Bingölspor",
+    "away_team": "Ağrı 1970",
+    "minute": 9,
+    "score": "1:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 9,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:05.382426",
+    "match_id": 1503475,
+    "home_team": "Hantharwady United",
+    "away_team": "Rakhine United",
+    "minute": 87,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 87,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:05.491547",
+    "match_id": 1503477,
+    "home_team": "I.S.P.E",
+    "away_team": "Dagon Port",
+    "minute": 56,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 56,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:06.609643",
+    "match_id": 1441941,
+    "home_team": "Elazığspor",
+    "away_team": "Muğlaspor",
+    "minute": 39,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 39,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:06.717236",
+    "match_id": 1441943,
+    "home_team": "Erbaaspor",
+    "away_team": "Kepez Belediyespor",
+    "minute": 44,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 44,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:07.826113",
+    "match_id": 1490654,
+    "home_team": "Sparta Praha U19",
+    "away_team": "Pardubice U19",
+    "minute": 39,
+    "score": "1:2",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 39,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:07.952854",
+    "match_id": 1525478,
+    "home_team": "Sanfrecce Hiroshima",
+    "away_team": "Johor Darul Takzim FC",
+    "minute": 43,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 43,
+      "shots": {
+        "home": 5,
+        "away": 1,
+        "total": 6,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 63.0,
+        "away": 37.0
+      },
+      "corners": {
+        "home": 4,
+        "away": 1,
+        "total": 5
+      },
+      "fouls": {
+        "home": 6,
+        "away": 8
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 2,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:09.093259",
+    "match_id": 1525479,
+    "home_team": "Vissel Kobe",
+    "away_team": "FC Seoul",
+    "minute": 43,
+    "score": "0:1",
+    "next_goal_minute": 90,
+    "next_goal_probability": 73.4,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 43,
+      "shots": {
+        "home": 4,
+        "away": 3,
+        "total": 7,
+        "ontarget_home": 2,
+        "ontarget_away": 1,
+        "ontarget_total": 3,
+        "accuracy": 42.857142857142854
+      },
+      "possession": {
+        "home": 58.0,
+        "away": 42.0
+      },
+      "corners": {
+        "home": 2,
+        "away": 1,
+        "total": 3
+      },
+      "fouls": {
+        "home": 5,
+        "away": 9
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:10.246535",
+    "match_id": 1398607,
+    "home_team": "Hatayspor",
+    "away_team": "Sivasspor",
+    "minute": 14,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 63.0,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 14,
+      "shots": {
+        "home": 0,
+        "away": 3,
+        "total": 3,
+        "ontarget_home": 0,
+        "ontarget_away": 2,
+        "ontarget_total": 2,
+        "accuracy": 66.66666666666666
+      },
+      "possession": {
+        "home": 42.0,
+        "away": 58.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 0,
+        "total": 1
+      },
+      "fouls": {
+        "home": 2,
+        "away": 1
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 1,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:10.401145",
+    "match_id": 1398609,
+    "home_team": "İstanbulspor",
+    "away_team": "Amed",
+    "minute": 14,
+    "score": "0:0",
+    "next_goal_minute": 60,
+    "next_goal_probability": 80.9,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 14,
+      "shots": {
+        "home": 1,
+        "away": 2,
+        "total": 3,
+        "ontarget_home": 1,
+        "ontarget_away": 0,
+        "ontarget_total": 1,
+        "accuracy": 33.33333333333333
+      },
+      "possession": {
+        "home": 68.0,
+        "away": 32.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 2,
+        "total": 2
+      },
+      "fouls": {
+        "home": 0,
+        "away": 2
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:11.520659",
+    "match_id": 1441937,
+    "home_team": "Batman Petrolspor",
+    "away_team": "Karacabey Belediyespor",
+    "minute": 12,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 12,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:12.619497",
+    "match_id": 1441939,
+    "home_team": "24 Erzincanspor",
+    "away_team": "Tuzlaspor",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:12.729625",
+    "match_id": 1441942,
+    "home_team": "Adana 1954 FK",
+    "away_team": "Ankaraspor",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:13.847831",
+    "match_id": 1448582,
+    "home_team": "12 Bingölspor",
+    "away_team": "Ağrı 1970",
+    "minute": 9,
+    "score": "1:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 9,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:35.390472",
+    "match_id": 1503475,
+    "home_team": "Hantharwady United",
+    "away_team": "Rakhine United",
+    "minute": 89,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 89,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:35.501428",
+    "match_id": 1503477,
+    "home_team": "I.S.P.E",
+    "away_team": "Dagon Port",
+    "minute": 57,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 57,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:36.622116",
+    "match_id": 1441941,
+    "home_team": "Elazığspor",
+    "away_team": "Muğlaspor",
+    "minute": 40,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 40,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:36.720742",
+    "match_id": 1441943,
+    "home_team": "Erbaaspor",
+    "away_team": "Kepez Belediyespor",
+    "minute": 44,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 44,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:37.838347",
+    "match_id": 1490654,
+    "home_team": "Sparta Praha U19",
+    "away_team": "Pardubice U19",
+    "minute": 40,
+    "score": "1:2",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 40,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:37.967837",
+    "match_id": 1525478,
+    "home_team": "Sanfrecce Hiroshima",
+    "away_team": "Johor Darul Takzim FC",
+    "minute": 44,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 44,
+      "shots": {
+        "home": 5,
+        "away": 1,
+        "total": 6,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 63.0,
+        "away": 37.0
+      },
+      "corners": {
+        "home": 4,
+        "away": 1,
+        "total": 5
+      },
+      "fouls": {
+        "home": 6,
+        "away": 8
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 2,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:39.101324",
+    "match_id": 1525479,
+    "home_team": "Vissel Kobe",
+    "away_team": "FC Seoul",
+    "minute": 44,
+    "score": "0:1",
+    "next_goal_minute": 90,
+    "next_goal_probability": 70.2,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 44,
+      "shots": {
+        "home": 4,
+        "away": 3,
+        "total": 7,
+        "ontarget_home": 2,
+        "ontarget_away": 1,
+        "ontarget_total": 3,
+        "accuracy": 42.857142857142854
+      },
+      "possession": {
+        "home": 58.0,
+        "away": 42.0
+      },
+      "corners": {
+        "home": 2,
+        "away": 1,
+        "total": 3
+      },
+      "fouls": {
+        "home": 5,
+        "away": 9
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:40.257704",
+    "match_id": 1398607,
+    "home_team": "Hatayspor",
+    "away_team": "Sivasspor",
+    "minute": 14,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 63.0,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 14,
+      "shots": {
+        "home": 0,
+        "away": 3,
+        "total": 3,
+        "ontarget_home": 0,
+        "ontarget_away": 2,
+        "ontarget_total": 2,
+        "accuracy": 66.66666666666666
+      },
+      "possession": {
+        "home": 42.0,
+        "away": 58.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 0,
+        "total": 1
+      },
+      "fouls": {
+        "home": 2,
+        "away": 1
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 1,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:40.399672",
+    "match_id": 1398609,
+    "home_team": "İstanbulspor",
+    "away_team": "Amed",
+    "minute": 15,
+    "score": "0:0",
+    "next_goal_minute": 60,
+    "next_goal_probability": 76.8,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 15,
+      "shots": {
+        "home": 1,
+        "away": 2,
+        "total": 3,
+        "ontarget_home": 1,
+        "ontarget_away": 0,
+        "ontarget_total": 1,
+        "accuracy": 33.33333333333333
+      },
+      "possession": {
+        "home": 71.0,
+        "away": 29.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 2,
+        "total": 3
+      },
+      "fouls": {
+        "home": 0,
+        "away": 2
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:41.525725",
+    "match_id": 1441937,
+    "home_team": "Batman Petrolspor",
+    "away_team": "Karacabey Belediyespor",
+    "minute": 13,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 13,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:42.641609",
+    "match_id": 1441939,
+    "home_team": "24 Erzincanspor",
+    "away_team": "Tuzlaspor",
+    "minute": 12,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 12,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:42.744890",
+    "match_id": 1441942,
+    "home_team": "Adana 1954 FK",
+    "away_team": "Ankaraspor",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:44:43.863014",
+    "match_id": 1448582,
+    "home_team": "12 Bingölspor",
+    "away_team": "Ağrı 1970",
+    "minute": 10,
+    "score": "1:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 10,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:05.377583",
+    "match_id": 1503475,
+    "home_team": "Hantharwady United",
+    "away_team": "Rakhine United",
+    "minute": 89,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 89,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:05.474493",
+    "match_id": 1503477,
+    "home_team": "I.S.P.E",
+    "away_team": "Dagon Port",
+    "minute": 57,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 57,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:06.592801",
+    "match_id": 1441941,
+    "home_team": "Elazığspor",
+    "away_team": "Muğlaspor",
+    "minute": 40,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 40,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:06.707223",
+    "match_id": 1441943,
+    "home_team": "Erbaaspor",
+    "away_team": "Kepez Belediyespor",
+    "minute": 44,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 44,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:07.808478",
+    "match_id": 1490654,
+    "home_team": "Sparta Praha U19",
+    "away_team": "Pardubice U19",
+    "minute": 40,
+    "score": "1:2",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 40,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:07.933397",
+    "match_id": 1525478,
+    "home_team": "Sanfrecce Hiroshima",
+    "away_team": "Johor Darul Takzim FC",
+    "minute": 44,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 44,
+      "shots": {
+        "home": 5,
+        "away": 1,
+        "total": 6,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 63.0,
+        "away": 37.0
+      },
+      "corners": {
+        "home": 4,
+        "away": 1,
+        "total": 5
+      },
+      "fouls": {
+        "home": 6,
+        "away": 8
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 2,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:09.085787",
+    "match_id": 1525479,
+    "home_team": "Vissel Kobe",
+    "away_team": "FC Seoul",
+    "minute": 44,
+    "score": "0:1",
+    "next_goal_minute": 90,
+    "next_goal_probability": 70.2,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 44,
+      "shots": {
+        "home": 4,
+        "away": 3,
+        "total": 7,
+        "ontarget_home": 2,
+        "ontarget_away": 1,
+        "ontarget_total": 3,
+        "accuracy": 42.857142857142854
+      },
+      "possession": {
+        "home": 58.0,
+        "away": 42.0
+      },
+      "corners": {
+        "home": 2,
+        "away": 1,
+        "total": 3
+      },
+      "fouls": {
+        "home": 5,
+        "away": 9
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:10.226843",
+    "match_id": 1398607,
+    "home_team": "Hatayspor",
+    "away_team": "Sivasspor",
+    "minute": 14,
+    "score": "0:0",
+    "next_goal_minute": 45,
+    "next_goal_probability": 63.0,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 14,
+      "shots": {
+        "home": 0,
+        "away": 3,
+        "total": 3,
+        "ontarget_home": 0,
+        "ontarget_away": 2,
+        "ontarget_total": 2,
+        "accuracy": 66.66666666666666
+      },
+      "possession": {
+        "home": 42.0,
+        "away": 58.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 0,
+        "total": 1
+      },
+      "fouls": {
+        "home": 2,
+        "away": 1
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 1,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:10.351466",
+    "match_id": 1398609,
+    "home_team": "İstanbulspor",
+    "away_team": "Amed",
+    "minute": 15,
+    "score": "0:0",
+    "next_goal_minute": 60,
+    "next_goal_probability": 76.8,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 15,
+      "shots": {
+        "home": 1,
+        "away": 2,
+        "total": 3,
+        "ontarget_home": 1,
+        "ontarget_away": 0,
+        "ontarget_total": 1,
+        "accuracy": 33.33333333333333
+      },
+      "possession": {
+        "home": 71.0,
+        "away": 29.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 2,
+        "total": 3
+      },
+      "fouls": {
+        "home": 0,
+        "away": 2
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:11.460652",
+    "match_id": 1441937,
+    "home_team": "Batman Petrolspor",
+    "away_team": "Karacabey Belediyespor",
+    "minute": 13,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 13,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:12.594584",
+    "match_id": 1441939,
+    "home_team": "24 Erzincanspor",
+    "away_team": "Tuzlaspor",
+    "minute": 12,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 12,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:12.713753",
+    "match_id": 1441942,
+    "home_team": "Adana 1954 FK",
+    "away_team": "Ankaraspor",
+    "minute": 11,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 11,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:13.841095",
+    "match_id": 1448582,
+    "home_team": "12 Bingölspor",
+    "away_team": "Ağrı 1970",
+    "minute": 10,
+    "score": "1:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 10,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:35.378976",
+    "match_id": 1503475,
+    "home_team": "Hantharwady United",
+    "away_team": "Rakhine United",
+    "minute": 90,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 90,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:35.475460",
+    "match_id": 1503477,
+    "home_team": "I.S.P.E",
+    "away_team": "Dagon Port",
+    "minute": 58,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 58,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:36.582397",
+    "match_id": 1441941,
+    "home_team": "Elazığspor",
+    "away_team": "Muğlaspor",
+    "minute": 41,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 41,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:36.677347",
+    "match_id": 1441943,
+    "home_team": "Erbaaspor",
+    "away_team": "Kepez Belediyespor",
+    "minute": 45,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 45,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:37.796292",
+    "match_id": 1490654,
+    "home_team": "Sparta Praha U19",
+    "away_team": "Pardubice U19",
+    "minute": 41,
+    "score": "1:2",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Очень низкий",
+    "stats": {
+      "minute": 41,
+      "shots": {
+        "home": 0,
+        "away": 0,
+        "total": 0,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0
+      },
+      "possession": {
+        "home": 50.0,
+        "away": 50.0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0,
+        "total": 0
+      },
+      "fouls": {
+        "home": 0,
+        "away": 0
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:37.931822",
+    "match_id": 1525478,
+    "home_team": "Sanfrecce Hiroshima",
+    "away_team": "Johor Darul Takzim FC",
+    "minute": 45,
+    "score": "0:0",
+    "next_goal_minute": null,
+    "next_goal_probability": 0,
+    "attack_potential": "Средний",
+    "stats": {
+      "minute": 45,
+      "shots": {
+        "home": 5,
+        "away": 1,
+        "total": 6,
+        "ontarget_home": 0,
+        "ontarget_away": 0,
+        "ontarget_total": 0,
+        "accuracy": 0.0
+      },
+      "possession": {
+        "home": 59.0,
+        "away": 41.0
+      },
+      "corners": {
+        "home": 4,
+        "away": 2,
+        "total": 6
+      },
+      "fouls": {
+        "home": 6,
+        "away": 8
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 2,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:39.075964",
+    "match_id": 1525479,
+    "home_team": "Vissel Kobe",
+    "away_team": "FC Seoul",
+    "minute": 45,
+    "score": "0:1",
+    "next_goal_minute": 90,
+    "next_goal_probability": 71.2,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 45,
+      "shots": {
+        "home": 5,
+        "away": 3,
+        "total": 8,
+        "ontarget_home": 2,
+        "ontarget_away": 1,
+        "ontarget_total": 3,
+        "accuracy": 37.5
+      },
+      "possession": {
+        "home": 56.0,
+        "away": 44.0
+      },
+      "corners": {
+        "home": 2,
+        "away": 1,
+        "total": 3
+      },
+      "fouls": {
+        "home": 5,
+        "away": 9
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:40.218039",
+    "match_id": 1398607,
+    "home_team": "Hatayspor",
+    "away_team": "Sivasspor",
+    "minute": 16,
+    "score": "0:0",
+    "next_goal_minute": 60,
+    "next_goal_probability": 71.0,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 16,
+      "shots": {
+        "home": 0,
+        "away": 3,
+        "total": 3,
+        "ontarget_home": 0,
+        "ontarget_away": 2,
+        "ontarget_total": 2,
+        "accuracy": 66.66666666666666
+      },
+      "possession": {
+        "home": 38.0,
+        "away": 62.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 0,
+        "total": 1
+      },
+      "fouls": {
+        "home": 3,
+        "away": 1
+      },
+      "cards": {
+        "yellow_home": 1,
+        "yellow_away": 1,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-11T13:45:41.357017",
+    "match_id": 1398609,
+    "home_team": "İstanbulspor",
+    "away_team": "Amed",
+    "minute": 16,
+    "score": "0:0",
+    "next_goal_minute": 60,
+    "next_goal_probability": 72.1,
+    "attack_potential": "Высокий",
+    "stats": {
+      "minute": 16,
+      "shots": {
+        "home": 1,
+        "away": 2,
+        "total": 3,
+        "ontarget_home": 1,
+        "ontarget_away": 0,
+        "ontarget_total": 1,
+        "accuracy": 33.33333333333333
+      },
+      "possession": {
+        "home": 71.0,
+        "away": 29.0
+      },
+      "corners": {
+        "home": 1,
+        "away": 2,
+        "total": 3
+      },
+      "fouls": {
+        "home": 0,
+        "away": 2
+      },
+      "cards": {
+        "yellow_home": 0,
+        "yellow_away": 0,
+        "red_home": 0,
+        "red_away": 0
+      },
+      "dangerous_attacks": {
+        "home": 0,
+        "away": 0
+      }
+    }
+  }
+]

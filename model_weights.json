@@ -1,0 +1,11 @@
+{
+  "weights": {
+    "xg": 0.35,
+    "shots_ontarget": 0.3,
+    "dangerous_attacks": 0.2,
+    "shots": 0.25,
+    "corners": 0.15,
+    "possession": 0.1
+  },
+  "last_updated": "2026-03-12T20:38:01.268543"
+}
