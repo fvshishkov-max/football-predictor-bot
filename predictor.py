@@ -11,6 +11,7 @@ from models import Match, LiveStats, GoalSignal, MatchAnalysis
 from xg_provider import XGManager
 import threading
 from collections import defaultdict, deque
+from models import XGData  # Импортируем XGData
 
 logger = logging.getLogger(__name__)
 
@@ -184,6 +185,7 @@ class Predictor:
     if self.params['use_xg']:
         if match.id in self.cache['match_xg']:
             xg_data = self.cache['match_xg'][match.id]
+            logger.debug(f"xG для матча {match.id} получен из кэша")
         else:
             try:
                 # Определяем лигу для Understat
@@ -192,20 +194,27 @@ class Predictor:
                 # Получаем xG с автоматическим поиском
                 xg_data = await self.xg_manager.get_xg(
                     match_id=match.id,
+                    understat_id=match.understat_id,  # Передаем если есть
                     home_team=match.home_team.name,
                     away_team=match.away_team.name,
                     league=league_name,
                     match_date=match.start_time
                 )
+                
                 if xg_data:
                     self.cache['match_xg'][match.id] = xg_data
-                    logger.info(f"📊 xG для матча {match.id}: {xg_data['home_xg']:.2f}-{xg_data['away_xg']:.2f}")
+                    # Сохраняем understat_id в match если нашли
+                    if xg_data.understat_id and not match.understat_id:
+                        match.understat_id = xg_data.understat_id
+                    
+                    logger.info(f"📊 xG для матча {match.id}: {xg_data.home_xg:.2f}-{xg_data.away_xg:.2f} "
+                              f"(всего {xg_data.total_xg:.2f}, ударов: {xg_data.shots or 'N/A'})")
             except Exception as e:
                 logger.error(f"Ошибка получения xG для матча {match.id}: {e}")
     
     # Получаем факторы лиги и команд
-    league_factor = self._get_league_factor(match.league_id, match.league_name)
-    team_factor = self._get_team_factor(match.home_team.id, match.away_team.id)
+    league_factor = self._get_league_factor(match.league_id, match.league_name, xg_data)
+    team_factor = self._get_team_factor(match.home_team.id, match.away_team.id, xg_data)
     
     # Рассчитываем активность
     activity_level, activity_description = self._calculate_activity(stats, current_minute)
@@ -236,30 +245,60 @@ class Predictor:
     self.cache['match_analysis'][cache_key] = (time.time(), analysis)
     
     if next_signal and xg_data:
-        logger.info(f"⚽ Сигнал с xG {xg_data['total_xg']:.2f}: {match.home_team.name}-{match.away_team.name} "
+        logger.info(f"⚽ Сигнал с xG {xg_data.total_xg:.2f}: {match.home_team.name}-{match.away_team.name} "
+                   f"~{next_signal.predicted_minute}' ({next_signal.probability:.1f}%)")
+    elif next_signal:
+        logger.info(f"⚽ Сигнал (без xG): {match.home_team.name}-{match.away_team.name} "
                    f"~{next_signal.predicted_minute}' ({next_signal.probability:.1f}%)")
     
     return analysis
+
+def _get_league_factor(self, league_id: int, league_name: str, 
+                       xg_data: Optional[XGData] = None) -> float:
+    """Получает фактор лиги на основе статистики и xG"""
+    if not league_id:
+        return 1.0
     
-    def _get_league_factor(self, league_id: int, league_name: str) -> float:
-        if not league_id:
-            return 1.0
-        stats = self.accuracy_stats['league_stats'].get(str(league_id))
-        if not stats or stats['total'] < 5:
-            return 1.0
+    factor = 1.0
+    
+    # Учитываем xG если есть
+    if xg_data and xg_data.total_xg > 1.5:
+        factor *= 1.1  # Результативная лига
+    
+    stats = self.accuracy_stats['league_stats'].get(str(league_id))
+    if stats and stats['total'] > 5:
         accuracy = stats['correct'] / stats['total'] if stats['total'] > 0 else 0.5
-        factor = 1.1 if accuracy > 0.7 else 0.9 if accuracy < 0.3 else 1.0
-        return factor
+        if accuracy > 0.7:
+            factor *= 1.1
+        elif accuracy < 0.3:
+            factor *= 0.9
     
-    def _get_team_factor(self, home_id: int, away_id: int) -> float:
-        home_stats = self.accuracy_stats['team_stats'].get(str(home_id), {})
-        away_stats = self.accuracy_stats['team_stats'].get(str(away_id), {})
-        factor = 1.0
-        for stats in [home_stats, away_stats]:
-            if stats and stats.get('signals', 0) > 0:
-                avg_xg = stats.get('avg_xg', 0)
-                factor *= 1.1 if avg_xg > 1.5 else 0.95 if avg_xg < 0.5 else 1.0
-        return factor
+    return factor
+    
+    def _get_team_factor(self, home_id: int, away_id: int, 
+                     xg_data: Optional[XGData] = None) -> float:
+    """Получает фактор команд на основе истории и xG"""
+    factor = 1.0
+    
+    # Учитываем xG команд если есть
+    if xg_data:
+        if xg_data.home_xg > 1.0:
+            factor *= 1.05
+        if xg_data.away_xg > 1.0:
+            factor *= 1.05
+    
+    home_stats = self.accuracy_stats['team_stats'].get(str(home_id), {})
+    away_stats = self.accuracy_stats['team_stats'].get(str(away_id), {})
+    
+    for stats in [home_stats, away_stats]:
+        if stats and stats.get('signals', 0) > 5:
+            accuracy = stats.get('correct', 0) / stats['signals']
+            if accuracy > 0.7:
+                factor *= 1.05
+            elif accuracy < 0.3:
+                factor *= 0.95
+    
+    return factor
     
     def _calculate_activity(self, stats: LiveStats, current_minute: int) -> tuple:
         if current_minute < self.params['min_minutes_for_analysis']:
@@ -367,7 +406,7 @@ class Predictor:
     
     async def _calculate_goal_probability(self, stats: LiveStats, current_minute: int,
                                      minutes_left: int, current_goals: int,
-                                     xg_data: Optional[Dict] = None) -> float:
+                                     xg_data: Optional[XGData] = None) -> float:
     """Рассчитывает вероятность гола с использованием xG"""
     if minutes_left <= 0:
         return 0
@@ -379,8 +418,8 @@ class Predictor:
     total_weight = 0
     
     # 1. xG фактор (самый важный)
-    if xg_data and self.params['use_xg'] and xg_data.get('total_xg', 0) > 0:
-        total_xg = xg_data.get('total_xg', 0)
+    if xg_data and self.params['use_xg'] and xg_data.total_xg > 0:
+        total_xg = xg_data.total_xg
         
         # Учитываем уже забитые голы
         remaining_xg = max(0, total_xg - current_goals)
@@ -410,6 +449,10 @@ class Predictor:
             ontarget_factor = min(1.0, expected_ontarget / self.params['ontarget_per_goal'])
             factors.append(ontarget_factor * self.weights['shots_ontarget'])
             total_weight += self.weights['shots_ontarget']
+        else:
+            # Если нет ударов в створ, но матч идет, даем минимальный фактор
+            factors.append(0.1 * self.weights['shots_ontarget'])
+            total_weight += self.weights['shots_ontarget']
         
         # Опасные атаки
         if stats.total_dangerous_attacks > 0:
@@ -426,6 +469,14 @@ class Predictor:
             shots_factor = min(1.0, expected_shots / self.params['shots_per_goal'])
             factors.append(shots_factor * self.weights['shots'])
             total_weight += self.weights['shots']
+        
+        # Угловые
+        if stats.total_corners > 0:
+            corners_per_minute = stats.total_corners / current_minute
+            expected_corners = corners_per_minute * minutes_left
+            corners_factor = min(1.0, expected_corners / self.params['corners_per_goal'])
+            factors.append(corners_factor * self.weights['corners'])
+            total_weight += self.weights['corners']
     
     if total_weight > 0:
         probability = sum(factors)
@@ -443,64 +494,89 @@ class Predictor:
     return max(0.3, min(self.params['max_confidence'], probability))
     
     def _validate_signal(self, stats: LiveStats, current_minute: int,
-                        target_minute: int, probability: float,
-                        xg_data: Optional[Dict] = None) -> bool:
-        if xg_data and xg_data.get('total_xg', 0) < 0.5:
-            return False
-        
-        if current_minute < 30 and stats.total_shots < 4:
-            return False
-        
-        if target_minute >= 75 and stats.total_shots < 8:
-            return False
-        
-        if target_minute > 90:
-            return False
-        
-        return True
+                    target_minute: int, probability: float,
+                    xg_data: Optional[XGData] = None) -> bool:
+    """Дополнительная валидация сигнала с учетом xG"""
+    
+    # Если есть xG, проверяем его достаточность
+    if xg_data and xg_data.total_xg < 0.5:
+        logger.debug(f"Сигнал отклонен: слишком низкий xG ({xg_data.total_xg:.2f})")
+        return False
+    
+    # Проверяем достаточность статистики
+    if current_minute < 30 and stats.total_shots < 4:
+        logger.debug("Сигнал отклонен: мало ударов в начале матча")
+        return False
+    
+    if target_minute >= 75 and stats.total_shots < 8:
+        logger.debug("Сигнал отклонен: мало ударов для голов в концовке")
+        return False
+    
+    # Проверяем, не слишком ли поздно
+    if target_minute > 90:
+        return False
+    
+    return True
     
     def _generate_signal_description(self, probability: float, minutes_left: int,
-                                    target_minute: int, stats: LiveStats,
-                                    xg_data: Optional[Dict] = None) -> str:
-        if probability >= 0.8:
-            base = "🚨 КРИТИЧЕСКИ ВЫСОКАЯ"
-        elif probability >= 0.7:
-            base = "⚡ ЭКСТРА ВЫСОКАЯ"
-        elif probability >= 0.6:
-            base = "🔥 ОЧЕНЬ ВЫСОКАЯ"
-        elif probability >= 0.5:
-            base = "📊 ХОРОШАЯ"
-        else:
-            base = "📈 ПОВЫШЕННАЯ"
-        
-        xg_part = f" (xG={xg_data['total_xg']:.2f})" if xg_data and xg_data.get('total_xg', 0) > 0.5 else ""
-        shots_part = f", {stats.total_shots_ontarget} в створ" if stats.total_shots_ontarget > 3 else ""
-        
-        return f"{base} вероятность гола к {target_minute}'{xg_part}{shots_part}"
+                                target_minute: int, stats: LiveStats,
+                                xg_data: Optional[XGData] = None) -> str:
+    """Генерирует описание сигнала с учетом xG"""
+    
+    if probability >= 0.8:
+        base = "🚨 КРИТИЧЕСКИ ВЫСОКАЯ"
+    elif probability >= 0.7:
+        base = "⚡ ЭКСТРА ВЫСОКАЯ"
+    elif probability >= 0.6:
+        base = "🔥 ОЧЕНЬ ВЫСОКАЯ"
+    elif probability >= 0.5:
+        base = "📊 ХОРОШАЯ"
+    else:
+        base = "📈 ПОВЫШЕННАЯ"
+    
+    xg_part = f" (xG={xg_data.total_xg:.2f})" if xg_data and xg_data.total_xg > 0.5 else ""
+    shots_part = f", {stats.total_shots_ontarget} в створ" if stats.total_shots_ontarget > 3 else ""
+    
+    return f"{base} вероятность гола к {target_minute}'{xg_part}{shots_part}"
     
     def _calculate_attack_potential(self, stats: LiveStats, current_minute: int,
-                               xg_data: Optional[Dict] = None) -> str:
+                               xg_data: Optional[XGData] = None) -> str:
     """Определяет атакующий потенциал с учетом xG"""
     if current_minute < 5:
         return "⚖️ Разведка"
     
     # Если есть xG, используем его
-    if xg_data and xg_data.get('total_xg', 0) > 0:
-        total_xg = xg_data['total_xg']
-        xg_per_minute = total_xg / max(1, current_minute)
+    if xg_data and xg_data.total_xg > 0:
+        total_xg = xg_data.total_xg
         
-        if total_xg > 2.5:
+        if total_xg > 3.0:
             return "🔥🔥🔥🔥🔥 РАЗГРОМНЫЙ"
-        elif total_xg > 2.0:
+        elif total_xg > 2.5:
             return "🔥🔥🔥🔥 ОЧЕНЬ ВЫСОКИЙ"
-        elif total_xg > 1.5:
+        elif total_xg > 2.0:
             return "🔥🔥🔥 ВЫСОКИЙ"
-        elif total_xg > 1.0:
+        elif total_xg > 1.5:
             return "🔥🔥 СРЕДНИЙ"
-        elif total_xg > 0.5:
+        elif total_xg > 0.8:
             return "🔥 НИЗКИЙ"
         else:
             return "💧 ОЧЕНЬ НИЗКИЙ"
+    
+    # Если xG нет, используем статистику ударов
+    shots_per_minute = stats.total_shots / current_minute
+    
+    if shots_per_minute > 0.25:
+        return "🔥🔥🔥🔥 РАЗГРОМНЫЙ"
+    elif shots_per_minute > 0.2:
+        return "🔥🔥🔥 ОЧЕНЬ ВЫСОКИЙ"
+    elif shots_per_minute > 0.15:
+        return "🔥🔥 ВЫСОКИЙ"
+    elif shots_per_minute > 0.1:
+        return "🔥 СРЕДНИЙ"
+    elif shots_per_minute > 0.05:
+        return "💧 НИЗКИЙ"
+    else:
+        return "💧💧 ОЧЕНЬ НИЗКИЙ"
     
     # Если xG нет, используем статистику ударов
     shots_per_minute = stats.total_shots / current_minute
