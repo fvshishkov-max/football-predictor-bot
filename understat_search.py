@@ -187,3 +187,8 @@ class UnderstatSearch:
         except Exception as e:
             logger.error(f"Ошибка парсинга матчей: {e}")
             return None
+            
+            async def find_match_and_get_xg(self, home_team: str, away_team: str,
+                                   league: str, match_date: datetime) -> Optional[int]:
+        """Находит ID матча и сразу возвращает его"""
+        return await self.find_match(home_team, away_team, league, match_date)

@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 import time
 from cachetools import TTLCache
 
+from models import XGData  # Импортируем новый класс
+
 logger = logging.getLogger(__name__)
 
 class XGProvider:
@@ -27,6 +29,11 @@ class XGProvider:
         7: 'Ligue_1',    # Франция
         8: 'RFPL',       # Россия
         9: 'RFPL',       # Россия (ФНЛ)
+        13: 'EPL',       # АПЛ (дополнительно)
+        19: 'Serie_A',   # Серия А
+        20: 'Bundesliga', # Бундеслига
+        21: 'La_liga',   # Ла Лига
+        22: 'Ligue_1',   # Лига 1
     }
     
     def __init__(self, cache_ttl: int = 3600):  # Кэш на 1 час
@@ -71,7 +78,7 @@ class XGProvider:
             await asyncio.sleep(wait_time)
         self.last_request_time = time.time()
     
-    async def get_match_xg(self, match_id: int, understat_id: Optional[int] = None) -> Optional[Dict]:
+    async def get_match_xg(self, match_id: int, understat_id: Optional[int] = None) -> Optional[XGData]:
         """
         Получает xG для матча.
         
@@ -80,7 +87,7 @@ class XGProvider:
             understat_id: ID матча в Understat (если известен)
             
         Returns:
-            Dict с xG данными или None
+            XGData объект с xG данными или None
         """
         self.stats['total_requests'] += 1
         
@@ -91,10 +98,7 @@ class XGProvider:
             logger.debug(f"xG для матча {match_id} получен из кэша")
             return self.cache[cache_key]
         
-        # Если нет understat_id, пробуем найти матч
         if not understat_id:
-            # TODO: Реализовать поиск матча по дате/командам
-            # Пока возвращаем None
             logger.debug(f"Нет understat_id для матча {match_id}")
             return None
         
@@ -114,12 +118,12 @@ class XGProvider:
                 html = await response.text()
             
             # Парсим xG данные
-            xg_data = self._parse_xg_from_html(html)
+            xg_data = self._parse_xg_from_html(html, understat_id)
             
             if xg_data:
                 self.stats['successful_requests'] += 1
                 self.cache[cache_key] = xg_data
-                logger.info(f"✅ xG для матча {match_id}: {xg_data['home_xg']:.2f}-{xg_data['away_xg']:.2f} (всего {xg_data['total_xg']:.2f})")
+                logger.info(f"✅ xG для матча {match_id}: {xg_data.home_xg:.2f}-{xg_data.away_xg:.2f} (всего {xg_data.total_xg:.2f})")
                 return xg_data
             else:
                 self.stats['failed_requests'] += 1
@@ -135,17 +139,16 @@ class XGProvider:
             self.stats['failed_requests'] += 1
             return None
     
-    def _parse_xg_from_html(self, html: str) -> Optional[Dict]:
+    def _parse_xg_from_html(self, html: str, understat_id: int) -> Optional[XGData]:
         """
         Парсит xG данные из HTML страницы Understat.
-        Извлекает данные из JavaScript переменных.
+        Возвращает объект XGData.
         """
         try:
             soup = BeautifulSoup(html, 'lxml')
             
             # Ищем скрипт с данными
             scripts = soup.find_all('script')
-            xg_data = None
             
             for script in scripts:
                 if not script.string:
@@ -175,21 +178,21 @@ class XGProvider:
                                 except (ValueError, TypeError):
                                     continue
                             
-                            xg_data = {
-                                'home_xg': round(home_xg, 2),
-                                'away_xg': round(away_xg, 2),
-                                'total_xg': round(home_xg + away_xg, 2),
-                                'shots': len(data),
-                                'source': 'shotsData'
-                            }
-                            break
+                            return XGData(
+                                home_xg=round(home_xg, 2),
+                                away_xg=round(away_xg, 2),
+                                total_xg=round(home_xg + away_xg, 2),
+                                shots=len(data),
+                                source='shotsData',
+                                understat_id=understat_id
+                            )
                             
                         except json.JSONDecodeError as e:
                             logger.debug(f"Ошибка парсинга JSON shotsData: {e}")
                             continue
                 
                 # Альтернативный источник - teamsData
-                elif 'teamsData' in script.string and not xg_data:
+                elif 'teamsData' in script.string:
                     match = re.search(r'var teamsData\s*=\s*(\{.+?\});', script.string, re.DOTALL)
                     if match:
                         try:
@@ -208,19 +211,19 @@ class XGProvider:
                                     except (ValueError, TypeError):
                                         continue
                             
-                            xg_data = {
-                                'home_xg': round(home_xg, 2),
-                                'away_xg': round(away_xg, 2),
-                                'total_xg': round(home_xg + away_xg, 2),
-                                'source': 'teamsData'
-                            }
-                            break
+                            return XGData(
+                                home_xg=round(home_xg, 2),
+                                away_xg=round(away_xg, 2),
+                                total_xg=round(home_xg + away_xg, 2),
+                                source='teamsData',
+                                understat_id=understat_id
+                            )
                             
                         except json.JSONDecodeError as e:
                             logger.debug(f"Ошибка парсинга JSON teamsData: {e}")
                             continue
             
-            return xg_data
+            return None
             
         except Exception as e:
             logger.error(f"Ошибка парсинга HTML: {e}")
@@ -251,26 +254,45 @@ class XGManager:
         self.providers = {
             'understat': XGProvider()
         }
+        from understat_search import UnderstatSearch
+        self.searcher = UnderstatSearch()
         self.stats = {
             'total_requests': 0,
             'successful_requests': 0,
             'failed_requests': 0,
-            'cached_requests': 0
+            'cached_requests': 0,
+            'search_requests': 0,
+            'successful_searches': 0
         }
     
-    async def get_xg(self, match_id: int, understat_id: Optional[int] = None) -> Optional[Dict]:
-        """Получает xG из доступных источников"""
+    async def get_xg(self, match_id: int, understat_id: Optional[int] = None,
+                     home_team: Optional[str] = None, away_team: Optional[str] = None,
+                     league: Optional[str] = None, match_date: Optional[datetime] = None) -> Optional[XGData]:
+        """
+        Получает xG с автоматическим поиском understat_id.
+        Возвращает объект XGData.
+        """
         self.stats['total_requests'] += 1
         
-        # Пробуем Understat
+        # Если understat_id не указан, пробуем найти
+        if not understat_id and home_team and away_team and league and match_date:
+            self.stats['search_requests'] += 1
+            found_id = await self.searcher.find_match(
+                home_team, away_team, league, match_date
+            )
+            if found_id:
+                self.stats['successful_searches'] += 1
+                understat_id = found_id
+                logger.info(f"🔍 Найден understat_id {understat_id} для матча {match_id}")
+        
+        # Получаем xG
         xg_data = await self.providers['understat'].get_match_xg(match_id, understat_id)
         
         if xg_data:
             self.stats['successful_requests'] += 1
             # Обновляем статистику провайдера
-            for provider in self.providers.values():
-                if hasattr(provider, 'stats'):
-                    self.stats['cached_requests'] = provider.stats.get('cached_requests', 0)
+            provider_stats = self.providers['understat'].get_stats()
+            self.stats['cached_requests'] = provider_stats.get('cached', 0)
         else:
             self.stats['failed_requests'] += 1
         
@@ -280,17 +302,20 @@ class XGManager:
         """Закрывает все соединения"""
         for provider in self.providers.values():
             await provider.close()
+        await self.searcher.close()
     
     def get_stats(self) -> Dict:
         """Возвращает статистику работы"""
-        total = self.stats['total_requests']
         provider_stats = self.providers['understat'].get_stats()
         
         return {
-            'total_requests': total,
+            'total_requests': self.stats['total_requests'],
             'successful': self.stats['successful_requests'],
             'failed': self.stats['failed_requests'],
-            'cached': provider_stats['cached'],
-            'success_rate': round((self.stats['successful_requests'] / max(1, total)) * 100, 1),
+            'cached': provider_stats.get('cached', 0),
+            'search_requests': self.stats['search_requests'],
+            'successful_searches': self.stats['successful_searches'],
+            'search_success_rate': round((self.stats['successful_searches'] / max(1, self.stats['search_requests'])) * 100, 1),
+            'success_rate': round((self.stats['successful_requests'] / max(1, self.stats['total_requests'])) * 100, 1),
             'provider_stats': provider_stats
         }
