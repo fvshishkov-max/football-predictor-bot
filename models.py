@@ -8,7 +8,7 @@ class Team:
     """Модель команды"""
     id: int
     name: str
-    country_code: Optional[str] = None  # Добавить это поле
+    country_code: Optional[str] = None
     logo_url: Optional[str] = None
 
 @dataclass
@@ -27,7 +27,7 @@ class Match:
     start_time: Optional[datetime] = None
     stats: Dict[str, Any] = field(default_factory=dict)
     events: List[Dict] = field(default_factory=list)
-    understat_id: Optional[int] = None  # Добавляем это поле
+    understat_id: Optional[int] = None  # ID матча в Understat
     
     @property
     def is_live(self) -> bool:
@@ -72,33 +72,19 @@ class LiveStats:
     
     @property
     def total_shots(self) -> int:
-        """Общее количество ударов"""
         return self.shots_home + self.shots_away
     
     @property
     def total_shots_ontarget(self) -> int:
-        """Общее количество ударов в створ"""
         return self.shots_ontarget_home + self.shots_ontarget_away
     
     @property
     def shots_accuracy(self) -> float:
-        """Точность ударов в процентах"""
         if self.total_shots > 0:
             return (self.total_shots_ontarget / self.total_shots) * 100
         return 0
     
-    @property
-    def total_corners(self) -> int:
-        """Общее количество угловых"""
-        return self.corners_home + self.corners_away
-    
-    @property
-    def total_dangerous_attacks(self) -> int:
-        """Общее количество опасных атак"""
-        return self.dangerous_attacks_home + self.dangerous_attacks_away
-    
     def to_dict(self) -> Dict:
-        """Преобразует статистику в словарь"""
         return {
             'minute': self.minute,
             'shots': {
@@ -116,24 +102,45 @@ class LiveStats:
             },
             'corners': {
                 'home': self.corners_home,
-                'away': self.corners_away,
-                'total': self.total_corners
-            },
-            'fouls': {
-                'home': self.fouls_home,
-                'away': self.fouls_away
-            },
-            'cards': {
-                'yellow_home': self.yellow_cards_home,
-                'yellow_away': self.yellow_cards_away,
-                'red_home': self.red_cards_home,
-                'red_away': self.red_cards_away
+                'away': self.corners_away
             },
             'dangerous_attacks': {
                 'home': self.dangerous_attacks_home,
                 'away': self.dangerous_attacks_away,
-                'total': self.total_dangerous_attacks
+                'total': self.dangerous_attacks_home + self.dangerous_attacks_away
             }
+        }
+
+@dataclass
+class XGData:
+    """Модель для xG данных"""
+    home_xg: float
+    away_xg: float
+    total_xg: float
+    shots: Optional[int] = None
+    source: Optional[str] = None
+    understat_id: Optional[int] = None
+    
+    @property
+    def home_xg_formatted(self) -> str:
+        return f"{self.home_xg:.2f}"
+    
+    @property
+    def away_xg_formatted(self) -> str:
+        return f"{self.away_xg:.2f}"
+    
+    @property
+    def total_xg_formatted(self) -> str:
+        return f"{self.total_xg:.2f}"
+    
+    def to_dict(self) -> Dict:
+        return {
+            'home_xg': self.home_xg,
+            'away_xg': self.away_xg,
+            'total_xg': self.total_xg,
+            'shots': self.shots,
+            'source': self.source,
+            'understat_id': self.understat_id
         }
 
 @dataclass
@@ -142,20 +149,18 @@ class GoalSignal:
     match_id: int
     predicted_minute: int
     probability: float
-    signal_type: str
+    signal_type: str  # 'HIGH' или 'NORMAL'
     description: str
     timestamp: datetime
     stats: Dict
     minutes_left: int
-    xg_data: Optional[Dict] = None  # Добавляем xG данные
+    xg_data: Optional[XGData] = None  # xG данные для сигнала
     
     @property
     def is_high_priority(self) -> bool:
-        """Проверяет, является ли сигнал высокоприоритетным"""
         return self.signal_type == 'HIGH' or self.probability >= 70
     
     def to_dict(self) -> Dict:
-        """Преобразует сигнал в словарь"""
         return {
             'match_id': self.match_id,
             'predicted_minute': self.predicted_minute,
@@ -165,7 +170,7 @@ class GoalSignal:
             'timestamp': self.timestamp.isoformat(),
             'minutes_left': self.minutes_left,
             'is_high_priority': self.is_high_priority,
-            'xg_data': self.xg_data  # Добавляем xG в словарь
+            'xg_data': self.xg_data.to_dict() if self.xg_data else None
         }
 
 @dataclass
@@ -181,27 +186,27 @@ class MatchAnalysis:
     attack_potential: str
     next_signal: Optional[GoalSignal] = None
     has_signal: bool = False
-    xg_data: Optional[Dict] = None  # Добавляем xG данные
+    xg_data: Optional[XGData] = None  # xG данные для матча
     
     def format_telegram_message(self, match: Match) -> str:
-        """Форматирует сообщение для Telegram с ссылкой на матч"""
-        
-        # Создаем ссылку на матч (можно заменить на реальный URL)
-        match_url = f"https://sstats.net/match/{match.id}"
+        """Форматирует сообщение для Telegram"""
+        match_url = f"https://understat.com/match/{match.understat_id}" if match.understat_id else f"https://sstats.net/match/{match.id}"
         
         lines = [
             f"⚽️ **{match.home_team.name} vs {match.away_team.name}**",
             f"⏱️ Минута: **{self.minute}'** | Счет: **{self.score}**",
-            f"[🔗 Смотреть матч]({match_url})",  # Ссылка на матч
+            f"[🔗 Смотреть матч]({match_url})",
             ""
         ]
         
-        # Добавляем xG если есть
+        # xG статистика
         if self.xg_data:
-            lines.append(f"📊 **xG:** {self.xg_data.get('home_xg', 0):.2f} : {self.xg_data.get('away_xg', 0):.2f} (всего {self.xg_data.get('total_xg', 0):.2f})")
+            lines.append(f"📊 **xG:** {self.xg_data.home_xg_formatted} : {self.xg_data.away_xg_formatted} (всего {self.xg_data.total_xg_formatted})")
+            if self.xg_data.shots:
+                lines.append(f"   • Ударов: {self.xg_data.shots}")
             lines.append("")
         
-        # Статистика
+        # Текущая статистика
         lines.append("📊 **ТЕКУЩАЯ СТАТИСТИКА:**")
         lines.append(f"   • Удары: {self.stats.shots_home}:{self.stats.shots_away} (всего {self.stats.total_shots})")
         lines.append(f"   • В створ: {self.stats.shots_ontarget_home}:{self.stats.shots_ontarget_away}")
@@ -215,16 +220,15 @@ class MatchAnalysis:
         lines.append(f"💬 {self.activity_description}")
         lines.append("")
         
-        # Сигнал на гол
+        # Сигнал
         if self.has_signal and self.next_signal:
             signal = self.next_signal
             lines.append(f"⚽️ **СИГНАЛ НА ГОЛ!**")
             lines.append(f"   • Ожидаемое время: **~{signal.predicted_minute}'**")
             lines.append(f"   • Вероятность: **{signal.probability:.1f}%**")
             
-            # Добавляем xG в сигнал если есть
             if signal.xg_data:
-                lines.append(f"   • xG: **{signal.xg_data.get('total_xg', 0):.2f}**")
+                lines.append(f"   • xG: **{signal.xg_data.total_xg_formatted}**")
             
             lines.append(f"   • {signal.description}")
             
@@ -233,10 +237,6 @@ class MatchAnalysis:
                 lines.append("🚨 **ВЫСОКАЯ ВЕРОЯТНОСТЬ ГОЛА!**")
         else:
             lines.append("⏳ **Нет активных сигналов на гол**")
-            if self.minute < 10:
-                lines.append("   Матч только начался, нужно больше данных для анализа")
-            elif self.stats.total_shots < 3:
-                lines.append("   Низкая атакующая активность")
         
         lines.append("")
         lines.append(f"🔥 Атакующий потенциал: {self.attack_potential}")
@@ -244,7 +244,6 @@ class MatchAnalysis:
         return '\n'.join(lines)
     
     def to_dict(self) -> Dict:
-        """Преобразует анализ в словарь"""
         return {
             'match_id': self.match_id,
             'timestamp': self.timestamp.isoformat(),
@@ -256,22 +255,7 @@ class MatchAnalysis:
             'attack_potential': self.attack_potential,
             'has_signal': self.has_signal,
             'next_signal': self.next_signal.to_dict() if self.next_signal else None,
-            'xg_data': self.xg_data  # Добавляем xG в словарь
-        }
-    
-    def to_dict(self) -> Dict:
-        """Преобразует анализ в словарь"""
-        return {
-            'match_id': self.match_id,
-            'timestamp': self.timestamp.isoformat(),
-            'minute': self.minute,
-            'score': self.score,
-            'stats': self.stats.to_dict(),
-            'activity_level': self.activity_level,
-            'activity_description': self.activity_description,
-            'attack_potential': self.attack_potential,
-            'has_signal': self.has_signal,
-            'next_signal': self.next_signal.to_dict() if self.next_signal else None
+            'xg_data': self.xg_data.to_dict() if self.xg_data else None
         }
 
 @dataclass
@@ -287,6 +271,7 @@ class Prediction:
     current_score: str = "0:0"
     shots_stats: Dict = field(default_factory=dict)
     possession_stats: Dict = field(default_factory=dict)
+    xg_total: Optional[float] = None  # Добавляем xG
     
     def to_dict(self) -> Dict:
         return {
@@ -297,7 +282,8 @@ class Prediction:
             'next_goal_probability': self.next_goal_probability,
             'attack_potential': self.attack_potential,
             'match_minute': self.match_minute,
-            'current_score': self.current_score
+            'current_score': self.current_score,
+            'xg_total': self.xg_total
         }
 
 @dataclass
