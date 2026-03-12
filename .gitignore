@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *.so
 .Python
+*.egg-info/
+dist/
+build/
 
 # Virtual Environment
 venv/
@@ -10,28 +13,54 @@ env/
 ENV/
 env.bak/
 venv.bak/
+.env
+.venv
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.DS_Store
 
 # Logs and databases
 *.log
 *.db
 *.sqlite3
+*.db-journal
 
-# Local data files (не включаем чувствительные данные)
+# Local data files
 bot_stats.json
 selected_matches.json
 football_bot.log
+football.log
+football_analyzer.log
+xg_stats.json
 
-# Backups
+# Backups and archives
 backups/
 *.zip
 *.tar
+*.gz
+*.rar
+football_project_backup.zip
 
-# OS
-.DS_Store
+# History files
+predictions_history_*.csv
+predictions_history_*.json
+signals_history_*.csv
+analysis_*.zip
+
+# But keep latest signals
+!signals_history_latest.json
+
+# OS generated files
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Project specific
+*.db
+football.db
+.env.txt
