@@ -27,6 +27,7 @@ class Match:
     start_time: Optional[datetime] = None
     stats: Dict[str, Any] = field(default_factory=dict)
     events: List[Dict] = field(default_factory=list)
+    understat_id: Optional[int] = None  # Добавляем это поле
     
     @property
     def is_live(self) -> bool:
