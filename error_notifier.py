@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 class ErrorNotifier:
     """Система уведомлений об ошибках в Telegram"""
     
-    def __init__(self, telegram_bot, channel_id: str, admin_id: Optional[str] = None):
+    ddef __init__(self, telegram_bot, channel_id: str, admin_id: Optional[str] = None):
         self.telegram_bot = telegram_bot
-        self.channel_id = channel_id          # используется переданный ID
+        self.channel_id = channel_id  # используется переданный ID
         self.admin_id = admin_id or channel_id
         self.error_counts = defaultdict(int)
         self.last_notification = defaultdict(lambda: datetime.min)

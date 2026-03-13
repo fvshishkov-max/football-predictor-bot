@@ -14,37 +14,36 @@ class StatsReporter:
         self.channel_id = channel_id
         self.signals_since_last_report = []
         self.last_report_time = datetime.now()
-        self.report_interval = timedelta(hours=6)  # Максимум раз в 6 часов
-        self.signals_per_report = 10  # Отправляем статистику каждые 10 сигналов
+        self.report_interval = timedelta(hours=6)
+        self.signals_per_report = 10
         
-    # stats_reporter.py (фрагмент)
     def add_signal(self, signal_data: Dict):
         """Добавляет сигнал в статистику"""
         self.signals_since_last_report.append(signal_data)
         current_count = len(self.signals_since_last_report)
-        logger.debug(f"StatsReporter: добавлен сигнал, всего в очереди: {current_count}")
+        logger.info(f"StatsReporter: добавлен сигнал, всего в очереди: {current_count}")
 
-        # Проверяем, нужно ли отправить отчет
         if current_count >= self.signals_per_report:
             logger.info(f"StatsReporter: набрано {current_count} сигналов, отправляю отчёт")
             self.send_report()
-        else:
-            logger.debug(f"StatsReporter: до отчёта осталось {self.signals_per_report - current_count} сигналов")
     
     def send_report(self):
         """Отправляет статистику в Telegram"""
         if not self.signals_since_last_report:
             logger.debug("StatsReporter: нет сигналов для отчёта")
             return
-
+        
+        now = datetime.now()
+        if now - self.last_report_time < self.report_interval:
+            logger.debug(f"StatsReporter: слишком рано для отчета. Последний был {self.last_report_time}")
+            return
+        
         total_signals = len(self.signals_since_last_report)
         logger.info(f"StatsReporter: формирование отчёта по {total_signals} сигналам")
         
-        # Средняя вероятность
-        avg_probability = sum(s['probability'] for s in self.signals_since_last_report) / total_signals
+        avg_probability = sum(s['signal_probability'] for s in self.signals_since_last_report) / total_signals
         
-        # Распределение по таймам
-        minutes = [s['predicted_minute'] for s in self.signals_since_last_report]
+        minutes = [s['signal_minute'] for s in self.signals_since_last_report]
         minute_ranges = {
             '1-15': len([m for m in minutes if m <= 15]),
             '16-30': len([m for m in minutes if 15 < m <= 30]),
@@ -54,18 +53,16 @@ class StatsReporter:
             '76-90': len([m for m in minutes if 75 < m <= 90])
         }
         
-        # Топ-5 лиг по количеству сигналов
         leagues = [s['league_name'] for s in self.signals_since_last_report if s.get('league_name')]
         league_counter = Counter(leagues)
         top_leagues = league_counter.most_common(5)
         
-        # Формируем сообщение
         report = (
             f"📊 **СТАТИСТИКА ПРОГНОЗОВ**\n\n"
             f"📈 Последние {total_signals} сигналов:\n"
             f"   • Средняя вероятность: **{avg_probability:.1f}%**\n"
-            f"   • Макс. вероятность: **{max(s['probability'] for s in self.signals_since_last_report):.1f}%**\n"
-            f"   • Мин. вероятность: **{min(s['probability'] for s in self.signals_since_last_report):.1f}%**\n\n"
+            f"   • Макс. вероятность: **{max(s['signal_probability'] for s in self.signals_since_last_report):.1f}%**\n"
+            f"   • Мин. вероятность: **{min(s['signal_probability'] for s in self.signals_since_last_report):.1f}%**\n\n"
             f"⏱️ **Распределение по минутам:**\n"
         )
         
@@ -82,38 +79,16 @@ class StatsReporter:
         
         report += f"\n📅 Отчет за период: {self.last_report_time.strftime('%d.%m %H:%M')} - {now.strftime('%d.%m %H:%M')}"
         
-        # Добавляем информацию о xG
-        xg_available = len([s for s in self.signals_since_last_report if s.get('xg_total')])
-        xg_percentage = (xg_available / total_signals) * 100 if total_signals > 0 else 0
-        
-        # Самые результативные команды
-        teams = []
-        for s in self.signals_since_last_report:
-            teams.append(s.get('home_team'))
-            teams.append(s.get('away_team'))
-        team_counter = Counter(teams)
-        top_teams = team_counter.most_common(5)
-        
-        report += f"\n📊 **Дополнительно:**\n"
-        report += f"   • Сигналов с xG: {xg_available} ({xg_percentage:.1f}%)\n"
-        
-        if top_teams:
-            report += f"\n⚽ **Часто встречающиеся команды:**\n"
-            for team, count in top_teams:
-                report += f"   • {team}: {count}\n"
-        
-        # Отправляем в Telegram
         try:
             self.telegram_bot.message_queue.put({
                 'key': f"stats_report_{now.timestamp()}",
                 'text': report
             })
             logger.info(f"✅ StatsReporter: отчёт отправлен ({total_signals} сигналов)")
-
-            # Сбрасываем счетчик
+            
             self.signals_since_last_report = []
             self.last_report_time = now
-
+            
         except Exception as e:
             logger.error(f"❌ StatsReporter: ошибка отправки отчёта: {e}")
     

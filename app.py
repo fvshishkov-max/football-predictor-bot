@@ -52,7 +52,7 @@ class FootballApp:
         
         # Инициализация репортера статистики
         self.stats_reporter = StatsReporter(self.telegram, config.CHANNEL_ID)
-        self.predictor.stats_reporter = self.stats_reporter
+        self.error_notifier = ErrorNotifier(self.telegram, config.CHANNEL_ID)
         
         # Инициализация мониторинга производительности и уведомлений об ошибках
         self.performance_monitor = PerformanceMonitor()
@@ -82,7 +82,7 @@ class FootballApp:
         self.update_in_progress = False
         self.stop_monitoring = False
         self.last_update_time = 0
-        self.update_interval = 90  # Увеличено до 90 секунд для снижения нагрузки на API
+        self.update_interval = 120  # Увеличено до 90 секунд для снижения нагрузки на API
         
         # Подключаем обработчики UI
         self.ui.on_refresh_callback = self.refresh_matches
