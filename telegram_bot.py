@@ -36,23 +36,18 @@ COUNTRY_FLAGS = {
 class TelegramBot:
     """Класс для работы с Telegram ботом с очередью сообщений"""
     
-    def __init__(self, token: str, channel_id: str = "-1001679913676"):
+    def __init__(self, token: str, channel_id: str):  # channel_id теперь обязательный параметр
         self.token = token
         self.channel_id = channel_id
         self.sent_signals = set()
         self.max_retries = 3
         self.retry_delay = 2
-        
-        # Очередь сообщений
         self.message_queue = Queue(maxsize=50)
         self.last_send_time = 0
-        self.min_interval = 4  # Увеличим интервал до 4 секунд
-        
-        # Блокировка
+        self.min_interval = 4
         self.sent_lock = threading.Lock()
-        
-        # Запускаем обработчик очереди
         self.start_queue_processor()
+        logger.info(f"🚀 Запущен обработчик очереди Telegram для канала {channel_id}")
     
     def start_queue_processor(self):
         """Запускает фоновый поток для обработки очереди"""

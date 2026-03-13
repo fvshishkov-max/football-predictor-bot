@@ -17,25 +17,28 @@ class StatsReporter:
         self.report_interval = timedelta(hours=6)  # Максимум раз в 6 часов
         self.signals_per_report = 10  # Отправляем статистику каждые 10 сигналов
         
+    # stats_reporter.py (фрагмент)
     def add_signal(self, signal_data: Dict):
+        """Добавляет сигнал в статистику"""
         self.signals_since_last_report.append(signal_data)
-        logger.debug(f"StatsReporter: добавлен сигнал, всего {len(self.signals_since_last_report)}")
-        if len(self.signals_since_last_report) >= self.signals_per_report:
+        current_count = len(self.signals_since_last_report)
+        logger.debug(f"StatsReporter: добавлен сигнал, всего в очереди: {current_count}")
+
+        # Проверяем, нужно ли отправить отчет
+        if current_count >= self.signals_per_report:
+            logger.info(f"StatsReporter: набрано {current_count} сигналов, отправляю отчёт")
             self.send_report()
+        else:
+            logger.debug(f"StatsReporter: до отчёта осталось {self.signals_per_report - current_count} сигналов")
     
     def send_report(self):
         """Отправляет статистику в Telegram"""
         if not self.signals_since_last_report:
+            logger.debug("StatsReporter: нет сигналов для отчёта")
             return
-        
-        # Проверяем, не отправляли ли недавно
-        now = datetime.now()
-        if now - self.last_report_time < self.report_interval:
-            logger.debug(f"Слишком рано для отчета. Последний был {self.last_report_time}")
-            return
-        
-        # Собираем статистику
+
         total_signals = len(self.signals_since_last_report)
+        logger.info(f"StatsReporter: формирование отчёта по {total_signals} сигналам")
         
         # Средняя вероятность
         avg_probability = sum(s['probability'] for s in self.signals_since_last_report) / total_signals
@@ -101,19 +104,18 @@ class StatsReporter:
         
         # Отправляем в Telegram
         try:
-            # Используем существующий метод отправки
             self.telegram_bot.message_queue.put({
                 'key': f"stats_report_{now.timestamp()}",
                 'text': report
             })
-            logger.info(f"📊 Отчет статистики отправлен ({total_signals} сигналов)")
-            
+            logger.info(f"✅ StatsReporter: отчёт отправлен ({total_signals} сигналов)")
+
             # Сбрасываем счетчик
             self.signals_since_last_report = []
             self.last_report_time = now
-            
+
         except Exception as e:
-            logger.error(f"Ошибка отправки отчета: {e}")
+            logger.error(f"❌ StatsReporter: ошибка отправки отчёта: {e}")
     
     def force_report(self):
         """Принудительная отправка отчета"""
