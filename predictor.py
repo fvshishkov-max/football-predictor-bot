@@ -45,6 +45,11 @@ class Predictor:
         self.analysis_intervals = self.CRITICAL_TIMES
         self.xg_manager = XGManager("5b1f5b1fbec540c1bc4b4a10d620d3ed")
         
+        # Инициализация ML
+        self.ml_predictor = MLPredictor()
+        self.performance_monitor = PerformanceMonitor()
+        self.error_notifier = None  # Будет установлен из app.py
+        
         self.params = {
             'shots_per_goal': 9.5,
             'ontarget_per_goal': 3.8,
@@ -181,6 +186,9 @@ class Predictor:
             logger.error(f"Ошибка загрузки xG статистики: {e}")
     
     async def analyze_live_match(self, match: Match, stats: LiveStats) -> MatchAnalysis:
+        start_time = time.time()
+        
+        try:
         """Анализирует live матч с использованием xG"""
         cache_key = match.id
         cached = self.cache['match_analysis'].get(cache_key)
@@ -262,6 +270,39 @@ class Predictor:
                        f"~{next_signal.predicted_minute}' ({next_signal.probability:.1f}%)")
         
         return analysis
+        
+        # Добавляем мониторинг
+            duration = time.time() - start_time
+            self.performance_monitor.record_request('analyze_live_match', duration)
+            
+            # Используем ML для улучшения предсказания
+            if hasattr(self, 'ml_predictor') and self.ml_predictor.model is not None:
+                features = self.ml_predictor.extract_features(
+                    stats.to_dict(), 
+                    xg_data.to_dict() if xg_data else None
+                )
+                ml_prediction, ml_confidence = self.ml_predictor.predict(features)
+                
+                # Комбинируем с нашим алгоритмом
+                if next_signal:
+                    # Взвешенное среднее
+                    next_signal.probability = (
+                        next_signal.probability * 0.7 + 
+                        ml_confidence * 100 * 0.3
+                    )
+            
+            return analysis
+            
+        except Exception as e:
+            # Уведомляем об ошибке
+            if self.error_notifier:
+                self.error_notifier.notify_error(
+                    error_type='ANALYSIS_ERROR',
+                    error_msg=str(e),
+                    tb=traceback.format_exc(),
+                    context={'match_id': match.id}
+                )
+            raise
     
     def _get_league_factor(self, league_id: int, league_name: str, xg_data: Optional[XGData] = None) -> float:
         if not league_id:
@@ -656,7 +697,7 @@ class Predictor:
                 'shots_ontarget': signal.stats.get('shots', {}).get('ontarget_total', 0) if signal.stats else 0,
                 'xg_total': signal.xg_data.total_xg if signal.xg_data else None,
                 'xg_home': signal.xg_data.home_xg if signal.xg_data else None,
-                'xg_away': signal.xg_data.away_xg if signal.xg_data else None
+                'xg_away': signal.xg_data.away_xg if signal.xg_data else None,
                 'league_name': match.league_name,
                 'probability': signal.probability,
                 'predicted_minute': signal.predicted_minute
