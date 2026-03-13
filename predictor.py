@@ -9,8 +9,8 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Set
 from models import Match, LiveStats, GoalSignal, MatchAnalysis, XGData
 from xg_manager import XGManager
+from ml_predictor import MLPredictor  # Добавьте эту строку
 import threading
-import math
 from collections import defaultdict, deque
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class Predictor:
         
         # Инициализация ML
         self.ml_predictor = MLPredictor()
-        self.performance_monitor = PerformanceMonitor()
+        self.performance_monitor = None  # Будет установлен из app.py
         self.error_notifier = None  # Будет установлен из app.py
         
         self.params = {
@@ -186,116 +186,117 @@ class Predictor:
             logger.error(f"Ошибка загрузки xG статистики: {e}")
     
     async def analyze_live_match(self, match: Match, stats: LiveStats) -> MatchAnalysis:
+        """Анализирует live матч с использованием xG"""
         start_time = time.time()
         
         try:
-        """Анализирует live матч с использованием xG"""
-        cache_key = match.id
-        cached = self.cache['match_analysis'].get(cache_key)
-        if cached:
-            timestamp, analysis = cached
-            if time.time() - timestamp < self.cache['cache_ttl']:
-                return analysis
-        
-        if not stats:
-            stats = LiveStats(minute=match.minute or 0)
-        
-        current_minute = match.minute or 0
-        current_goals = (match.home_score or 0) + (match.away_score or 0)
-        
-        # Получаем xG данные
-        xg_data = None
-        if self.params['use_xg']:
-            if match.id in self.cache['match_xg']:
-                xg_data = self.cache['match_xg'][match.id]
-                logger.debug(f"xG для матча {match.id} получен из кэша")
-            else:
-                try:
-                    # Определяем лигу для football-data.org
-                    league_id = match.league_id
-                    
-                    # Получаем xG с автоматическим поиском
-                    xg_data = await self.xg_manager.get_xg(
-                        match_id=match.id,
-                        home_team=match.home_team.name,
-                        away_team=match.away_team.name,
-                        league_id=league_id,
-                        match_date=match.start_time
-                    )
-                    
-                    if xg_data:
-                        self.cache['match_xg'][match.id] = xg_data
-                        logger.info(f"📊 xG для матча {match.id}: {xg_data.home_xg:.2f}-{xg_data.away_xg:.2f} "
-                                  f"(всего {xg_data.total_xg:.2f})")
-                except Exception as e:
-                    logger.error(f"Ошибка получения xG для матча {match.id}: {e}")
-        
-        # Получаем факторы лиги и команд
-        league_factor = self._get_league_factor(match.league_id, match.league_name, xg_data)
-        team_factor = self._get_team_factor(match.home_team.id, match.away_team.id, xg_data)
-        
-        # Рассчитываем активность
-        activity_level, activity_description = self._calculate_activity(stats, current_minute)
-        
-        # Находим следующий сигнал с учетом xG
-        next_signal = await self._find_next_goal_signal(
-            stats, current_minute, current_goals, match,
-            league_factor, team_factor, xg_data
-        )
-        
-        # Рассчитываем атакующий потенциал с учетом xG
-        attack_potential = self._calculate_attack_potential(stats, current_minute, xg_data)
-        
-        analysis = MatchAnalysis(
-            match_id=match.id,
-            timestamp=datetime.now(),
-            minute=current_minute,
-            score=f"{match.home_score}:{match.away_score}",
-            stats=stats,
-            activity_level=activity_level,
-            activity_description=activity_description,
-            attack_potential=attack_potential,
-            next_signal=next_signal,
-            has_signal=next_signal is not None,
-            xg_data=xg_data
-        )
-        
-        self.cache['match_analysis'][cache_key] = (time.time(), analysis)
-        
-        if next_signal and xg_data:
-            logger.info(f"⚽ Сигнал с xG {xg_data.total_xg:.2f}: {match.home_team.name}-{match.away_team.name} "
-                       f"~{next_signal.predicted_minute}' ({next_signal.probability:.1f}%)")
-        elif next_signal:
-            logger.info(f"⚽ Сигнал (без xG): {match.home_team.name}-{match.away_team.name} "
-                       f"~{next_signal.predicted_minute}' ({next_signal.probability:.1f}%)")
-        
-        return analysis
-        
-        # Добавляем мониторинг
+            cache_key = match.id
+            cached = self.cache['match_analysis'].get(cache_key)
+            if cached:
+                timestamp, analysis = cached
+                if time.time() - timestamp < self.cache['cache_ttl']:
+                    return analysis
+            
+            if not stats:
+                stats = LiveStats(minute=match.minute or 0)
+            
+            current_minute = match.minute or 0
+            current_goals = (match.home_score or 0) + (match.away_score or 0)
+            
+            # Получаем xG данные
+            xg_data = None
+            if self.params['use_xg']:
+                if match.id in self.cache['match_xg']:
+                    xg_data = self.cache['match_xg'][match.id]
+                    logger.debug(f"xG для матча {match.id} получен из кэша")
+                else:
+                    try:
+                        # Определяем лигу для football-data.org
+                        league_id = match.league_id
+                        
+                        # Получаем xG с автоматическим поиском
+                        xg_data = await self.xg_manager.get_xg(
+                            match_id=match.id,
+                            home_team=match.home_team.name,
+                            away_team=match.away_team.name,
+                            league_id=league_id,
+                            match_date=match.start_time
+                        )
+                        
+                        if xg_data:
+                            self.cache['match_xg'][match.id] = xg_data
+                            logger.info(f"📊 xG для матча {match.id}: {xg_data.home_xg:.2f}-{xg_data.away_xg:.2f} "
+                                      f"(всего {xg_data.total_xg:.2f})")
+                    except Exception as e:
+                        logger.error(f"Ошибка получения xG для матча {match.id}: {e}")
+            
+            # Получаем факторы лиги и команд
+            league_factor = self._get_league_factor(match.league_id, match.league_name, xg_data)
+            team_factor = self._get_team_factor(match.home_team.id, match.away_team.id, xg_data)
+            
+            # Рассчитываем активность
+            activity_level, activity_description = self._calculate_activity(stats, current_minute)
+            
+            # Находим следующий сигнал с учетом xG
+            next_signal = await self._find_next_goal_signal(
+                stats, current_minute, current_goals, match,
+                league_factor, team_factor, xg_data
+            )
+            
+            # Рассчитываем атакующий потенциал с учетом xG
+            attack_potential = self._calculate_attack_potential(stats, current_minute, xg_data)
+            
+            # Добавляем мониторинг производительности
             duration = time.time() - start_time
-            self.performance_monitor.record_request('analyze_live_match', duration)
+            if hasattr(self, 'performance_monitor'):
+                self.performance_monitor.record_request('analyze_live_match', duration)
             
             # Используем ML для улучшения предсказания
-            if hasattr(self, 'ml_predictor') and self.ml_predictor.model is not None:
-                features = self.ml_predictor.extract_features(
-                    stats.to_dict(), 
-                    xg_data.to_dict() if xg_data else None
-                )
-                ml_prediction, ml_confidence = self.ml_predictor.predict(features)
-                
-                # Комбинируем с нашим алгоритмом
-                if next_signal:
-                    # Взвешенное среднее
+            if hasattr(self, 'ml_predictor') and self.ml_predictor.model is not None and next_signal:
+                try:
+                    features = self.ml_predictor.extract_features(
+                        stats.to_dict(), 
+                        xg_data.to_dict() if xg_data else None
+                    )
+                    ml_prediction, ml_confidence = self.ml_predictor.predict(features)
+                    
+                    # Комбинируем с нашим алгоритмом (70% алгоритм, 30% ML)
                     next_signal.probability = (
                         next_signal.probability * 0.7 + 
                         ml_confidence * 100 * 0.3
                     )
+                except Exception as e:
+                    logger.error(f"Ошибка ML предсказания: {e}")
+            
+            analysis = MatchAnalysis(
+                match_id=match.id,
+                timestamp=datetime.now(),
+                minute=current_minute,
+                score=f"{match.home_score}:{match.away_score}",
+                stats=stats,
+                activity_level=activity_level,
+                activity_description=activity_description,
+                attack_potential=attack_potential,
+                next_signal=next_signal,
+                has_signal=next_signal is not None,
+                xg_data=xg_data
+            )
+            
+            self.cache['match_analysis'][cache_key] = (time.time(), analysis)
+            
+            if next_signal and xg_data:
+                logger.info(f"⚽ Сигнал с xG {xg_data.total_xg:.2f}: {match.home_team.name}-{match.away_team.name} "
+                           f"~{next_signal.predicted_minute}' ({next_signal.probability:.1f}%)")
+            elif next_signal:
+                logger.info(f"⚽ Сигнал (без xG): {match.home_team.name}-{match.away_team.name} "
+                           f"~{next_signal.predicted_minute}' ({next_signal.probability:.1f}%)")
             
             return analysis
             
         except Exception as e:
             # Уведомляем об ошибке
-            if self.error_notifier:
+            if hasattr(self, 'error_notifier') and self.error_notifier:
+                import traceback
                 self.error_notifier.notify_error(
                     error_type='ANALYSIS_ERROR',
                     error_msg=str(e),

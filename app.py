@@ -48,6 +48,18 @@ class FootballApp:
         self.db = Database()
         self.state = BotState()
         
+        # Инициализация мониторинга и уведомлений
+        from performance_monitor import PerformanceMonitor
+        from error_notifier import ErrorNotifier
+        from ml_predictor import MLPredictor
+        
+        self.performance_monitor = PerformanceMonitor()
+        self.error_notifier = ErrorNotifier(self.telegram, config.CHANNEL_ID)
+        
+        # Передаем в predictor
+        self.predictor.performance_monitor = self.performance_monitor
+        self.predictor.error_notifier = self.error_notifier
+        
         # Инициализация репортера статистики
         self.stats_reporter = StatsReporter(self.telegram, config.CHANNEL_ID)
         self.predictor.stats_reporter = self.stats_reporter
