@@ -171,36 +171,41 @@ class FootballDataXGProvider:
     
     async def search_match(self, home_team: str, away_team: str, 
                           competition_code: str, match_date: datetime) -> Optional[Dict]:
-        """Улучшенный поиск матча с отладкой"""
+        """Улучшенный поиск матча с несколькими попытками"""
         cache_key = f"search_{home_team}_{away_team}_{match_date.strftime('%Y%m%d')}"
         if cache_key in self.cache:
             return self.cache[cache_key]
         
-        date_from = match_date.strftime('%Y-%m-%d')
-        date_to = (match_date + timedelta(days=1)).strftime('%Y-%m-%d')
+        # Пробуем искать за день до и после, если в указанную дату нет матчей
+        search_dates = [
+            match_date,
+            match_date - timedelta(days=1),
+            match_date + timedelta(days=1)
+        ]
         
-        print(f"   Поиск в {competition_code} за {date_from}")
-        matches = await self.get_competition_matches(competition_code, date_from, date_to)
-        
-        print(f"   Найдено матчей в лиге: {len(matches)}")
-        
-        for match in matches:
-            match_home = match.get('homeTeam', {}).get('name', '')
-            match_away = match.get('awayTeam', {}).get('name', '')
+        for search_date in search_dates:
+            date_from = search_date.strftime('%Y-%m-%d')
+            date_to = (search_date + timedelta(days=1)).strftime('%Y-%m-%d')
             
-            print(f"   Проверка: {match_home} vs {match_away}")
+            logger.info(f"Поиск в {competition_code} за {date_from}")
+            matches = await self.get_competition_matches(competition_code, date_from, date_to)
             
-            if self._team_matches(home_team, match_home) and self._team_matches(away_team, match_away):
-                self.cache[cache_key] = match
-                print(f"   ✅ Совпадение найдено!")
-                return match
-            
-            if self._team_matches(home_team, match_away) and self._team_matches(away_team, match_home):
-                self.cache[cache_key] = match
-                print(f"   ✅ Совпадение найдено (перестановка)!")
-                return match
+            if matches:
+                for match in matches:
+                    match_home = match.get('homeTeam', {}).get('name', '')
+                    match_away = match.get('awayTeam', {}).get('name', '')
+                    
+                    if self._team_matches(home_team, match_home) and self._team_matches(away_team, match_away):
+                        self.cache[cache_key] = match
+                        logger.info(f"✅ Найден матч за {search_date.strftime('%Y-%m-%d')}")
+                        return match
+                    
+                    if self._team_matches(home_team, match_away) and self._team_matches(away_team, match_home):
+                        self.cache[cache_key] = match
+                        logger.info(f"✅ Найден матч за {search_date.strftime('%Y-%m-%d')} (перестановка)")
+                        return match
         
-        print(f"   ❌ Совпадений нет")
+        logger.debug(f"Матч не найден ни в одной из дат")
         self.cache[cache_key] = None
         return None
     
@@ -208,101 +213,105 @@ class FootballDataXGProvider:
                           home_team: Optional[str] = None, away_team: Optional[str] = None,
                           competition_code: Optional[str] = None, 
                           match_date: Optional[datetime] = None) -> Optional[XGData]:
-        """Получает xG для матча с улучшенной оценкой"""
+        """Получает xG для матча с повторными попытками"""
         self.stats['total_requests'] += 1
         
         cache_key = f"xg_{match_id}"
         if cache_key in self.cache:
             self.stats['cached_requests'] += 1
+            logger.debug(f"xG для матча {match_id} получен из кэша")
             return self.cache[cache_key]
         
         # Поиск матча если нет ID
         if not football_data_id and all([home_team, away_team, competition_code, match_date]):
+            logger.info(f"Поиск xG для {home_team} vs {away_team} в {competition_code}")
             match_data = await self.search_match(home_team, away_team, competition_code, match_date)
             if match_data:
                 football_data_id = match_data.get('id')
+                logger.info(f"Найден football_data_id {football_data_id}")
         
         if not football_data_id:
+            logger.debug(f"Нет football_data_id для матча {match_id}")
             self.stats['failed_requests'] += 1
             return None
         
-        try:
-            await self._wait_for_rate_limit()
-            session = await self._get_session()
-            
-            url = f"{self.BASE_URL}/matches/{football_data_id}"
-            logger.info(f"Запрос матча {football_data_id}")
-            
-            async with session.get(url) as response:
-                self._update_rate_limit(response.headers)
+        # Повторные попытки запроса
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                await self._wait_for_rate_limit()
+                session = await self._get_session()
                 
-                if response.status == 200:
-                    data = await response.json()
+                url = f"{self.BASE_URL}/matches/{football_data_id}"
+                logger.info(f"Запрос матча {football_data_id} (попытка {attempt + 1})")
+                
+                async with session.get(url) as response:
+                    self._update_rate_limit(response.headers)
                     
-                    # Получаем детальную статистику матча
-                    score = data.get('score', {}).get('fullTime', {})
-                    home_goals = score.get('home', 0)
-                    away_goals = score.get('away', 0)
-                    
-                    # Улучшенная оценка xG на основе статистики
-                    # В бесплатной версии используем эвристики
-                    
-                    # Базовый xG от количества голов
-                    home_xg = home_goals * 0.9
-                    away_xg = away_goals * 0.9
-                    
-                    # Корректировка для разгромных побед
-                    if home_goals > 3:
-                        home_xg = home_goals * 0.7  # Меньше xG на гол при разгроме
-                    if away_goals > 3:
-                        away_xg = away_goals * 0.7
-                    
-                    # Корректировка для матчей с 0 голов
-                    if home_goals == 0 and away_goals == 0:
-                        # Сухая ничья - низкий xG
-                        home_xg = 0.3
-                        away_xg = 0.3
-                    elif home_goals == 0:
-                        # Хозяева не забили, но гости забили
-                        home_xg = 0.2 * away_goals  # Пропущенные голы указывают на слабость
-                    elif away_goals == 0:
-                        away_xg = 0.2 * home_goals
-                    
-                    # Корректировка для топ-матчей (выше интенсивность)
-                    if competition_code in ['PL', 'PD', 'BL1', 'SA', 'FL1']:
-                        if 'Real Madrid' in str(data) or 'Barcelona' in str(data) or \
-                           'Bayern' in str(data) or 'Dortmund' in str(data) or \
-                           'PSG' in str(data) or 'Marseille' in str(data) or \
-                           'Inter' in str(data) or 'Juventus' in str(data):
-                            home_xg *= 1.1
-                            away_xg *= 1.1
-                    
-                    # Округляем до 1 знака
-                    home_xg = round(home_xg, 1)
-                    away_xg = round(away_xg, 1)
-                    
-                    xg_data = XGData(
-                        home_xg=home_xg,
-                        away_xg=away_xg,
-                        total_xg=round(home_xg + away_xg, 1),
-                        source='football-data.org (enhanced)',
-                        understat_id=football_data_id
-                    )
-                    
-                    self.stats['successful_requests'] += 1
-                    self.cache[cache_key] = xg_data
-                    logger.info(f"✅ xG для матча {match_id}: {xg_data.home_xg:.1f}-{xg_data.away_xg:.1f} (голы: {home_goals}-{away_goals})")
-                    return xg_data
-                    
-                else:
-                    logger.warning(f"Ошибка {response.status} для матча {football_data_id}")
-                    self.stats['failed_requests'] += 1
-                    return None
-                    
-        except Exception as e:
-            logger.error(f"Ошибка: {e}")
-            self.stats['failed_requests'] += 1
-            return None
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        # Получаем счет
+                        score = data.get('score', {}).get('fullTime', {})
+                        home_goals = score.get('home', 0)
+                        away_goals = score.get('away', 0)
+                        
+                        # Более точная оценка xG
+                        home_xg = self._estimate_xg_from_goals(home_goals, away_goals, is_home=True)
+                        away_xg = self._estimate_xg_from_goals(away_goals, home_goals, is_home=False)
+                        
+                        xg_data = XGData(
+                            home_xg=round(home_xg, 1),
+                            away_xg=round(away_xg, 1),
+                            total_xg=round(home_xg + away_xg, 1),
+                            source='football-data.org',
+                            understat_id=football_data_id
+                        )
+                        
+                        self.stats['successful_requests'] += 1
+                        self.cache[cache_key] = xg_data
+                        logger.info(f"✅ xG для матча {match_id}: {xg_data.home_xg:.1f}-{xg_data.away_xg:.1f} (голы: {home_goals}-{away_goals})")
+                        return xg_data
+                        
+                    elif response.status == 429:
+                        logger.warning(f"Rate limit exceeded, attempt {attempt + 1}/{max_retries}")
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(10 * (attempt + 1))
+                    else:
+                        logger.warning(f"Ошибка {response.status} для матча {football_data_id}")
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(5)
+                            
+            except Exception as e:
+                logger.error(f"Ошибка при попытке {attempt + 1}: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(5)
+        
+        self.stats['failed_requests'] += 1
+        return None
+        
+    def _estimate_xg_from_goals(self, team_goals: int, opponent_goals: int, is_home: bool) -> float:
+        """Оценивает xG на основе забитых и пропущенных голов"""
+        if team_goals == 0 and opponent_goals == 0:
+            return 0.3  # Сухая ничья
+        
+        if team_goals == 0:
+            return opponent_goals * 0.2  # Не забили, но пропустили
+        
+        # Базовый xG от забитых голов
+        base_xg = team_goals * 0.8
+        
+        # Корректировка для крупных счетов
+        if team_goals >= 4:
+            base_xg = team_goals * 0.6
+        elif team_goals >= 3:
+            base_xg = team_goals * 0.7
+        
+        # Бонус за игру дома
+        if is_home:
+            base_xg *= 1.1
+        
+        return base_xg
     
     def get_stats(self) -> Dict:
         """Возвращает статистику"""

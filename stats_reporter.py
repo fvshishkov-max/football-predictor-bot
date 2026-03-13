@@ -81,6 +81,26 @@ class StatsReporter:
         
         report += f"\n📅 Отчет за период: {self.last_report_time.strftime('%d.%m %H:%M')} - {now.strftime('%d.%m %H:%M')}"
         
+        # Добавляем информацию о xG
+        xg_available = len([s for s in self.signals_since_last_report if s.get('xg_total')])
+        xg_percentage = (xg_available / total_signals) * 100 if total_signals > 0 else 0
+        
+        # Самые результативные команды
+        teams = []
+        for s in self.signals_since_last_report:
+            teams.append(s.get('home_team'))
+            teams.append(s.get('away_team'))
+        team_counter = Counter(teams)
+        top_teams = team_counter.most_common(5)
+        
+        report += f"\n📊 **Дополнительно:**\n"
+        report += f"   • Сигналов с xG: {xg_available} ({xg_percentage:.1f}%)\n"
+        
+        if top_teams:
+            report += f"\n⚽ **Часто встречающиеся команды:**\n"
+            for team, count in top_teams:
+                report += f"   • {team}: {count}\n"
+        
         # Отправляем в Telegram
         try:
             # Используем существующий метод отправки
