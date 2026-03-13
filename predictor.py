@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Set
 from models import Match, LiveStats, GoalSignal, MatchAnalysis, XGData
 from xg_manager import XGManager
-from ml_predictor import MLPredictor  # Добавьте эту строку
+from ml_predictor import MLPredictor
 import threading
 from collections import defaultdict, deque
 
@@ -45,10 +45,11 @@ class Predictor:
         self.analysis_intervals = self.CRITICAL_TIMES
         self.xg_manager = XGManager("5b1f5b1fbec540c1bc4b4a10d620d3ed")
         
-        # Инициализация ML
+        # Инициализация дополнительных модулей (будут установлены из app.py)
         self.ml_predictor = MLPredictor()
-        self.performance_monitor = None  # Будет установлен из app.py
-        self.error_notifier = None  # Будет установлен из app.py
+        self.performance_monitor = None
+        self.error_notifier = None
+        self.stats_reporter = None
         
         self.params = {
             'shots_per_goal': 9.5,
@@ -246,9 +247,9 @@ class Predictor:
             # Рассчитываем атакующий потенциал с учетом xG
             attack_potential = self._calculate_attack_potential(stats, current_minute, xg_data)
             
-            # Добавляем мониторинг производительности
+            # Добавляем мониторинг производительности (с проверкой)
             duration = time.time() - start_time
-            if hasattr(self, 'performance_monitor'):
+            if hasattr(self, 'performance_monitor') and self.performance_monitor:
                 self.performance_monitor.record_request('analyze_live_match', duration)
             
             # Используем ML для улучшения предсказания
@@ -294,7 +295,7 @@ class Predictor:
             return analysis
             
         except Exception as e:
-            # Уведомляем об ошибке
+            # Уведомляем об ошибке (с проверкой)
             if hasattr(self, 'error_notifier') and self.error_notifier:
                 import traceback
                 self.error_notifier.notify_error(
@@ -698,20 +699,20 @@ class Predictor:
                 'shots_ontarget': signal.stats.get('shots', {}).get('ontarget_total', 0) if signal.stats else 0,
                 'xg_total': signal.xg_data.total_xg if signal.xg_data else None,
                 'xg_home': signal.xg_data.home_xg if signal.xg_data else None,
-                'xg_away': signal.xg_data.away_xg if signal.xg_data else None,
-                'league_name': match.league_name,
-                'probability': signal.probability,
-                'predicted_minute': signal.predicted_minute
+                'xg_away': signal.xg_data.away_xg if signal.xg_data else None
             }
             
             self.signals_history.append(entry)
-            if hasattr(self, 'stats_reporter') and self.stats_reporter:
-            self.stats_reporter.add_signal(entry)
             logger.info(f"💾 Сигнал {len(self.signals_history)}: {match.home_team.name}-{match.away_team.name} "
                        f"~{signal.predicted_minute}' ({signal.probability:.1f}%)")
             
             self.accuracy_stats['total_signals'] = len(self.signals_history)
             self.accuracy_stats['goals_predicted'] = len(self.signals_history)
+            
+            # Добавляем сигнал в репортер статистики (с проверкой)
+            if hasattr(self, 'stats_reporter') and self.stats_reporter:
+                self.stats_reporter.add_signal(entry)
+            
             self.schedule_save()
     
     def schedule_save(self):

@@ -18,10 +18,9 @@ from ui import FootballAppUI
 from models import Match, LiveStats, MatchAnalysis, Prediction
 from bot_state import BotState
 from stats_reporter import StatsReporter
-import config
-from ml_predictor import MLPredictor
 from performance_monitor import PerformanceMonitor
 from error_notifier import ErrorNotifier
+import config
 
 logging.basicConfig(
     level=logging.INFO,
@@ -47,26 +46,20 @@ class FootballApp:
             use_mock=config.USE_MOCK_DATA
         )
         self.predictor = Predictor()
-        self.predictor.stats_reporter = self.stats_reporter
         self.telegram = TelegramBot(config.BOT_TOKEN, config.CHANNEL_ID)
         self.db = Database()
         self.state = BotState()
         
-        # Инициализация мониторинга и уведомлений
-        from performance_monitor import PerformanceMonitor
-        from error_notifier import ErrorNotifier
-        from ml_predictor import MLPredictor
-        
-        self.performance_monitor = PerformanceMonitor()
-        self.error_notifier = ErrorNotifier(self.telegram, config.CHANNEL_ID)
-        
-        # Передаем в predictor
-        self.predictor.performance_monitor = self.performance_monitor
-        self.predictor.error_notifier = self.error_notifier
-        
         # Инициализация репортера статистики
         self.stats_reporter = StatsReporter(self.telegram, config.CHANNEL_ID)
         self.predictor.stats_reporter = self.stats_reporter
+        
+        # Инициализация мониторинга производительности и уведомлений об ошибках
+        self.performance_monitor = PerformanceMonitor()
+        self.error_notifier = ErrorNotifier(self.telegram, config.CHANNEL_ID)
+        
+        self.predictor.performance_monitor = self.performance_monitor
+        self.predictor.error_notifier = self.error_notifier
         
         # Создаем event loop для асинхронных операций
         self.loop = asyncio.new_event_loop()
@@ -89,7 +82,7 @@ class FootballApp:
         self.update_in_progress = False
         self.stop_monitoring = False
         self.last_update_time = 0
-        self.update_interval = 60  # Обновление каждые 60 секунд
+        self.update_interval = 90  # Увеличено до 90 секунд для снижения нагрузки на API
         
         # Подключаем обработчики UI
         self.ui.on_refresh_callback = self.refresh_matches
@@ -228,7 +221,7 @@ class FootballApp:
                             
                             # Если есть ошибка подключения, пробуем снова
                             if isinstance(results[0], Exception) and "Cannot connect" in str(results[0]):
-                                delay = base_delay * (2 ** attempt)  # Экспоненциальная задержка
+                                delay = base_delay * (2 ** attempt)
                                 logger.warning(f"Попытка {attempt + 1}/{max_retries} не удалась (проблемы с сетью), повтор через {delay}с...")
                                 await asyncio.sleep(delay)
                                 continue
