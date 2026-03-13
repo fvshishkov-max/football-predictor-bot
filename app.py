@@ -17,6 +17,7 @@ from database import Database
 from ui import FootballAppUI
 from models import Match, LiveStats, MatchAnalysis, Prediction
 from bot_state import BotState
+from stats_reporter import StatsReporter
 import config
 
 logging.basicConfig(
@@ -36,25 +37,20 @@ class FootballApp:
         self.root = tk.Tk()
         self.ui = FootballAppUI(self.root)
         
+        # Инициализация компонентов
         self.api_client = SStatsClient(
             api_key=config.SSTATS_API_KEY, 
             timezone=config.TIMEZONE,
             use_mock=config.USE_MOCK_DATA
         )
         self.predictor = Predictor()
-        self.telegram = TelegramBot(config.BOT_TOKEN, config.CHANNEL_ID)
+        self.telegram = TelegramBot(config.BOT_TOKEN, config.CHANNEL_ID)  # Передаем оба параметра
         self.db = Database()
         self.state = BotState()
         
-        # Инициализация
-        self.api_client = SStatsClient(...)
-        self.predictor = Predictor()
-        self.telegram = TelegramBot(...)
-        
-        # Добавляем StatsReporter
-        from stats_reporter import StatsReporter
+        # Инициализация репортера статистики
         self.stats_reporter = StatsReporter(self.telegram, config.CHANNEL_ID)
-        self.predictor.stats_reporter = self.stats_reporter  # Передаем в predictor
+        self.predictor.stats_reporter = self.stats_reporter
         
         # Создаем event loop для асинхронных операций
         self.loop = asyncio.new_event_loop()
@@ -183,7 +179,7 @@ class FootballApp:
             self.ui.update_analysis(text)
     
     def refresh_matches(self):
-        """Обновление списка матчей"""
+        """Обновление списка матчей с повторными попытками"""
         current_time = time.time()
         if current_time - self.last_update_time < self.update_interval:
             logger.debug(f"Слишком частые обновления, пропускаем. Прошло: {current_time - self.last_update_time:.1f}с")
@@ -199,25 +195,39 @@ class FootballApp:
         
         def load():
             try:
-                async def fetch_data():
-                    tasks = [
-                        self.api_client.get_live_matches(),
-                        self.api_client.get_today_matches()
-                    ]
-                    results = await asyncio.gather(*tasks, return_exceptions=True)
-                    return results
+                async def fetch_data_with_retry():
+                    max_retries = 3
+                    for attempt in range(max_retries):
+                        try:
+                            tasks = [
+                                self.api_client.get_live_matches(),
+                                self.api_client.get_today_matches()
+                            ]
+                            results = await asyncio.gather(*tasks, return_exceptions=True)
+                            
+                            # Проверяем, не являются ли результаты исключениями
+                            live_matches = results[0] if not isinstance(results[0], Exception) else []
+                            today_matches = results[1] if not isinstance(results[1], Exception) else []
+                            
+                            if live_matches or today_matches:
+                                return [live_matches, today_matches]
+                            
+                            logger.warning(f"Попытка {attempt + 1}/{max_retries} не удалась, повтор через 5с...")
+                            await asyncio.sleep(5)
+                            
+                        except Exception as e:
+                            logger.error(f"Ошибка при попытке {attempt + 1}: {e}")
+                            if attempt < max_retries - 1:
+                                await asyncio.sleep(5)
+                    
+                    return [[], []]
                 
                 # Запускаем с таймаутом
-                future = asyncio.run_coroutine_threadsafe(fetch_data(), self.loop)
-                results = future.result(timeout=30)
+                future = asyncio.run_coroutine_threadsafe(fetch_data_with_retry(), self.loop)
+                results = future.result(timeout=60)
                 
-                matches = results[0] if not isinstance(results[0], Exception) else []
-                all_matches = results[1] if not isinstance(results[1], Exception) else []
-                
-                if isinstance(results[0], Exception):
-                    logger.error(f"Ошибка получения LIVE матчей: {results[0]}")
-                if isinstance(results[1], Exception):
-                    logger.error(f"Ошибка получения всех матчей: {results[1]}")
+                matches = results[0] if results[0] else []
+                all_matches = results[1] if results[1] else []
                 
                 async def analyze_matches():
                     analyses_results = []

@@ -6,7 +6,7 @@ load_dotenv()
 
 # Telegram
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8117632870:AAHXkrXSj3m317Djb548KdNKzv7DD3WLKzM")
-CHANNEL_ID = os.getenv("CHANNEL_ID", "-1001960458800")
+CHANNEL_ID = os.getenv("CHANNEL_ID", "-1001679913676")  # Обновленный ID канала
 
 # SStats API
 SSTATS_API_KEY = os.getenv("SSTATS_API_KEY", "k0f69qjmqx4gs8a8")
@@ -18,7 +18,7 @@ FOOTBALL_DATA_API_KEY = os.getenv("FOOTBALL_DATA_API_KEY", "5b1f5b1fbec540c1bc4b
 
 # Настройки
 TIMEZONE = 3
-UPDATE_INTERVAL = 30  # секунд
+UPDATE_INTERVAL = 60  # секунд
 
 # Цветовая схема для UI
 COLORS = {
