@@ -55,8 +55,11 @@ class UnderstatSearch:
     def __init__(self):
         self.session: Optional[aiohttp.ClientSession] = None
         self.cache = {}  # Простой кэш для результатов поиска
+        self.last_request_time = 0
+        self.request_delay = 2  # Задержка между запросами
         
     async def _get_session(self) -> aiohttp.ClientSession:
+        """Получает или создает сессию"""
         if self.session is None or self.session.closed:
             self.session = aiohttp.ClientSession(
                 headers={
@@ -66,8 +69,18 @@ class UnderstatSearch:
         return self.session
     
     async def close(self):
+        """Закрывает сессию"""
         if self.session and not self.session.closed:
             await self.session.close()
+    
+    async def _wait_for_rate_limit(self):
+        """Соблюдает rate limiting"""
+        now = time.time()
+        time_since_last = now - self.last_request_time
+        if time_since_last < self.request_delay:
+            wait_time = self.request_delay - time_since_last
+            await asyncio.sleep(wait_time)
+        self.last_request_time = time.time()
     
     def normalize_team_name(self, name: str) -> str:
         """Нормализует название команды для поиска"""
@@ -76,7 +89,7 @@ class UnderstatSearch:
             return self.TEAM_NAME_MAPPING[name]
         
         # Убираем лишние слова
-        name = name.replace('FC', '').replace('United', 'Utd').strip()
+        name = name.replace('FC', '').replace('United', 'Utd').replace('F.C.', '').strip()
         return name
     
     async def find_match(self, home_team: str, away_team: str, 
@@ -93,12 +106,13 @@ class UnderstatSearch:
         Returns:
             ID матча в Understat или None
         """
-        cache_key = f"{home_team}_{away_team}_{match_date.date()}"
+        cache_key = f"{home_team}_{away_team}_{match_date.strftime('%Y%m%d')}"
         if cache_key in self.cache:
             logger.debug(f"Результат поиска получен из кэша: {cache_key}")
             return self.cache[cache_key]
         
         try:
+            await self._wait_for_rate_limit()
             session = await self._get_session()
             
             # Получаем страницу лиги
@@ -187,8 +201,12 @@ class UnderstatSearch:
         except Exception as e:
             logger.error(f"Ошибка парсинга матчей: {e}")
             return None
-            
-            async def find_match_and_get_xg(self, home_team: str, away_team: str,
+    
+    async def find_match_and_get_xg(self, home_team: str, away_team: str,
                                    league: str, match_date: datetime) -> Optional[int]:
         """Находит ID матча и сразу возвращает его"""
         return await self.find_match(home_team, away_team, league, match_date)
+
+
+# Добавляем недостающий импорт time
+import time

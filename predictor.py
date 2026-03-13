@@ -166,26 +166,26 @@ class Predictor:
             logger.error(f"Ошибка загрузки xG статистики: {e}")
     
     async def analyze_live_match(self, match: Match, stats: LiveStats) -> MatchAnalysis:
-    """Анализирует live матч с использованием xG"""
-    cache_key = match.id
-    cached = self.cache['match_analysis'].get(cache_key)
-    if cached:
-        timestamp, analysis = cached
-        if time.time() - timestamp < self.cache['cache_ttl']:
-            return analysis
-    
-    if not stats:
-        stats = LiveStats(minute=match.minute or 0)
-    
-    current_minute = match.minute or 0
-    current_goals = (match.home_score or 0) + (match.away_score or 0)
-    
-    # Получаем xG данные
-    xg_data = None
-    if self.params['use_xg']:
-        if match.id in self.cache['match_xg']:
-            xg_data = self.cache['match_xg'][match.id]
-            logger.debug(f"xG для матча {match.id} получен из кэша")
+        """Анализирует live матч с использованием xG"""
+        cache_key = match.id
+        cached = self.cache['match_analysis'].get(cache_key)
+        if cached:
+            timestamp, analysis = cached
+            if time.time() - timestamp < self.cache['cache_ttl']:
+                return analysis
+        
+        if not stats:
+            stats = LiveStats(minute=match.minute or 0)
+        
+        current_minute = match.minute or 0
+        current_goals = (match.home_score or 0) + (match.away_score or 0)
+        
+        # Получаем xG данные
+        xg_data = None
+        if self.params['use_xg']:
+            if match.id in self.cache['match_xg']:
+                xg_data = self.cache['match_xg'][match.id]
+                logger.debug(f"xG для матча {match.id} получен из кэша")
         else:
             try:
                 # Определяем лигу для Understat
@@ -276,29 +276,29 @@ def _get_league_factor(self, league_id: int, league_name: str,
     return factor
     
     def _get_team_factor(self, home_id: int, away_id: int, 
-                     xg_data: Optional[XGData] = None) -> float:
-    """Получает фактор команд на основе истории и xG"""
-    factor = 1.0
-    
-    # Учитываем xG команд если есть
-    if xg_data:
-        if xg_data.home_xg > 1.0:
-            factor *= 1.05
-        if xg_data.away_xg > 1.0:
-            factor *= 1.05
-    
-    home_stats = self.accuracy_stats['team_stats'].get(str(home_id), {})
-    away_stats = self.accuracy_stats['team_stats'].get(str(away_id), {})
-    
-    for stats in [home_stats, away_stats]:
-        if stats and stats.get('signals', 0) > 5:
-            accuracy = stats.get('correct', 0) / stats['signals']
-            if accuracy > 0.7:
+                         xg_data: Optional[XGData] = None) -> float:
+        """Получает фактор команд на основе истории и xG"""
+        factor = 1.0
+        
+        # Учитываем xG команд если есть
+        if xg_data:
+            if xg_data.home_xg > 1.0:
                 factor *= 1.05
-            elif accuracy < 0.3:
-                factor *= 0.95
-    
-    return factor
+            if xg_data.away_xg > 1.0:
+                factor *= 1.05
+        
+        home_stats = self.accuracy_stats['team_stats'].get(str(home_id), {})
+        away_stats = self.accuracy_stats['team_stats'].get(str(away_id), {})
+        
+        for stats in [home_stats, away_stats]:
+            if stats and stats.get('signals', 0) > 5:
+                accuracy = stats.get('correct', 0) / stats['signals']
+                if accuracy > 0.7:
+                    factor *= 1.05
+                elif accuracy < 0.3:
+                    factor *= 0.95
+        
+        return factor
     
     def _calculate_activity(self, stats: LiveStats, current_minute: int) -> tuple:
         if current_minute < self.params['min_minutes_for_analysis']:
