@@ -11,7 +11,10 @@ CHANNEL_ID = os.getenv("CHANNEL_ID", "-1001960458800")
 # SStats API
 SSTATS_API_KEY = os.getenv("SSTATS_API_KEY", "k0f69qjmqx4gs8a8")
 SSTATS_BASE_URL = "https://api.sstats.net"
-USE_MOCK_DATA = False  # False для реального API, True для тестовых данных
+USE_MOCK_DATA = False
+
+# Football-Data.org API
+FOOTBALL_DATA_API_KEY = os.getenv("FOOTBALL_DATA_API_KEY", "5b1f5b1fbec540c1bc4b4a10d620d3ed")
 
 # Настройки
 TIMEZONE = 3

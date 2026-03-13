@@ -5,6 +5,7 @@ import csv
 import os
 import time
 import asyncio
+import config
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from models import Match, LiveStats, GoalSignal, MatchAnalysis
@@ -12,6 +13,7 @@ from xg_provider import XGManager
 import threading
 from collections import defaultdict, deque
 from models import XGData  # Импортируем XGData
+from xg_manager import XGManager
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +45,7 @@ class Predictor:
     
     def __init__(self):
         self.analysis_intervals = self.CRITICAL_TIMES
-        self.xg_manager = XGManager()
+        self.xg_manager = XGManager(config.FOOTBALL_DATA_API_KEY)
         
         self.params = {
             'shots_per_goal': 9.5,
