@@ -657,9 +657,14 @@ class Predictor:
                 'xg_total': signal.xg_data.total_xg if signal.xg_data else None,
                 'xg_home': signal.xg_data.home_xg if signal.xg_data else None,
                 'xg_away': signal.xg_data.away_xg if signal.xg_data else None
+                'league_name': match.league_name,
+                'probability': signal.probability,
+                'predicted_minute': signal.predicted_minute
             }
             
             self.signals_history.append(entry)
+            if hasattr(self, 'stats_reporter'):
+                self.stats_reporter.add_signal(entry)
             logger.info(f"💾 Сигнал {len(self.signals_history)}: {match.home_team.name}-{match.away_team.name} "
                        f"~{signal.predicted_minute}' ({signal.probability:.1f}%)")
             

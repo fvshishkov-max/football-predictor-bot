@@ -46,6 +46,16 @@ class FootballApp:
         self.db = Database()
         self.state = BotState()
         
+        # Инициализация
+        self.api_client = SStatsClient(...)
+        self.predictor = Predictor()
+        self.telegram = TelegramBot(...)
+        
+        # Добавляем StatsReporter
+        from stats_reporter import StatsReporter
+        self.stats_reporter = StatsReporter(self.telegram, config.CHANNEL_ID)
+        self.predictor.stats_reporter = self.stats_reporter  # Передаем в predictor
+        
         # Создаем event loop для асинхронных операций
         self.loop = asyncio.new_event_loop()
         self.loop_thread = threading.Thread(target=self._start_loop, daemon=True)

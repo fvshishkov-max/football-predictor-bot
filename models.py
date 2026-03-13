@@ -214,16 +214,21 @@ class MatchAnalysis:
     xg_data: Optional[XGData] = None
     
     def format_telegram_message(self, match: Match) -> str:
-        """Форматирует сообщение для Telegram с ссылкой на букмекера"""
+        """Форматирует сообщение для Telegram с ссылкой на Sofascore"""
         
-        # Ссылка на матч у букмекера (например, 1xBet, Bet365 и т.д.)
-        # Здесь можно использовать любой букмекер. Я выбрал 1xBet как пример
-        bookmaker_url = f"https://1xbet.com/en/line/football/{match.id}"
+        # Создаем slug для URL из названий команд
+        home_slug = match.home_team.name.lower().replace(' ', '-').replace('.', '').replace('&', 'and')
+        away_slug = match.away_team.name.lower().replace(' ', '-').replace('.', '').replace('&', 'and')
+        # Убираем возможные двойные дефисы
+        home_slug = '-'.join(filter(None, home_slug.split('-')))
+        away_slug = '-'.join(filter(None, away_slug.split('-')))
+        
+        sofascore_url = f"https://www.sofascore.com/ru/{home_slug}-vs-{away_slug}/{match.id}"
         
         lines = [
             f"⚽️ **{match.home_team.name} vs {match.away_team.name}**",
             f"⏱️ Минута: **{self.minute}'** | Счет: **{self.score}**",
-            f"🔗 [Смотреть матч у букмекера]({bookmaker_url})",
+            f"🔗 [Смотреть на Sofascore]({sofascore_url})",
             ""
         ]
         
