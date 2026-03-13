@@ -22,7 +22,7 @@ class RealSStatsClient:
         self.finished_statuses = [8, 9, 10, 17]
     
     async def _make_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
-        """Выполняет запрос к API с увеличенным таймаутом"""
+        """Выполняет запрос к API с обработкой rate limit"""
         url = f"{self.BASE_URL}{endpoint}"
         request_params = {"apikey": self.api_key}
         if params:
@@ -34,28 +34,40 @@ class RealSStatsClient:
         }
         
         timeout = aiohttp.ClientTimeout(total=60)
+        max_retries = 3
         
-        try:
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                logger.debug(f"Запрос к API: {url}")
-                async with session.get(url, headers=headers, params=request_params) as response:
-                    if response.status != 200:
-                        logger.error(f"Ошибка API {response.status} для {url}")
-                        return None
-                    
-                    try:
-                        data = await response.json()
-                        return data
-                    except Exception as e:
-                        logger.error(f"Не удалось распарсить JSON: {e}")
-                        return None
+        for attempt in range(max_retries):
+            try:
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    logger.debug(f"Запрос к API: {url}")
+                    async with session.get(url, headers=headers, params=request_params) as response:
+                        if response.status == 429:
+                            retry_after = int(response.headers.get('Retry-After', 5))
+                            logger.warning(f"Rate limit (429) для {url}, ожидание {retry_after}с (попытка {attempt+1}/{max_retries})")
+                            await asyncio.sleep(retry_after)
+                            continue
                         
-        except asyncio.TimeoutError:
-            logger.error(f"Таймаут запроса к {url} (60 секунд)")
-            return None
-        except Exception as e:
-            logger.error(f"Ошибка запроса: {e}")
-            return None
+                        if response.status != 200:
+                            logger.error(f"Ошибка API {response.status} для {url}")
+                            return None
+                        
+                        try:
+                            data = await response.json()
+                            return data
+                        except Exception as e:
+                            logger.error(f"Не удалось распарсить JSON: {e}")
+                            return None
+                            
+            except asyncio.TimeoutError:
+                logger.error(f"Таймаут запроса к {url} (60 секунд)")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(5 * (attempt + 1))
+            except Exception as e:
+                logger.error(f"Ошибка запроса: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(5 * (attempt + 1))
+        
+        return None
     
     async def get_live_matches(self) -> List[Match]:
         """Получает LIVE матчи"""

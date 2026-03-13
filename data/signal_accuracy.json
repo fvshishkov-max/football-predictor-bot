@@ -1,10 +1,10 @@
 {
   "stats": {
-    "total_signals": 137,
+    "total_signals": 172,
     "correct_signals": 50,
     "accuracy_rate": 100.0,
     "avg_time_error": 0.0,
-    "goals_predicted": 137,
+    "goals_predicted": 172,
     "goals_actual": 124,
     "xg_accuracy": 0,
     "signals_by_time": {
@@ -48,5 +48,5 @@
     "use_xg": true,
     "min_send_probability": 50.0
   },
-  "last_updated": "2026-03-13T13:15:47.485038"
+  "last_updated": "2026-03-13T20:11:35.948943"
 }

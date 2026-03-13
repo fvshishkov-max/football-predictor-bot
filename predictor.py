@@ -705,8 +705,8 @@ class Predictor:
             }
             
             self.signals_history.append(entry)
-            if hasattr(self, 'stats_reporter'):
-                self.stats_reporter.add_signal(entry)
+            if hasattr(self, 'stats_reporter') and self.stats_reporter:
+            self.stats_reporter.add_signal(entry)
             logger.info(f"💾 Сигнал {len(self.signals_history)}: {match.home_team.name}-{match.away_team.name} "
                        f"~{signal.predicted_minute}' ({signal.probability:.1f}%)")
             
