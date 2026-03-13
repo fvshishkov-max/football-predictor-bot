@@ -36,7 +36,7 @@ COUNTRY_FLAGS = {
 class TelegramBot:
     """Класс для работы с Telegram ботом с очередью сообщений"""
     
-    def __init__(self, token: str, channel_id: str):
+    def __init__(self, token: str, channel_id: str = "-1001679913676"):
         self.token = token
         self.channel_id = channel_id
         self.sent_signals = set()

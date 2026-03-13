@@ -19,6 +19,9 @@ from models import Match, LiveStats, MatchAnalysis, Prediction
 from bot_state import BotState
 from stats_reporter import StatsReporter
 import config
+from ml_predictor import MLPredictor
+from performance_monitor import PerformanceMonitor
+from error_notifier import ErrorNotifier
 
 logging.basicConfig(
     level=logging.INFO,
