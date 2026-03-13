@@ -27,7 +27,7 @@ class Match:
     start_time: Optional[datetime] = None
     stats: Dict[str, Any] = field(default_factory=dict)
     events: List[Dict] = field(default_factory=list)
-    understat_id: Optional[int] = None  # ID матча в Understat
+    understat_id: Optional[int] = None
     
     @property
     def is_live(self) -> bool:
@@ -72,19 +72,33 @@ class LiveStats:
     
     @property
     def total_shots(self) -> int:
+        """Общее количество ударов"""
         return self.shots_home + self.shots_away
     
     @property
     def total_shots_ontarget(self) -> int:
+        """Общее количество ударов в створ"""
         return self.shots_ontarget_home + self.shots_ontarget_away
     
     @property
     def shots_accuracy(self) -> float:
+        """Точность ударов в процентах"""
         if self.total_shots > 0:
             return (self.total_shots_ontarget / self.total_shots) * 100
         return 0
     
+    @property
+    def total_corners(self) -> int:
+        """Общее количество угловых"""
+        return self.corners_home + self.corners_away
+    
+    @property
+    def total_dangerous_attacks(self) -> int:
+        """Общее количество опасных атак"""
+        return self.dangerous_attacks_home + self.dangerous_attacks_away
+    
     def to_dict(self) -> Dict:
+        """Преобразует статистику в словарь"""
         return {
             'minute': self.minute,
             'shots': {
@@ -102,12 +116,23 @@ class LiveStats:
             },
             'corners': {
                 'home': self.corners_home,
-                'away': self.corners_away
+                'away': self.corners_away,
+                'total': self.total_corners
+            },
+            'fouls': {
+                'home': self.fouls_home,
+                'away': self.fouls_away
+            },
+            'cards': {
+                'yellow_home': self.yellow_cards_home,
+                'yellow_away': self.yellow_cards_away,
+                'red_home': self.red_cards_home,
+                'red_away': self.red_cards_away
             },
             'dangerous_attacks': {
                 'home': self.dangerous_attacks_home,
                 'away': self.dangerous_attacks_away,
-                'total': self.dangerous_attacks_home + self.dangerous_attacks_away
+                'total': self.total_dangerous_attacks
             }
         }
 
@@ -149,12 +174,12 @@ class GoalSignal:
     match_id: int
     predicted_minute: int
     probability: float
-    signal_type: str  # 'HIGH' или 'NORMAL'
+    signal_type: str
     description: str
     timestamp: datetime
     stats: Dict
     minutes_left: int
-    xg_data: Optional[XGData] = None  # xG данные для сигнала
+    xg_data: Optional[XGData] = None
     
     @property
     def is_high_priority(self) -> bool:
@@ -186,27 +211,28 @@ class MatchAnalysis:
     attack_potential: str
     next_signal: Optional[GoalSignal] = None
     has_signal: bool = False
-    xg_data: Optional[XGData] = None  # xG данные для матча
+    xg_data: Optional[XGData] = None
     
     def format_telegram_message(self, match: Match) -> str:
-        """Форматирует сообщение для Telegram"""
-        match_url = f"https://understat.com/match/{match.understat_id}" if match.understat_id else f"https://sstats.net/match/{match.id}"
+        """Форматирует сообщение для Telegram с ссылкой на букмекера"""
+        
+        # Ссылка на матч у букмекера (например, 1xBet, Bet365 и т.д.)
+        # Здесь можно использовать любой букмекер. Я выбрал 1xBet как пример
+        bookmaker_url = f"https://1xbet.com/en/line/football/{match.id}"
         
         lines = [
             f"⚽️ **{match.home_team.name} vs {match.away_team.name}**",
             f"⏱️ Минута: **{self.minute}'** | Счет: **{self.score}**",
-            f"[🔗 Смотреть матч]({match_url})",
+            f"🔗 [Смотреть матч у букмекера]({bookmaker_url})",
             ""
         ]
         
-        # xG статистика
         if self.xg_data:
             lines.append(f"📊 **xG:** {self.xg_data.home_xg_formatted} : {self.xg_data.away_xg_formatted} (всего {self.xg_data.total_xg_formatted})")
             if self.xg_data.shots:
                 lines.append(f"   • Ударов: {self.xg_data.shots}")
             lines.append("")
         
-        # Текущая статистика
         lines.append("📊 **ТЕКУЩАЯ СТАТИСТИКА:**")
         lines.append(f"   • Удары: {self.stats.shots_home}:{self.stats.shots_away} (всего {self.stats.total_shots})")
         lines.append(f"   • В створ: {self.stats.shots_ontarget_home}:{self.stats.shots_ontarget_away}")
@@ -215,12 +241,10 @@ class MatchAnalysis:
         lines.append(f"   • Угловые: {self.stats.corners_home}:{self.stats.corners_away}")
         lines.append("")
         
-        # Активность
         lines.append(f"📈 **Активность:** {self.activity_level}")
         lines.append(f"💬 {self.activity_description}")
         lines.append("")
         
-        # Сигнал
         if self.has_signal and self.next_signal:
             signal = self.next_signal
             lines.append(f"⚽️ **СИГНАЛ НА ГОЛ!**")
@@ -271,7 +295,7 @@ class Prediction:
     current_score: str = "0:0"
     shots_stats: Dict = field(default_factory=dict)
     possession_stats: Dict = field(default_factory=dict)
-    xg_total: Optional[float] = None  # Добавляем xG
+    xg_total: Optional[float] = None
     
     def to_dict(self) -> Dict:
         return {

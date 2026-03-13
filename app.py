@@ -23,7 +23,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('football_bot.log', encoding='utf-8'),
+        logging.FileHandler('logs/football_bot.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -46,25 +46,30 @@ class FootballApp:
         self.db = Database()
         self.state = BotState()
         
+        # Создаем event loop для асинхронных операций
         self.loop = asyncio.new_event_loop()
         self.loop_thread = threading.Thread(target=self._start_loop, daemon=True)
         self.loop_thread.start()
         
+        # Очередь для результатов из асинхронных задач
         self.result_queue = Queue()
         
+        # Данные
         self.matches: List[Match] = []
         self.all_matches: List[Match] = []
         self.analyses: Dict[int, MatchAnalysis] = {}
         self.selected_matches: Set[int] = set()
         self.sent_signals: Set[str] = set()
         
+        # Тайминг
         self.last_signal_time = 0
         self.signal_cooldown = 5
         self.update_in_progress = False
         self.stop_monitoring = False
         self.last_update_time = 0
-        self.update_interval = 20
+        self.update_interval = 60  # Обновление каждые 60 секунд
         
+        # Подключаем обработчики UI
         self.ui.on_refresh_callback = self.refresh_matches
         self.ui.on_analyze_callback = self.analyze_match
         self.ui.on_track_callback = self.toggle_tracking
@@ -72,22 +77,44 @@ class FootballApp:
         self.ui.on_show_all_callback = self.show_all_matches
         self.ui.on_auto_send_toggle = self.toggle_auto_send
         
+        # Загружаем данные
         self.load_from_state()
+        
+        # Запускаем периодическое обновление UI результатами
         self.root.after(100, self._process_results)
+        
+        # Первое обновление
         self.root.after(100, self.refresh_matches)
+        
+        # Запускаем фоновый мониторинг
+        self.start_background_monitoring()
         
         logger.info("✅ Приложение запущено")
         logger.info(f"📊 Статистика: сигналов {self.predictor.accuracy_stats['total_signals']}")
     
+    def start_background_monitoring(self):
+        """Запускает фоновый поток для автоматического обновления"""
+        def monitor():
+            while not self.stop_monitoring:
+                try:
+                    time.sleep(self.update_interval)
+                    if not self.update_in_progress:
+                        logger.info("🔄 Автоматическое обновление матчей...")
+                        self.root.after(0, self.refresh_matches)
+                except Exception as e:
+                    logger.error(f"Ошибка в мониторинге: {e}")
+        
+        thread = threading.Thread(target=monitor, daemon=True)
+        thread.start()
+        logger.info(f"🔄 Фоновый мониторинг запущен (интервал: {self.update_interval}с)")
+    
     def _start_loop(self):
+        """Запускает event loop в отдельном потоке"""
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
     
-    async def _run_async(self, coro):
-        future = asyncio.run_coroutine_threadsafe(coro, self.loop)
-        return future.result(timeout=30)
-    
     def _process_results(self):
+        """Обрабатывает результаты из очереди и обновляет UI"""
         try:
             while not self.result_queue.empty():
                 result = self.result_queue.get_nowait()
@@ -120,8 +147,8 @@ class FootballApp:
     def load_from_state(self):
         self.sent_signals = set(self.state.state['sent_signals'])
         try:
-            if os.path.exists('selected_matches.json'):
-                with open('selected_matches.json', 'r', encoding='utf-8') as f:
+            if os.path.exists('data/selected_matches.json'):
+                with open('data/selected_matches.json', 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     self.selected_matches = set(data.get('selected', []))
         except Exception as e:
@@ -146,11 +173,14 @@ class FootballApp:
             self.ui.update_analysis(text)
     
     def refresh_matches(self):
+        """Обновление списка матчей"""
         current_time = time.time()
         if current_time - self.last_update_time < self.update_interval:
+            logger.debug(f"Слишком частые обновления, пропускаем. Прошло: {current_time - self.last_update_time:.1f}с")
             return
         
         if self.update_in_progress:
+            logger.debug("Обновление уже выполняется, пропускаем")
             return
         
         self.update_in_progress = True
@@ -167,7 +197,9 @@ class FootballApp:
                     results = await asyncio.gather(*tasks, return_exceptions=True)
                     return results
                 
-                results = asyncio.run_coroutine_threadsafe(fetch_data(), self.loop).result(timeout=30)
+                # Запускаем с таймаутом
+                future = asyncio.run_coroutine_threadsafe(fetch_data(), self.loop)
+                results = future.result(timeout=30)
                 
                 matches = results[0] if not isinstance(results[0], Exception) else []
                 all_matches = results[1] if not isinstance(results[1], Exception) else []
@@ -189,16 +221,19 @@ class FootballApp:
                             logger.error(f"Ошибка обработки матча {match.id}: {e}")
                     return analyses_results
                 
-                analyses_results = asyncio.run_coroutine_threadsafe(analyze_matches(), self.loop).result(timeout=60)
-                
-                for match, analysis in analyses_results:
-                    if analysis:
-                        self.result_queue.put({
-                            'type': 'analysis_result',
-                            'match_id': match.id,
-                            'match': match,
-                            'analysis': analysis
-                        })
+                # Запускаем анализ с таймаутом
+                if matches:
+                    future_analysis = asyncio.run_coroutine_threadsafe(analyze_matches(), self.loop)
+                    analyses_results = future_analysis.result(timeout=60)
+                    
+                    for match, analysis in analyses_results:
+                        if analysis:
+                            self.result_queue.put({
+                                'type': 'analysis_result',
+                                'match_id': match.id,
+                                'match': match,
+                                'analysis': analysis
+                            })
                 
                 self.result_queue.put({
                     'type': 'update_ui',
@@ -208,12 +243,15 @@ class FootballApp:
                     }
                 })
                 
+                logger.info(f"✅ Обновление завершено. Найдено LIVE матчей: {len(matches)}")
+                
             except Exception as e:
                 logger.error(f"❌ Ошибка загрузки: {e}")
                 self.root.after(0, lambda: self.ui.set_status("🔴 ОШИБКА", "red"))
             finally:
                 self.update_in_progress = False
         
+        # Запускаем в отдельном потоке
         thread = threading.Thread(target=load, daemon=True)
         thread.start()
     
@@ -368,7 +406,7 @@ class FootballApp:
     
     def save_selected_matches(self):
         try:
-            with open('selected_matches.json', 'w', encoding='utf-8') as f:
+            with open('data/selected_matches.json', 'w', encoding='utf-8') as f:
                 json.dump({'selected': list(self.selected_matches)}, f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.error(f"Ошибка сохранения выбранных матчей: {e}")

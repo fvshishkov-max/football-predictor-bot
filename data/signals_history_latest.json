@@ -1916,5 +1916,24 @@
     "xg_total": null,
     "xg_home": null,
     "xg_away": null
+  },
+  {
+    "timestamp": "2026-03-13T12:06:22.573897",
+    "match_id": 1469676,
+    "home_team": "Brisbane Roar",
+    "home_id": 947,
+    "away_team": "Western Sydney Wanderers",
+    "away_id": 939,
+    "league_id": 188,
+    "league_name": "A-League",
+    "signal_minute": 90,
+    "signal_probability": 91.00000000000001,
+    "match_minute": 45,
+    "score": "1:2",
+    "shots_total": 16,
+    "shots_ontarget": 5,
+    "xg_total": null,
+    "xg_home": null,
+    "xg_away": null
   }
 ]
