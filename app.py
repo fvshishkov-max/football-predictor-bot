@@ -47,6 +47,7 @@ class FootballApp:
             use_mock=config.USE_MOCK_DATA
         )
         self.predictor = Predictor()
+        self.predictor.stats_reporter = self.stats_reporter
         self.telegram = TelegramBot(config.BOT_TOKEN, config.CHANNEL_ID)
         self.db = Database()
         self.state = BotState()

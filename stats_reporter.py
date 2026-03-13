@@ -18,10 +18,8 @@ class StatsReporter:
         self.signals_per_report = 10  # Отправляем статистику каждые 10 сигналов
         
     def add_signal(self, signal_data: Dict):
-        """Добавляет сигнал в статистику"""
         self.signals_since_last_report.append(signal_data)
-        
-        # Проверяем, нужно ли отправить отчет
+        logger.debug(f"StatsReporter: добавлен сигнал, всего {len(self.signals_since_last_report)}")
         if len(self.signals_since_last_report) >= self.signals_per_report:
             self.send_report()
     
