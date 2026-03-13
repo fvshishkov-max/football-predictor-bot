@@ -4,21 +4,20 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Optional, Dict
 from collections import defaultdict
-import threading
 
 logger = logging.getLogger(__name__)
 
 class ErrorNotifier:
     """Система уведомлений об ошибках в Telegram"""
     
-    ddef __init__(self, telegram_bot, channel_id: str, admin_id: Optional[str] = None):
+    def __init__(self, telegram_bot, channel_id: str, admin_id: Optional[str] = None):
         self.telegram_bot = telegram_bot
-        self.channel_id = channel_id  # используется переданный ID
+        self.channel_id = channel_id
         self.admin_id = admin_id or channel_id
         self.error_counts = defaultdict(int)
         self.last_notification = defaultdict(lambda: datetime.min)
-        self.cooldown_period = timedelta(minutes=5)  # Не чаще раза в 5 минут
-        self.max_errors_before_alert = 3  # 3 одинаковые ошибки подряд
+        self.cooldown_period = timedelta(minutes=5)
+        self.max_errors_before_alert = 3
         
     def notify_error(self, error_type: str, error_msg: str, 
                      tb: Optional[str] = None, context: Optional[Dict] = None):
@@ -50,8 +49,7 @@ class ErrorNotifier:
                 message += f"  • {key}: {value}\n"
         
         if tb and self.error_counts[error_type] >= self.max_errors_before_alert:
-            # Для критических ошибок добавляем traceback
-            short_tb = tb.split('\n')[-5:]  # Последние 5 строк
+            short_tb = tb.split('\n')[-5:]
             message += f"\n**Traceback:**\n```\n" + '\n'.join(short_tb) + "\n```"
         
         # Отправляем в Telegram
@@ -63,7 +61,6 @@ class ErrorNotifier:
             logger.info(f"✅ Уведомление об ошибке отправлено: {error_type}")
             self.last_notification[error_type] = now
             
-            # Если ошибка критическая, сбрасываем счетчик
             if self.error_counts[error_type] >= self.max_errors_before_alert:
                 self.error_counts[error_type] = 0
                 
@@ -75,7 +72,7 @@ class ErrorNotifier:
         context = {
             'endpoint': endpoint,
             'status_code': status_code,
-            'response': response[:200]  # Первые 200 символов
+            'response': response[:200]
         }
         self.notify_error(
             error_type=f"API_{api_name}",
