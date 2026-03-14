@@ -12,6 +12,7 @@ from xg_manager import XGManager
 from ml_predictor import MLPredictor
 import threading
 from collections import defaultdict, deque
+from team_form import TeamFormAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,8 @@ class Predictor:
         self.performance_monitor = None
         self.error_notifier = None
         self.stats_reporter = None
+        self.team_analyzer = TeamFormAnalyzer()
+        self.weather_provider = WeatherProvider()
         
         self.params = {
             'shots_per_goal': 9.5,
@@ -67,6 +70,18 @@ class Predictor:
             'use_xg': True,
             'min_send_probability': 50.0
         }
+        
+        self.weights.update({
+            'form': 0.10,      # Форма команд
+            'h2h': 0.05,       # История встреч
+            'weather': 0.05,    # Погода
+        })
+        
+        # Пересчет старых весов с учетом новых
+        scale_factor = 1.0 - sum([0.10, 0.05, 0.05])  # 0.8
+        for key in ['xg', 'shots_ontarget', 'dangerous_attacks', 'shots', 'corners', 'possession']:
+            if key in self.weights:
+                self.weights[key] *= scale_factor
         
         self.weights = self.DEFAULT_WEIGHTS.copy()
         self.thresholds = self.THRESHOLDS.copy()
@@ -107,6 +122,20 @@ class Predictor:
         
         logger.info(f"📊 Модель инициализирована с порогами: {self.thresholds}")
         logger.info(f"⚖️ Начальные веса: {self.weights}")
+        
+        # Инициализация анализатора формы команд
+        self.team_analyzer = TeamFormAnalyzer()
+        
+        # Обновляем веса с учетом нового фактора
+        self.weights = {
+            'xg': 0.30,              # Уменьшаем с 0.35 до 0.30
+            'shots_ontarget': 0.20,   # Уменьшаем с 0.25 до 0.20
+            'dangerous_attacks': 0.15, # Оставляем 0.15
+            'shots': 0.10,            # Оставляем 0.10
+            'corners': 0.08,          # Уменьшаем с 0.10 до 0.08
+            'possession': 0.05,       # Оставляем 0.05
+            'team_form': 0.12          # Новый фактор
+        }
     
     def start_auto_save(self):
         """Запускает автоматическое сохранение данных в фоновом режиме"""
@@ -291,6 +320,18 @@ class Predictor:
             elif next_signal:
                 logger.info(f"⚽ Сигнал (без xG): {match.home_team.name}-{match.away_team.name} "
                            f"~{next_signal.predicted_minute}' ({next_signal.probability:.1f}%)")
+                           
+                           # Если матч завершен, сохраняем в историю
+            if match.is_finished and hasattr(self, 'team_analyzer'):
+                self.team_analyzer.save_match(
+                match_id=match.id,
+                home_id=match.home_team.id,
+                away_id=match.away_team.id,
+                home_score=match.home_score,
+                away_score=match.away_score,
+                match_date=match.start_time or datetime.now(),
+                league_id=match.league_id
+            )
             
             return analysis
             
@@ -382,7 +423,7 @@ class Predictor:
             minutes_left = interval - current_minute
             
             base_probability = await self._calculate_goal_probability(
-                stats, current_minute, minutes_left, current_goals, xg_data
+                stats, current_minute, minutes_left, current_goals, xg_data, match  # Добавлен match
             )
             
             adjusted_probability = base_probability * league_factor * team_factor
@@ -450,7 +491,8 @@ class Predictor:
     
     async def _calculate_goal_probability(self, stats: LiveStats, current_minute: int,
                                          minutes_left: int, current_goals: int,
-                                         xg_data: Optional[XGData] = None) -> float:
+                                         xg_data: Optional[XGData] = None,
+                                         match: Optional[Match] = None) -> float:
         if minutes_left <= 0:
             return 0
         
@@ -460,6 +502,7 @@ class Predictor:
         factors = []
         total_weight = 0
         
+        # xG фактор
         if xg_data and self.params['use_xg'] and xg_data.total_xg > 0:
             total_xg = xg_data.total_xg
             remaining_xg = max(0, total_xg - current_goals)
@@ -473,6 +516,7 @@ class Predictor:
             factors.append(xg_factor * adjusted_weight)
             total_weight += adjusted_weight
         
+        # Статистические факторы
         if current_minute > 0:
             if stats.total_shots_ontarget > 0:
                 ontarget_per_minute = stats.total_shots_ontarget / current_minute
@@ -504,6 +548,28 @@ class Predictor:
                 corners_factor = min(1.0, expected_corners / self.params['corners_per_goal'])
                 factors.append(corners_factor * self.weights['corners'])
                 total_weight += self.weights['corners']
+        
+        # Фактор формы команд (НОВЫЙ)
+        if match and hasattr(self, 'team_analyzer'):
+            home_form = self.team_analyzer.get_team_form(match.home_team.id)
+            away_form = self.team_analyzer.get_team_form(match.away_team.id)
+            
+            # Комбинируем форму команд
+            combined_form = (home_form['form'] + away_form['form']) / 2
+            
+            # Учитываем тренд
+            trend_factor = 1.0
+            if home_form['trend'] == 1 and away_form['trend'] == 1:
+                trend_factor = 1.1  # Обе команды в хорошей форме
+            elif home_form['trend'] == -1 and away_form['trend'] == -1:
+                trend_factor = 0.9  # Обе команды в плохой форме
+            
+            form_factor = combined_form * trend_factor
+            factors.append(form_factor * self.weights['team_form'])
+            total_weight += self.weights['team_form']
+            
+            logger.debug(f"Форма команд: home={home_form['form']}, away={away_form['form']}, "
+                        f"trend={trend_factor}, factor={form_factor:.2f}")
         
         if total_weight > 0:
             probability = sum(factors)
