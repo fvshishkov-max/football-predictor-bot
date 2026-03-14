@@ -151,3 +151,28 @@ class MLPredictor:
                 logger.info(f"📥 Модель загружена: {self.model_path}")
             except Exception as e:
                 logger.error(f"Ошибка загрузки модели: {e}")
+                
+        def extract_enhanced_features(self, match: Match, stats: LiveStats, 
+                                   xg_data: Optional[XGData] = None) -> np.array:
+            """Расширенное извлечение признаков"""
+            features = []
+            
+            # Текущая статистика матча
+            features.extend(self.extract_features(stats, xg_data))
+            
+            # Исторические данные команд
+            # (нужно добавить в базу данных)
+            home_form = self.get_team_form(match.home_team.id, last_n=5)
+            away_form = self.get_team_form(match.away_team.id, last_n=5)
+            features.extend([home_form, away_form])
+            
+            # Личные встречи
+            h2h_stats = self.get_h2h_stats(match.home_team.id, match.away_team.id)
+            features.extend([
+                h2h_stats.get('home_wins', 0),
+                h2h_stats.get('away_wins', 0),
+                h2h_stats.get('draws', 0),
+                h2h_stats.get('avg_goals', 0)
+            ])
+            
+            return np.array(features)

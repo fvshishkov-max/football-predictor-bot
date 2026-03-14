@@ -6,12 +6,12 @@ from collections import defaultdict
 import json
 import os
 
-from models import Match, TeamStats
+from models import Match
 from team_form import TeamFormAnalyzer
 
 logger = logging.getLogger(__name__)
 
-class FootballPredictor:
+class Predictor:
     """
     Класс для прогнозирования голов в футбольных матчах на основе статистики.
     Использует взвешенный подход с учетом xG, ударов, формы команд и других метрик.
@@ -43,10 +43,76 @@ class FootballPredictor:
         self.predictions_history = []
         self.max_history_size = 1000
         
+        # Статистика точности прогнозов
+        self.accuracy_stats = {
+            'total_predictions': 0,
+            'total_signals': 0,
+            'correct_predictions': 0,
+            'incorrect_predictions': 0,
+            'accuracy_rate': 0.0,
+            'goals_predicted': 0,
+            'goals_actual': 0,
+            'last_updated': datetime.now().isoformat()
+        }
+        
         # Инициализация анализатора формы команд
         self.team_analyzer = TeamFormAnalyzer()
         
-        logger.info("FootballPredictor инициализирован с весами: %s", self.weights)
+        logger.info("Predictor инициализирован с весами: %s", self.weights)
+    
+    def update_accuracy(self, prediction_id: str, actual_goals: int):
+        """
+        Обновляет статистику точности на основе реального результата
+        
+        Args:
+            prediction_id: ID предсказания
+            actual_goals: Фактическое количество голов в матче
+        """
+        try:
+            # Находим предсказание по ID
+            for pred in self.predictions_history:
+                if str(pred.get('match_id')) == str(prediction_id):
+                    predicted_prob = pred.get('total_goal_probability', 0)
+                    
+                    # Считаем предсказание правильным, если вероятность > 0.5 и гол был,
+                    # или если вероятность < 0.5 и гола не было
+                    had_goal = actual_goals > 0
+                    predicted_goal = predicted_prob > 0.5
+                    
+                    self.accuracy_stats['total_predictions'] += 1
+                    
+                    if pred.get('signal'):
+                        self.accuracy_stats['total_signals'] += 1
+                    
+                    if had_goal == predicted_goal:
+                        self.accuracy_stats['correct_predictions'] += 1
+                    else:
+                        self.accuracy_stats['incorrect_predictions'] += 1
+                    
+                    self.accuracy_stats['goals_predicted'] += predicted_prob * 3  # Ожидаемые голы
+                    self.accuracy_stats['goals_actual'] += actual_goals
+                    
+                    # Обновляем процент точности
+                    total = self.accuracy_stats['correct_predictions'] + self.accuracy_stats['incorrect_predictions']
+                    if total > 0:
+                        self.accuracy_stats['accuracy_rate'] = self.accuracy_stats['correct_predictions'] / total
+                    
+                    self.accuracy_stats['last_updated'] = datetime.now().isoformat()
+                    
+                    logger.debug(f"Обновлена статистика для матча {prediction_id}: точность {self.accuracy_stats['accuracy_rate']:.2f}")
+                    break
+                    
+        except Exception as e:
+            logger.error(f"Ошибка обновления статистики точности: {e}")
+    
+    def get_accuracy_stats(self) -> Dict:
+        """
+        Возвращает статистику точности прогнозов
+        
+        Returns:
+            Dict со статистикой точности
+        """
+        return self.accuracy_stats.copy()
     
     def predict_match(self, match: Match) -> Dict:
         """
@@ -67,10 +133,10 @@ class FootballPredictor:
             home_form = None
             away_form = None
             
-            if match.home_team and match.home_team.id:
+            if match.home_team and hasattr(match.home_team, 'id') and match.home_team.id:
                 home_form = self.team_analyzer.get_team_form(match.home_team.id)
                 
-            if match.away_team and match.away_team.id:
+            if match.away_team and hasattr(match.away_team, 'id') and match.away_team.id:
                 away_form = self.team_analyzer.get_team_form(match.away_team.id)
             
             # Рассчитываем вероятности голов для каждой команды
@@ -318,7 +384,12 @@ class FootballPredictor:
             return stats
         
         # Пытаемся найти статистику для нужной команды
-        team_id = match.home_team.id if is_home else match.away_team.id
+        team_id = match.home_team.id if is_home and match.home_team else None
+        if not team_id and not is_home and match.away_team:
+            team_id = match.away_team.id
+        
+        if not team_id:
+            return stats
         
         for period_stats in match.stats:
             if period_stats.get('period') == 'ALL':
@@ -402,16 +473,17 @@ class FootballPredictor:
                 # Если матч завершен, сохраняем в историю
                 if match.is_finished and hasattr(self, 'team_analyzer'):
                     try:
-                        self.team_analyzer.save_match(
-                            match_id=match.id,
-                            home_id=match.home_team.id,
-                            away_id=match.away_team.id,
-                            home_score=match.home_score,
-                            away_score=match.away_score,
-                            match_date=match.start_time or datetime.now(),
-                            league_id=match.league_id
-                        )
-                        logger.debug(f"📊 Матч {match.id} сохранен в историю")
+                        if match.home_team and match.away_team and match.home_team.id and match.away_team.id:
+                            self.team_analyzer.save_match(
+                                match_id=match.id,
+                                home_id=match.home_team.id,
+                                away_id=match.away_team.id,
+                                home_score=match.home_score or 0,
+                                away_score=match.away_score or 0,
+                                match_date=match.start_time or datetime.now(),
+                                league_id=match.league_id
+                            )
+                            logger.debug(f"📊 Матч {match.id} сохранен в историю")
                     except Exception as e:
                         logger.error(f"❌ Ошибка сохранения матча {match.id} в историю: {e}")
                 

@@ -1,54 +1,50 @@
-# run_fixed.py
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
-Исправленная версия запуска с правильной обработкой потоков
+Точка входа в приложение
 """
+
+import logging
 import sys
 import os
-import logging
-import time
 
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('football_bot.log', encoding='utf-8'),
-        logging.StreamHandler()
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('app.log', encoding='utf-8')
     ]
 )
 
 logger = logging.getLogger(__name__)
 
-def fix_windows_encoding():
-    """Исправляет кодировку для Windows"""
-    if sys.platform == "win32":
-        if hasattr(sys.stdout, 'reconfigure'):
-            sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
-            sys.stderr.reconfigure(encoding='utf-8', errors='backslashreplace')
-        else:
-            import io
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='backslashreplace')
-            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='backslashreplace')
-
 def main():
-    """Запуск приложения"""
+    """Основная функция"""
     try:
-        fix_windows_encoding()
-        
         logger.info("🚀 Запуск AI Football Predictor...")
         
-        # Импортируем после настройки
+        # Импортируем здесь, чтобы избежать циклических импортов
         from app import FootballApp
         
-        # Создаем приложение
+        # Создаем и запускаем приложение
         app = FootballApp()
+        app.start_monitoring()
         
-        # Запускаем в главном потоке
-        app.run()
+        logger.info("✅ Приложение запущено")
         
-    except KeyboardInterrupt:
-        logger.info("👋 Приложение остановлено пользователем")
+        # Держим основной поток активным
+        try:
+            while True:
+                import time
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("👋 Получен сигнал завершения")
+            app.stop_monitoring()
+            logger.info("👋 Приложение остановлено")
+            
     except Exception as e:
         logger.error(f"❌ Критическая ошибка: {e}", exc_info=True)
         sys.exit(1)
