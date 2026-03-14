@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+import numpy as np
 
 @dataclass
 class Team:
@@ -10,6 +11,12 @@ class Team:
     name: str
     country_code: Optional[str] = None
     logo_url: Optional[str] = None
+    
+    def __hash__(self):
+        return hash(self.id)
+    
+    def __eq__(self, other):
+        return self.id == other.id if isinstance(other, Team) else False
 
 @dataclass
 class Match:
@@ -28,6 +35,13 @@ class Match:
     stats: Dict[str, Any] = field(default_factory=dict)
     events: List[Dict] = field(default_factory=list)
     understat_id: Optional[int] = None
+    
+    # Новая расширенная статистика
+    shot_timeline: List[Dict] = field(default_factory=list)  # Хронология ударов
+    possession_timeline: List[Dict] = field(default_factory=list)  # Хронология владения
+    pressure_timeline: List[Dict] = field(default_factory=list)  # Хронология прессинга
+    passes_timeline: List[Dict] = field(default_factory=list)  # Хронология передач
+    substitutions: List[Dict] = field(default_factory=list)  # Замены
     
     @property
     def is_live(self) -> bool:
@@ -48,6 +62,13 @@ class Match:
     def total_goals(self) -> int:
         """Возвращает общее количество голов"""
         return (self.home_score or 0) + (self.away_score or 0)
+    
+    @property
+    def time_remaining(self) -> int:
+        """Возвращает оставшееся время в минутах"""
+        if self.minute is None:
+            return 90
+        return max(0, 90 - self.minute)
 
 @dataclass
 class LiveStats:
@@ -70,32 +91,85 @@ class LiveStats:
     dangerous_attacks_home: int = 0
     dangerous_attacks_away: int = 0
     
+    # Расширенная статистика
+    passes_home: int = 0
+    passes_away: int = 0
+    passes_accuracy_home: float = 0.0
+    passes_accuracy_away: float = 0.0
+    crosses_home: int = 0
+    crosses_away: int = 0
+    offsides_home: int = 0
+    offsides_away: int = 0
+    saves_home: int = 0
+    saves_away: int = 0
+    blocked_shots_home: int = 0
+    blocked_shots_away: int = 0
+    tackles_home: int = 0
+    tackles_away: int = 0
+    interceptions_home: int = 0
+    interceptions_away: int = 0
+    clearances_home: int = 0
+    clearances_away: int = 0
+    
+    # Динамические показатели (за последние 15 минут)
+    shots_last_15_home: int = 0
+    shots_last_15_away: int = 0
+    shots_ontarget_last_15_home: int = 0
+    shots_ontarget_last_15_away: int = 0
+    dangerous_attacks_last_15_home: int = 0
+    dangerous_attacks_last_15_away: int = 0
+    xg_last_15_home: float = 0.0
+    xg_last_15_away: float = 0.0
+    
     @property
     def total_shots(self) -> int:
-        """Общее количество ударов"""
         return self.shots_home + self.shots_away
     
     @property
     def total_shots_ontarget(self) -> int:
-        """Общее количество ударов в створ"""
         return self.shots_ontarget_home + self.shots_ontarget_away
     
     @property
     def shots_accuracy(self) -> float:
-        """Точность ударов в процентах"""
         if self.total_shots > 0:
             return (self.total_shots_ontarget / self.total_shots) * 100
         return 0
     
     @property
     def total_corners(self) -> int:
-        """Общее количество угловых"""
         return self.corners_home + self.corners_away
     
     @property
     def total_dangerous_attacks(self) -> int:
-        """Общее количество опасных атак"""
         return self.dangerous_attacks_home + self.dangerous_attacks_away
+    
+    @property
+    def momentum_home(self) -> float:
+        """Рассчитывает momentum команды на основе последних 15 минут"""
+        if self.minute < 15:
+            return 0.5
+        
+        # Сравниваем показатели за последние 15 минут с общими
+        if self.shots_last_15_home + self.shots_last_15_away > 0:
+            shot_momentum = self.shots_last_15_home / (self.shots_last_15_home + self.shots_last_15_away)
+        else:
+            shot_momentum = 0.5
+        
+        if self.dangerous_attacks_last_15_home + self.dangerous_attacks_last_15_away > 0:
+            attack_momentum = self.dangerous_attacks_last_15_home / (self.dangerous_attacks_last_15_home + self.dangerous_attacks_last_15_away)
+        else:
+            attack_momentum = 0.5
+        
+        if self.xg_last_15_home + self.xg_last_15_away > 0:
+            xg_momentum = self.xg_last_15_home / (self.xg_last_15_home + self.xg_last_15_away)
+        else:
+            xg_momentum = 0.5
+        
+        return (shot_momentum + attack_momentum + xg_momentum) / 3
+    
+    @property
+    def momentum_away(self) -> float:
+        return 1 - self.momentum_home
     
     def to_dict(self) -> Dict:
         """Преобразует статистику в словарь"""
@@ -133,6 +207,20 @@ class LiveStats:
                 'home': self.dangerous_attacks_home,
                 'away': self.dangerous_attacks_away,
                 'total': self.total_dangerous_attacks
+            },
+            'passes': {
+                'home': self.passes_home,
+                'away': self.passes_away,
+                'accuracy_home': self.passes_accuracy_home,
+                'accuracy_away': self.passes_accuracy_away
+            },
+            'momentum': {
+                'home': self.momentum_home,
+                'away': self.momentum_away,
+                'shots_last_15_home': self.shots_last_15_home,
+                'shots_last_15_away': self.shots_last_15_away,
+                'xg_last_15_home': self.xg_last_15_home,
+                'xg_last_15_away': self.xg_last_15_away
             }
         }
 
@@ -146,6 +234,12 @@ class XGData:
     source: Optional[str] = None
     understat_id: Optional[int] = None
     
+    # Расширенные xG данные
+    home_xg_by_minute: List[float] = field(default_factory=list)  # xG по минутам
+    away_xg_by_minute: List[float] = field(default_factory=list)
+    home_xg_by_shot: List[float] = field(default_factory=list)  # xG каждого удара
+    away_xg_by_shot: List[float] = field(default_factory=list)
+    
     @property
     def home_xg_formatted(self) -> str:
         return f"{self.home_xg:.2f}"
@@ -158,6 +252,18 @@ class XGData:
     def total_xg_formatted(self) -> str:
         return f"{self.total_xg:.2f}"
     
+    @property
+    def xg_per_shot_home(self) -> float:
+        if self.shots and self.home_xg_by_shot:
+            return sum(self.home_xg_by_shot) / len(self.home_xg_by_shot)
+        return 0
+    
+    @property
+    def xg_per_shot_away(self) -> float:
+        if self.shots and self.away_xg_by_shot:
+            return sum(self.away_xg_by_shot) / len(self.away_xg_by_shot)
+        return 0
+    
     def to_dict(self) -> Dict:
         return {
             'home_xg': self.home_xg,
@@ -165,7 +271,9 @@ class XGData:
             'total_xg': self.total_xg,
             'shots': self.shots,
             'source': self.source,
-            'understat_id': self.understat_id
+            'understat_id': self.understat_id,
+            'xg_per_shot_home': self.xg_per_shot_home,
+            'xg_per_shot_away': self.xg_per_shot_away
         }
 
 @dataclass
@@ -181,6 +289,11 @@ class GoalSignal:
     minutes_left: int
     xg_data: Optional[XGData] = None
     
+    # Расширенные данные сигнала
+    factors_contributions: Dict = field(default_factory=dict)  # Вклад каждого фактора
+    momentum_factor: float = 0.0  # Фактор momentum
+    substitution_factor: float = 0.0  # Фактор замен
+    
     @property
     def is_high_priority(self) -> bool:
         return self.signal_type == 'HIGH' or self.probability >= 70
@@ -195,7 +308,10 @@ class GoalSignal:
             'timestamp': self.timestamp.isoformat(),
             'minutes_left': self.minutes_left,
             'is_high_priority': self.is_high_priority,
-            'xg_data': self.xg_data.to_dict() if self.xg_data else None
+            'xg_data': self.xg_data.to_dict() if self.xg_data else None,
+            'momentum_factor': self.momentum_factor,
+            'substitution_factor': self.substitution_factor,
+            'factors_contributions': self.factors_contributions
         }
 
 @dataclass
@@ -213,13 +329,17 @@ class MatchAnalysis:
     has_signal: bool = False
     xg_data: Optional[XGData] = None
     
+    # Расширенный анализ
+    momentum_trend: str = "STABLE"  # RISING, FALLING, STABLE
+    key_events: List[Dict] = field(default_factory=list)  # Ключевые события
+    pressure_index: float = 0.0  # Индекс давления (0-1)
+    fatigue_factor: float = 1.0  # Фактор усталости
+    
     def format_telegram_message(self, match: Match) -> str:
-        """Форматирует сообщение для Telegram с ссылкой на Sofascore"""
+        """Форматирует сообщение для Telegram со ссылкой на Sofascore"""
         
-        # Создаем slug для URL из названий команд
         home_slug = match.home_team.name.lower().replace(' ', '-').replace('.', '').replace('&', 'and')
         away_slug = match.away_team.name.lower().replace(' ', '-').replace('.', '').replace('&', 'and')
-        # Убираем возможные двойные дефисы
         home_slug = '-'.join(filter(None, home_slug.split('-')))
         away_slug = '-'.join(filter(None, away_slug.split('-')))
         
@@ -244,6 +364,17 @@ class MatchAnalysis:
         lines.append(f"   • Точность: {self.stats.shots_accuracy:.1f}%")
         lines.append(f"   • Владение: {self.stats.possession_home:.0f}% / {self.stats.possession_away:.0f}%")
         lines.append(f"   • Угловые: {self.stats.corners_home}:{self.stats.corners_away}")
+        lines.append(f"   • Опасные атаки: {self.stats.dangerous_attacks_home}:{self.stats.dangerous_attacks_away}")
+        lines.append(f"   • Пасы: {self.stats.passes_home}:{self.stats.passes_away} (точн. {self.stats.passes_accuracy_home:.0f}% / {self.stats.passes_accuracy_away:.0f}%)")
+        lines.append("")
+        
+        # Добавляем информацию о momentum
+        lines.append(f"📈 **MOMENTUM:**")
+        lines.append(f"   • За последние 15 мин:")
+        lines.append(f"   • Удары: {self.stats.shots_last_15_home}:{self.stats.shots_last_15_away}")
+        lines.append(f"   • xG: {self.stats.xg_last_15_home:.2f}:{self.stats.xg_last_15_away:.2f}")
+        lines.append(f"   • Преимущество: {self.stats.momentum_home*100:.0f}% / {self.stats.momentum_away*100:.0f}%")
+        lines.append(f"   • Тренд: {self.momentum_trend}")
         lines.append("")
         
         lines.append(f"📈 **Активность:** {self.activity_level}")
@@ -256,10 +387,18 @@ class MatchAnalysis:
             lines.append(f"   • Ожидаемое время: **~{signal.predicted_minute}'**")
             lines.append(f"   • Вероятность: **{signal.probability:.1f}%**")
             
+            if signal.factors_contributions:
+                top_factors = sorted(signal.factors_contributions.items(), 
+                                    key=lambda x: x[1], reverse=True)[:3]
+                lines.append(f"   • Ключевые факторы: {', '.join([f[0] for f in top_factors])}")
+            
             if signal.xg_data:
                 lines.append(f"   • xG: **{signal.xg_data.total_xg_formatted}**")
             
             lines.append(f"   • {signal.description}")
+            
+            if signal.momentum_factor > 0.1:
+                lines.append(f"   • ⚡ Высокий momentum!")
             
             if signal.is_high_priority:
                 lines.append("")
@@ -269,6 +408,7 @@ class MatchAnalysis:
         
         lines.append("")
         lines.append(f"🔥 Атакующий потенциал: {self.attack_potential}")
+        lines.append(f"📊 Индекс давления: {self.pressure_index*100:.0f}%")
         
         return '\n'.join(lines)
     
@@ -284,7 +424,10 @@ class MatchAnalysis:
             'attack_potential': self.attack_potential,
             'has_signal': self.has_signal,
             'next_signal': self.next_signal.to_dict() if self.next_signal else None,
-            'xg_data': self.xg_data.to_dict() if self.xg_data else None
+            'xg_data': self.xg_data.to_dict() if self.xg_data else None,
+            'momentum_trend': self.momentum_trend,
+            'pressure_index': self.pressure_index,
+            'fatigue_factor': self.fatigue_factor
         }
 
 @dataclass

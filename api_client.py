@@ -4,7 +4,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Any
-from models import Match, Team, LiveStats
+from models import Match, Team, LiveStats, XGData
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class RealSStatsClient:
         self.api_key = api_key
         self.timezone = timezone
         self.last_request_time = 0
-        self.min_request_interval = 5  # Минимум 5 секунд между запросами
+        self.min_request_interval = 5
 
         # Статусы матчей
         self.live_statuses = [3, 4, 5, 6, 7, 11, 18, 19]
@@ -26,7 +26,6 @@ class RealSStatsClient:
     async def _make_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
         """Выполняет запрос к API с обработкой rate limit"""
         
-        # Проверяем, прошло ли достаточно времени с последнего запроса
         current_time = datetime.now().timestamp()
         time_since_last = current_time - self.last_request_time
         if time_since_last < self.min_request_interval:
@@ -45,7 +44,7 @@ class RealSStatsClient:
         }
 
         timeout = aiohttp.ClientTimeout(total=60)
-        max_retries = 5  # Увеличили количество попыток
+        max_retries = 5
 
         for attempt in range(max_retries):
             try:
@@ -53,11 +52,9 @@ class RealSStatsClient:
                     logger.debug(f"Запрос к API: {url}")
                     async with session.get(url, headers=headers, params=request_params) as response:
                         
-                        # Обновляем время последнего запроса
                         self.last_request_time = datetime.now().timestamp()
                         
                         if response.status == 429:
-                            # Получаем время ожидания из заголовка или используем увеличивающуюся задержку
                             retry_after = int(response.headers.get('Retry-After', 30 * (attempt + 1)))
                             logger.warning(f"Rate limit (429) для {url}, ожидание {retry_after}с (попытка {attempt+1}/{max_retries})")
                             await asyncio.sleep(retry_after)
@@ -69,7 +66,6 @@ class RealSStatsClient:
 
                         try:
                             data = await response.json()
-                            # Добавляем базовую задержку после успешного запроса
                             await asyncio.sleep(3)
                             return data
                         except Exception as e:
@@ -93,7 +89,7 @@ class RealSStatsClient:
 
     async def get_live_matches(self) -> List[Match]:
         """Получает LIVE матчи"""
-        params = {"Live": "true", "Limit": 20, "TimeZone": self.timezone}  # Уменьшили лимит
+        params = {"Live": "true", "Limit": 20, "TimeZone": self.timezone}
         data = await self._make_request("/Games/list", params)
         return self._parse_matches_list(data)
 
@@ -123,19 +119,51 @@ class RealSStatsClient:
 
             minute = game.get('elapsed') or 0
 
-            # Получаем данные о командах для country_code
+            # Получаем данные о командах
             home_team_data = game.get('homeTeam', {})
             away_team_data = game.get('awayTeam', {})
 
-            # Парсим country_code
-            home_country = None
-            away_country = None
+            # Парсим расширенную статистику
+            home_team_data = game.get('homeTeam', {})
+            away_team_data = game.get('awayTeam', {})
 
-            if 'country' in home_team_data and isinstance(home_team_data['country'], dict):
-                home_country = home_team_data['country'].get('code') or home_team_data['country'].get('name')
-
-            if 'country' in away_team_data and isinstance(away_team_data['country'], dict):
-                away_country = away_team_data['country'].get('code') or away_team_data['country'].get('name')
+            # Получаем хронологию событий для расчета динамики
+            events = data.get('events', [])
+            
+            # Рассчитываем показатели за последние 15 минут
+            shots_last_15_home = 0
+            shots_last_15_away = 0
+            shots_ontarget_last_15_home = 0
+            shots_ontarget_last_15_away = 0
+            dangerous_attacks_last_15_home = 0
+            dangerous_attacks_last_15_away = 0
+            xg_last_15_home = 0.0
+            xg_last_15_away = 0.0
+            
+            current_minute = minute
+            for event in events:
+                event_minute = event.get('minute', 0)
+                if event_minute > current_minute - 15:  # События за последние 15 минут
+                    event_type = event.get('type', '')
+                    event_team = event.get('team', '')
+                    
+                    if 'shot' in event_type.lower():
+                        if event_team == 'home':
+                            shots_last_15_home += 1
+                            if event.get('onTarget', False):
+                                shots_ontarget_last_15_home += 1
+                            xg_last_15_home += event.get('xg', 0)
+                        else:
+                            shots_last_15_away += 1
+                            if event.get('onTarget', False):
+                                shots_ontarget_last_15_away += 1
+                            xg_last_15_away += event.get('xg', 0)
+                    
+                    elif 'dangerous_attack' in event_type.lower():
+                        if event_team == 'home':
+                            dangerous_attacks_last_15_home += 1
+                        else:
+                            dangerous_attacks_last_15_away += 1
 
             live_stats = LiveStats(
                 minute=minute,
@@ -152,14 +180,97 @@ class RealSStatsClient:
                 yellow_cards_home=stats.get('yellowCardsHome', 0) or 0,
                 yellow_cards_away=stats.get('yellowCardsAway', 0) or 0,
                 dangerous_attacks_home=stats.get('dangerousAttacksHome', 0) or 0,
-                dangerous_attacks_away=stats.get('dangerousAttacksAway', 0) or 0
+                dangerous_attacks_away=stats.get('dangerousAttacksAway', 0) or 0,
+                
+                # Расширенная статистика
+                passes_home=stats.get('passesHome', 0) or 0,
+                passes_away=stats.get('passesAway', 0) or 0,
+                passes_accuracy_home=float(stats.get('passesAccuracyHome', 0) or 0),
+                passes_accuracy_away=float(stats.get('passesAccuracyAway', 0) or 0),
+                crosses_home=stats.get('crossesHome', 0) or 0,
+                crosses_away=stats.get('crossesAway', 0) or 0,
+                offsides_home=stats.get('offsidesHome', 0) or 0,
+                offsides_away=stats.get('offsidesAway', 0) or 0,
+                saves_home=stats.get('savesHome', 0) or 0,
+                saves_away=stats.get('savesAway', 0) or 0,
+                blocked_shots_home=stats.get('blockedShotsHome', 0) or 0,
+                blocked_shots_away=stats.get('blockedShotsAway', 0) or 0,
+                tackles_home=stats.get('tacklesHome', 0) or 0,
+                tackles_away=stats.get('tacklesAway', 0) or 0,
+                
+                # Динамические показатели
+                shots_last_15_home=shots_last_15_home,
+                shots_last_15_away=shots_last_15_away,
+                shots_ontarget_last_15_home=shots_ontarget_last_15_home,
+                shots_ontarget_last_15_away=shots_ontarget_last_15_away,
+                dangerous_attacks_last_15_home=dangerous_attacks_last_15_home,
+                dangerous_attacks_last_15_away=dangerous_attacks_last_15_away,
+                xg_last_15_home=xg_last_15_home,
+                xg_last_15_away=xg_last_15_away
             )
 
-            logger.info(f"Статистика матча {match_id}: {live_stats.total_shots} ударов, {live_stats.total_shots_ontarget} в створ")
+            logger.info(f"Статистика матча {match_id}: {live_stats.total_shots} ударов, "
+                       f"{live_stats.total_shots_ontarget} в створ, "
+                       f"momentum home: {live_stats.momentum_home:.2f}")
             return live_stats
 
         except Exception as e:
             logger.error(f"Ошибка парсинга статистики: {e}")
+            return None
+
+    async def get_match_xg(self, match_id: int) -> Optional[XGData]:
+        """Получает xG данные для матча"""
+        details = await self.get_match_details(match_id)
+        if not details:
+            return None
+
+        try:
+            data = details.get('data', {})
+            game = data.get('game', {})
+            stats = data.get('statistics', {})
+            events = data.get('events', [])
+
+            # Собираем xG каждого удара
+            home_xg_by_shot = []
+            away_xg_by_shot = []
+            home_xg_by_minute = []
+            away_xg_by_minute = []
+
+            for event in events:
+                if 'shot' in event.get('type', '').lower():
+                    xg = event.get('xg', 0)
+                    minute = event.get('minute', 0)
+                    team = event.get('team', '')
+
+                    if team == 'home':
+                        home_xg_by_shot.append(xg)
+                        home_xg_by_minute.append((minute, xg))
+                    else:
+                        away_xg_by_shot.append(xg)
+                        away_xg_by_minute.append((minute, xg))
+
+            home_xg = stats.get('expectedGoalsHome', sum(home_xg_by_shot))
+            away_xg = stats.get('expectedGoalsAway', sum(away_xg_by_shot))
+
+            xg_data = XGData(
+                home_xg=home_xg or 0,
+                away_xg=away_xg or 0,
+                total_xg=(home_xg or 0) + (away_xg or 0),
+                shots=len(home_xg_by_shot) + len(away_xg_by_shot),
+                source='SStats',
+                understat_id=match_id,
+                home_xg_by_shot=home_xg_by_shot,
+                away_xg_by_shot=away_xg_by_shot,
+                home_xg_by_minute=home_xg_by_minute,
+                away_xg_by_minute=away_xg_by_minute
+            )
+
+            logger.info(f"xG данные для матча {match_id}: home={xg_data.home_xg:.2f}, "
+                       f"away={xg_data.away_xg:.2f}, всего={xg_data.total_xg:.2f}")
+            return xg_data
+
+        except Exception as e:
+            logger.error(f"Ошибка парсинга xG: {e}")
             return None
 
     async def get_match_events(self, match_id: int) -> List[Dict]:
@@ -204,11 +315,9 @@ class RealSStatsClient:
         if not match_id:
             return None
 
-        # Парсим команды с country_code
         home_team_data = item.get('homeTeam', {})
         away_team_data = item.get('awayTeam', {})
 
-        # Получаем страну из данных команды
         home_country = None
         away_country = None
 
@@ -231,24 +340,17 @@ class RealSStatsClient:
             logo_url=away_team_data.get('logoUrl')
         )
 
-        # Статус
         status = item.get('status', 0)
         status_name = item.get('statusName')
-
-        # Счет
         home_score = item.get('homeResult') or item.get('homeFTResult') or 0
         away_score = item.get('awayResult') or item.get('awayFTResult') or 0
-
-        # Минута
         elapsed = item.get('elapsed')
 
-        # Лига
         season = item.get('season', {})
         league = season.get('league', {})
         league_name = league.get('name')
         league_id = league.get('id')
 
-        # Время начала
         start_time = None
         date_str = item.get('date')
         if date_str:
@@ -301,6 +403,11 @@ class SStatsClient:
             return self._get_mock_stats()
         return await self.real_client.get_match_statistics(match_id)
 
+    async def get_match_xg(self, match_id: int):
+        if self.use_mock:
+            return self._get_mock_xg()
+        return await self.real_client.get_match_xg(match_id)
+
     async def get_match_events(self, match_id: int) -> List[Dict]:
         if self.use_mock:
             return []
@@ -350,5 +457,20 @@ class SStatsClient:
             corners_home=random.randint(2, 6),
             corners_away=random.randint(1, 5),
             fouls_home=random.randint(5, 10),
-            fouls_away=random.randint(5, 10)
+            fouls_away=random.randint(5, 10),
+            passes_home=random.randint(200, 400),
+            passes_away=random.randint(150, 350),
+            passes_accuracy_home=random.randint(75, 90),
+            passes_accuracy_away=random.randint(70, 85)
+        )
+
+    def _get_mock_xg(self):
+        """Создает тестовые xG данные"""
+        import random
+        return XGData(
+            home_xg=random.uniform(0.5, 2.0),
+            away_xg=random.uniform(0.3, 1.5),
+            total_xg=random.uniform(1.0, 3.0),
+            shots=random.randint(10, 25),
+            source='Mock'
         )
