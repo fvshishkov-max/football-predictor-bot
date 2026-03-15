@@ -12,6 +12,7 @@ from api_client import SStatsClient
 from predictor import Predictor
 from telegram_bot import TelegramBot
 from team_form import TeamFormAnalyzer
+from stats_reporter import StatsReporter
 from models import MatchAnalysis, GoalSignal, LiveStats, XGData
 
 logger = logging.getLogger(__name__)
@@ -28,11 +29,10 @@ class FootballApp:
         try:
             # Получаем токены из config
             self.bot_token = getattr(config, 'TELEGRAM_TOKEN', None)
-            # Используем правильный ID канала из вашего config
             self.channel_id = getattr(config, 'CHANNEL_ID', '-1001679913676')
             self.sstats_api_key = getattr(config, 'SSTATS_TOKEN', None)
             self.use_mock = getattr(config, 'USE_MOCK_API', False)
-            self.check_interval = getattr(config, 'CHECK_INTERVAL', 120)
+            self.check_interval = getattr(config, 'CHECK_INTERVAL', 600)
             
             # Логируем результаты
             logger.info(f"📱 TELEGRAM_TOKEN: {'Найден' if self.bot_token else 'НЕ НАЙДЕН'}")
@@ -78,6 +78,14 @@ class FootballApp:
             )
             logger.info(f"✅ Telegram бот инициализирован для канала {self.channel_id}")
             
+            # Инициализация репортера статистики
+            logger.info("📈 Инициализация репортера статистики...")
+            self.stats_reporter = StatsReporter(self.telegram_bot, self.predictor)
+            logger.info("✅ StatsReporter инициализирован")
+            
+            # Словарь для отслеживания голов по таймам
+            self.match_goals = {}
+            
             # Создаем event loop для асинхронных операций
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
@@ -114,6 +122,8 @@ class FootballApp:
             logger.info(f"📊 Статистика предиктора:")
             logger.info(f"   - Всего предсказаний: {predictor_stats.get('total_predictions', 0)}")
             logger.info(f"   - Отправлено сигналов: {self.stats.get('signals_sent', 0)}")
+            logger.info(f"   - Текущие веса: {predictor_stats.get('current_weights', {})}")
+            logger.info(f"   - Пороги уверенности: {self.predictor.thresholds}")
             
             if hasattr(self.predictor, 'accuracy_stats'):
                 accuracy = self.predictor.accuracy_stats
@@ -180,33 +190,66 @@ class FootballApp:
         
         logger.info("⏹ Цикл мониторинга завершен")
     
+    def _check_goal_scored(self, match):
+        """Проверяет, был ли забит гол в матче"""
+        match_id = match.id
+        
+        if match_id not in self.match_goals:
+            self.match_goals[match_id] = {
+                'last_score': f"{match.home_score or 0}:{match.away_score or 0}",
+                'first_half_goals': 0,
+                'second_half_goals': 0,
+                'last_check': datetime.now()
+            }
+            return
+        
+        last_score = self.match_goals[match_id]['last_score']
+        current_score = f"{match.home_score or 0}:{match.away_score or 0}"
+        
+        if last_score != current_score:
+            # Гол забит!
+            half = "first" if match.minute and match.minute < 45 else "second"
+            self.match_goals[match_id][f'{half}_half_goals'] += 1
+            self.match_goals[match_id]['last_score'] = current_score
+            self.match_goals[match_id]['last_check'] = datetime.now()
+            
+            logger.info(f"⚽ ГОЛ в матче {match_id}! {last_score} -> {current_score} ({half} half)")
+            
+            # Передаем информацию о голе в predictor
+            if hasattr(self.predictor, 'check_goal_scored'):
+                self.predictor.check_goal_scored(match)
+    
     def _create_match_analysis(self, match, signal) -> MatchAnalysis:
         """Создает объект MatchAnalysis из сигнала"""
         
         # Создаем LiveStats с базовыми значениями
         stats = LiveStats(
             minute=match.minute or 0,
-            shots_home=0,
-            shots_away=0,
-            shots_ontarget_home=0,
-            shots_ontarget_away=0,
-            possession_home=50,
-            possession_away=50,
-            corners_home=0,
-            corners_away=0,
+            shots_home=signal.get('stats', {}).get('home', {}).get('shots', 0),
+            shots_away=signal.get('stats', {}).get('away', {}).get('shots', 0),
+            shots_ontarget_home=signal.get('stats', {}).get('home', {}).get('shots_on_target', 0),
+            shots_ontarget_away=signal.get('stats', {}).get('away', {}).get('shots_on_target', 0),
+            possession_home=signal.get('stats', {}).get('home', {}).get('possession', 50),
+            possession_away=signal.get('stats', {}).get('away', {}).get('possession', 50),
+            corners_home=signal.get('stats', {}).get('home', {}).get('corners', 0),
+            corners_away=signal.get('stats', {}).get('away', {}).get('corners', 0),
             fouls_home=0,
             fouls_away=0,
             yellow_cards_home=0,
             yellow_cards_away=0,
-            dangerous_attacks_home=0,
-            dangerous_attacks_away=0
+            dangerous_attacks_home=signal.get('stats', {}).get('home', {}).get('dangerous_attacks', 0),
+            dangerous_attacks_away=signal.get('stats', {}).get('away', {}).get('dangerous_attacks', 0),
+            passes_home=0,
+            passes_away=0,
+            passes_accuracy_home=0,
+            passes_accuracy_away=0
         )
         
-        # Создаем GoalSignal с правильным именем параметра - predicted_minute
+        # Создаем GoalSignal
         goal_signal = GoalSignal(
             match_id=match.id,
-            predicted_minute=match.minute or 0,  # ВАЖНО: predicted_minute, а не minute
-            probability=signal.get('probability', 0) * 100,  # Переводим в проценты
+            predicted_minute=match.minute or 0,
+            probability=signal.get('probability', 0) * 100,
             signal_type=signal.get('confidence', 'MEDIUM'),
             description=f"Вероятность гола {signal.get('probability', 0)*100:.1f}%",
             timestamp=datetime.now(),
@@ -215,7 +258,7 @@ class FootballApp:
             xg_data=None
         )
         
-        # Создаем MatchAnalysis в соответствии с моделью
+        # Создаем MatchAnalysis
         analysis = MatchAnalysis(
             match_id=match.id,
             timestamp=datetime.now(),
@@ -233,7 +276,7 @@ class FootballApp:
         return analysis
     
     def _format_signal_message(self, match, signal) -> str:
-        """Форматирует сигнал для отправки в Telegram"""
+        """Форматирует сигнал для отправки в Telegram с полной статистикой"""
         home_team = match.home_team.name if match.home_team else "Home"
         away_team = match.away_team.name if match.away_team else "Away"
         
@@ -247,17 +290,115 @@ class FootballApp:
         }
         emoji = confidence_emojis.get(confidence, "⚪")
         
-        message = (
-            f"{emoji} *Потенциальный гол!*\n"
-            f"{home_team} vs {away_team}\n\n"
-            f"📊 *Вероятность гола:* {signal.get('probability', 0)*100:.1f}%\n"
-            f"🎯 *Уверенность:* {confidence}\n"
-            f"⏱ *Минута:* {match.minute or 0}'\n\n"
-            f"🏠 {home_team}: {signal.get('home_prob', 0)*100:.1f}%\n"
-            f"✈️ {away_team}: {signal.get('away_prob', 0)*100:.1f}%"
-        )
+        # Текущий счет
+        current_score = f"{match.home_score or 0}:{match.away_score or 0}"
         
-        return message
+        # Ссылка на матч
+        match_url = signal.get('match_url', 'https://www.sofascore.com')
+        
+        # Определяем период матча
+        period = ""
+        if match.minute:
+            if match.minute < 45:
+                period = "1-й тайм"
+            elif match.minute < 90:
+                period = "2-й тайм"
+            else:
+                period = "Доп. время"
+        
+        # Получаем статистику
+        home_stats = signal.get('stats', {}).get('home', {})
+        away_stats = signal.get('stats', {}).get('away', {})
+        
+        # Получаем форму команд
+        home_form = signal.get('form', {}).get('home', {})
+        away_form = signal.get('form', {}).get('away', {})
+        
+        # Проверяем, есть ли реальная статистика
+        has_stats = any([
+            home_stats.get('shots', 0) > 0,
+            away_stats.get('shots', 0) > 0,
+            home_stats.get('shots_on_target', 0) > 0,
+            away_stats.get('shots_on_target', 0) > 0,
+            home_stats.get('corners', 0) > 0,
+            away_stats.get('corners', 0) > 0
+        ])
+        
+        # Формируем сообщение
+        message_lines = [
+            f"{emoji} **Потенциальный гол!**",
+            f"⚔️ **{home_team} vs {away_team}**",
+            f"📊 **Счет:** {current_score}",
+            f"⏱ **Минута:** {match.minute or 0}' {period}",
+            "",
+            f"📈 **Вероятность гола:** {signal.get('probability', 0)*100:.1f}%",
+            f"🎯 **Уверенность:** {confidence}",
+            "",
+            f"🏠 **{home_team}:** {signal.get('home_prob', 0)*100:.1f}%",
+            f"✈️ **{away_team}:** {signal.get('away_prob', 0)*100:.1f}%",
+        ]
+        
+        # Добавляем статистику только если она есть
+        if has_stats:
+            message_lines.extend([
+                "",
+                "📊 **СТАТИСТИКА МАТЧА:**",
+                f"  • Удары: {home_stats.get('shots', 0)} : {away_stats.get('shots', 0)}",
+                f"  • В створ: {home_stats.get('shots_on_target', 0)} : {away_stats.get('shots_on_target', 0)}",
+                f"  • xG: {home_stats.get('xg', 0):.2f} : {away_stats.get('xg', 0):.2f}",
+                f"  • Угловые: {home_stats.get('corners', 0)} : {away_stats.get('corners', 0)}",
+                f"  • Владение: {home_stats.get('possession', 50)}% : {away_stats.get('possession', 50)}%",
+                f"  • Опасные атаки: {home_stats.get('dangerous_attacks', 0)} : {away_stats.get('dangerous_attacks', 0)}",
+            ])
+        else:
+            message_lines.extend([
+                "",
+                "📊 **СТАТИСТИКА МАТЧА:**",
+                "  • Статистика временно недоступна"
+            ])
+        
+        # Добавляем форму команд если она есть
+        if home_form or away_form:
+            message_lines.extend([
+                "",
+                "📈 **ФОРМА КОМАНД:**",
+            ])
+            
+            if home_form:
+                form_string = home_form.get('form_string', '')
+                ppg = home_form.get('points_per_game', 0)
+                if form_string:
+                    message_lines.append(f"  • {home_team}: {form_string} ({ppg:.1f} о/м)")
+                else:
+                    message_lines.append(f"  • {home_team}: нет данных")
+            
+            if away_form:
+                form_string = away_form.get('form_string', '')
+                ppg = away_form.get('points_per_game', 0)
+                if form_string:
+                    message_lines.append(f"  • {away_team}: {form_string} ({ppg:.1f} о/м)")
+                else:
+                    message_lines.append(f"  • {away_team}: нет данных")
+        
+        # Добавляем информацию о голах в таймах
+        match_id = match.id
+        if match_id in self.match_goals:
+            first_half = self.match_goals[match_id].get('first_half_goals', 0)
+            second_half = self.match_goals[match_id].get('second_half_goals', 0)
+            if first_half > 0 or second_half > 0:
+                message_lines.extend([
+                    "",
+                    f"⚽ **ГОЛЫ ПО ТАЙМАМ:**",
+                    f"  • 1-й тайм: {first_half}",
+                    f"  • 2-й тайм: {second_half}"
+                ])
+        
+        message_lines.extend([
+            "",
+            f"🔗 **Смотреть матч:** {match_url}"
+        ])
+        
+        return "\n".join(message_lines)
     
     async def _check_live_matches_async(self):
         """Асинхронно проверяет live-матчи и генерирует сигналы"""
@@ -269,18 +410,39 @@ class FootballApp:
                 logger.debug("ℹ️ Нет live-матчей для анализа")
                 return
             
-            logger.info(f"📊 Найдено {len(matches)} live-матчей для анализа")
+            # Фильтруем матчи с крупным счетом
+            filtered_matches = []
+            for match in matches:
+                home_score = match.home_score or 0
+                away_score = match.away_score or 0
+                
+                # Пропускаем матчи с разницей 3+ гола
+                if abs(home_score - away_score) >= 3:
+                    logger.debug(f"Пропускаем матч {match.id}: крупный счет {home_score}:{away_score}")
+                    continue
+                
+                # Пропускаем матчи, где одна команда забила 4+
+                if home_score >= 4 or away_score >= 4:
+                    logger.debug(f"Пропускаем матч {match.id}: много голов {home_score}:{away_score}")
+                    continue
+                
+                filtered_matches.append(match)
+            
+            logger.info(f"📊 Найдено {len(matches)} матчей, после фильтрации: {len(filtered_matches)}")
             
             signals_generated = 0
-            for match in matches:
+            for match in filtered_matches:
                 try:
                     if not match or not hasattr(match, 'id'):
                         continue
                     
+                    # Проверяем, изменился ли счет (был ли гол)
+                    self._check_goal_scored(match)
+                    
                     home_team = match.home_team.name if match.home_team else "Unknown"
                     away_team = match.away_team.name if match.away_team else "Unknown"
                     
-                    logger.debug(f"⚽ Анализ матча: {home_team} vs {away_team} (ID: {match.id})")
+                    logger.debug(f"⚽ Анализ матча: {home_team} vs {away_team} (ID: {match.id}, минута: {match.minute}, счет: {match.home_score}:{match.away_score})")
                     
                     signal = self.predictor.analyze_live_match(match)
                     
@@ -298,10 +460,15 @@ class FootballApp:
                             
                             logger.info(f"📨 Сигнал отправлен для матча {match.id}: "
                                        f"{home_team} vs {away_team} - "
+                                       f"счет {match.home_score or 0}:{match.away_score or 0}, "
                                        f"вероятность {signal.get('probability', 0)*100:.1f}%")
                             
                             if match.is_finished and hasattr(self, 'team_analyzer'):
                                 self._save_match_to_history(match)
+                                
+                                # Проверяем точность прогноза
+                                if hasattr(self, 'stats_reporter'):
+                                    self.stats_reporter.check_prediction_accuracy(match, signal)
                         else:
                             logger.debug(f"⏳ Сигнал для матча {match.id} поставлен в очередь")
                     
@@ -389,6 +556,7 @@ class FootballApp:
         minutes = runtime.total_seconds() / 60
         
         predictor_stats = self.predictor.get_statistics()
+        telegram_stats = self.telegram_bot.get_stats() if hasattr(self.telegram_bot, 'get_stats') else {}
         
         log_message = [
             "\n" + "="*60,
@@ -400,10 +568,14 @@ class FootballApp:
             f"🔁 Вызовов API: {self.stats['api_calls']}",
             f"❌ Ошибок: {self.stats['errors_count']}",
             f"📤 Размер очереди Telegram: {self.telegram_bot.get_queue_size()}",
+            f"📤 Отправлено всего: {telegram_stats.get('sent_signals', 0)}",
+            f"📤 Неудачных попыток: {telegram_stats.get('failed_attempts', 0)}",
             "-"*60,
             "📊 СТАТИСТИКА ПРЕДИКТОРА",
             f"   Всего предсказаний: {predictor_stats.get('total_predictions', 0)}",
             f"   Средняя вероятность: {predictor_stats.get('avg_probability', 0)*100:.1f}%",
+            f"   Текущие веса: {predictor_stats.get('current_weights', {})}",
+            f"   Пороги: {self.predictor.thresholds}"
         ]
         
         if hasattr(self.predictor, 'accuracy_stats'):
@@ -414,7 +586,15 @@ class FootballApp:
                     "📊 СТАТИСТИКА ТОЧНОСТИ",
                     f"   Всего сигналов: {accuracy.get('total_signals', 0)}",
                     f"   Точность: {accuracy.get('accuracy_rate', 0)*100:.1f}%",
+                    f"   По уровням:"
                 ])
+                
+                # Добавляем статистику по уровням уверенности
+                by_confidence = accuracy.get('by_confidence', {})
+                for level, data in by_confidence.items():
+                    if data.get('total', 0) > 0:
+                        level_acc = (data.get('correct', 0) / data.get('total', 1)) * 100
+                        log_message.append(f"      {level}: {data.get('total', 0)} прогнозов, точность {level_acc:.1f}%")
         
         log_message.append("="*60)
         logger.info("\n".join(log_message))
@@ -436,9 +616,24 @@ class FootballApp:
                 f.write(f"Ошибок: {self.stats['errors_count']}\n")
                 f.write(f"Размер очереди Telegram: {self.telegram_bot.get_queue_size()}\n")
                 
+                telegram_stats = self.telegram_bot.get_stats() if hasattr(self.telegram_bot, 'get_stats') else {}
+                f.write(f"Отправлено всего: {telegram_stats.get('sent_signals', 0)}\n")
+                f.write(f"Неудачных попыток: {telegram_stats.get('failed_attempts', 0)}\n")
+                
                 if hasattr(self.predictor, 'accuracy_stats'):
                     accuracy = self.predictor.accuracy_stats
                     f.write(f"\nТочность прогнозов: {accuracy.get('accuracy_rate', 0)*100:.1f}%\n")
+                    
+                    by_confidence = accuracy.get('by_confidence', {})
+                    f.write("\nСтатистика по уровням уверенности:\n")
+                    for level, data in by_confidence.items():
+                        if data.get('total', 0) > 0:
+                            level_acc = (data.get('correct', 0) / data.get('total', 1)) * 100
+                            f.write(f"  {level}: {data.get('total', 0)} прогнозов, точность {level_acc:.1f}%\n")
+                
+                predictor_stats = self.predictor.get_statistics()
+                f.write(f"\nТекущие веса: {predictor_stats.get('current_weights', {})}\n")
+                f.write(f"Пороги уверенности: {self.predictor.thresholds}\n")
             
             logger.info(f"💾 Статистика сохранена в {filename}")
             
@@ -452,9 +647,12 @@ class FootballApp:
         status = {
             'running': self.running,
             'uptime_seconds': runtime.total_seconds(),
+            'uptime_formatted': str(runtime).split('.')[0],
             'stats': self.stats.copy(),
             'predictor_stats': self.predictor.get_statistics(),
             'telegram_queue_size': self.telegram_bot.get_queue_size(),
+            'telegram_stats': self.telegram_bot.get_stats() if hasattr(self.telegram_bot, 'get_stats') else {},
+            'thresholds': self.predictor.thresholds,
             'timestamp': datetime.now().isoformat()
         }
         
@@ -475,5 +673,10 @@ class FootballApp:
             logger.info("✅ История предсказаний сохранена")
         except Exception as e:
             logger.error(f"❌ Ошибка сохранения истории предсказаний: {e}")
+        
+        # Сохраняем статистику репортера
+        if hasattr(self, 'stats_reporter'):
+            self.stats_reporter.save_stats()
+            logger.info("✅ Статистика репортера сохранена")
         
         logger.info("✅ Очистка завершена")

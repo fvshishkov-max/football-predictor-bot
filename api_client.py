@@ -24,45 +24,65 @@ class RealSStatsClient:
         self.finished_statuses = [8, 9, 10, 17]
 
     def _safe_get(self, data: Dict, key: str, default: Any) -> Any:
-        """Безопасно получает значение из словаря"""
+        """Безопасно получает значение из словаря с рекурсивным поиском"""
         try:
             if isinstance(data, dict):
-                # Пробуем разные варианты ключей
-                variations = [
-                    key,
-                    key.lower(),
-                    key.upper(),
-                    key.replace('Home', 'home'),
-                    key.replace('Away', 'away'),
-                    key.replace('home', 'Home'),
-                    key.replace('away', 'Away'),
-                    key.replace('Home', '').lower(),
-                    key.replace('Away', '').lower()
-                ]
+                # Прямой поиск
+                if key in data:
+                    return data[key] if data[key] is not None else default
                 
-                for var in variations:
-                    if var in data:
-                        value = data[var]
-                        if value is not None:
-                            return value
+                # Поиск без учета регистра
+                key_lower = key.lower()
+                for k, v in data.items():
+                    if k.lower() == key_lower:
+                        return v if v is not None else default
                 
-                # Если не нашли, ищем вложенные структуры
+                # Рекурсивный поиск во вложенных словарях
                 for k, v in data.items():
                     if isinstance(v, dict):
                         result = self._safe_get(v, key, None)
                         if result is not None:
                             return result
-                        
                     elif isinstance(v, list):
                         for item in v:
                             if isinstance(item, dict):
                                 result = self._safe_get(item, key, None)
                                 if result is not None:
                                     return result
+            
             return default
         except Exception as e:
             logger.debug(f"Ошибка _safe_get для ключа {key}: {e}")
             return default
+
+    def _extract_numeric(self, value: Any, default: int = 0) -> int:
+        """Извлекает числовое значение из различных форматов"""
+        if value is None:
+            return default
+        if isinstance(value, (int, float)):
+            return int(value)
+        if isinstance(value, str):
+            # Убираем проценты и пробелы
+            value = value.replace('%', '').strip()
+            try:
+                return int(float(value))
+            except:
+                return default
+        return default
+
+    def _extract_float(self, value: Any, default: float = 0.0) -> float:
+        """Извлекает число с плавающей точкой"""
+        if value is None:
+            return default
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            value = value.replace('%', '').strip()
+            try:
+                return float(value)
+            except:
+                return default
+        return default
 
     async def _make_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
         """Выполняет запрос к API с обработкой rate limit"""
@@ -90,40 +110,40 @@ class RealSStatsClient:
         for attempt in range(max_retries):
             try:
                 async with aiohttp.ClientSession(timeout=timeout) as session:
-                    logger.info(f"Запрос к API: {url}")
+                    logger.info(f"📡 Запрос к API: {url}")
                     async with session.get(url, headers=headers, params=request_params) as response:
                         
                         self.last_request_time = datetime.now().timestamp()
                         
                         if response.status == 429:
                             retry_after = int(response.headers.get('Retry-After', 30 * (attempt + 1)))
-                            logger.warning(f"Rate limit (429) для {url}, ожидание {retry_after}с (попытка {attempt+1}/{max_retries})")
+                            logger.warning(f"⚠️ Rate limit (429) для {url}, ожидание {retry_after}с (попытка {attempt+1}/{max_retries})")
                             await asyncio.sleep(retry_after)
                             continue
 
                         if response.status != 200:
-                            logger.error(f"Ошибка API {response.status} для {url}")
+                            logger.error(f"❌ Ошибка API {response.status} для {url}")
                             return None
 
                         try:
                             data = await response.json()
-                            await asyncio.sleep(3)
+                            await asyncio.sleep(2)
                             return data
                         except Exception as e:
-                            logger.error(f"Не удалось распарсить JSON: {e}")
+                            logger.error(f"❌ Не удалось распарсить JSON: {e}")
                             return None
 
             except asyncio.TimeoutError:
-                logger.error(f"Таймаут запроса к {url} (60 секунд)")
+                logger.error(f"⏰ Таймаут запроса к {url} (60 секунд)")
                 if attempt < max_retries - 1:
                     wait_time = 15 * (attempt + 1)
-                    logger.info(f"Ожидание {wait_time}с перед повторной попыткой")
+                    logger.info(f"⏳ Ожидание {wait_time}с перед повторной попыткой")
                     await asyncio.sleep(wait_time)
             except Exception as e:
-                logger.error(f"Ошибка запроса: {e}")
+                logger.error(f"❌ Ошибка запроса: {e}")
                 if attempt < max_retries - 1:
                     wait_time = 15 * (attempt + 1)
-                    logger.info(f"Ожидание {wait_time}с перед повторной попыткой")
+                    logger.info(f"⏳ Ожидание {wait_time}с перед повторной попыткой")
                     await asyncio.sleep(wait_time)
 
         return None
@@ -142,7 +162,7 @@ class RealSStatsClient:
 
     async def get_match_details(self, match_id: int) -> Optional[Dict]:
         """Получает детальную информацию о матче"""
-        logger.info(f"Получение статистики матча {match_id}...")
+        logger.info(f"📊 Получение статистики матча {match_id}...")
         return await self._make_request(f"/Games/{match_id}")
 
     async def get_match_statistics(self, match_id: int) -> Optional[LiveStats]:
@@ -155,49 +175,73 @@ class RealSStatsClient:
             data = details.get('data', {})
             game = data.get('game', {})
             
-            # Ищем статистику в разных местах
+            # Собираем статистику из всех возможных источников
             statistics = {}
             possible_stat_locations = [
                 data.get('statistics', {}),
                 data.get('statisticsData', {}),
                 data.get('stats', {}),
                 game.get('statistics', {}),
-                details.get('statistics', {})
+                details.get('statistics', {}),
+                data.get('liveData', {}).get('statistics', {})
             ]
             
             for stats_location in possible_stat_locations:
                 if stats_location and isinstance(stats_location, dict):
-                    statistics.update(stats_location)
+                    # Рекурсивно обновляем словарь
+                    self._deep_update(statistics, stats_location)
 
             minute = game.get('elapsed') or game.get('minute') or 0
 
-            # Парсим статистику с проверкой на наличие данных
+            # Извлекаем статистику для обеих команд
+            shots_home = self._extract_numeric(self._safe_get(statistics, 'totalShotsHome', 0))
+            shots_away = self._extract_numeric(self._safe_get(statistics, 'totalShotsAway', 0))
+            
+            shots_ontarget_home = self._extract_numeric(self._safe_get(statistics, 'shotsOnGoalHome', 0))
+            shots_ontarget_away = self._extract_numeric(self._safe_get(statistics, 'shotsOnGoalAway', 0))
+            
+            possession_home = self._extract_float(self._safe_get(statistics, 'ballPossessionHome', 50))
+            possession_away = 100 - possession_home if possession_home <= 100 else 50
+            
+            corners_home = self._extract_numeric(self._safe_get(statistics, 'cornerKicksHome', 0))
+            corners_away = self._extract_numeric(self._safe_get(statistics, 'cornerKicksAway', 0))
+            
+            dangerous_attacks_home = self._extract_numeric(self._safe_get(statistics, 'dangerousAttacksHome', 0))
+            dangerous_attacks_away = self._extract_numeric(self._safe_get(statistics, 'dangerousAttacksAway', 0))
+            
+            fouls_home = self._extract_numeric(self._safe_get(statistics, 'foulsHome', 0))
+            fouls_away = self._extract_numeric(self._safe_get(statistics, 'foulsAway', 0))
+            
+            yellow_cards_home = self._extract_numeric(self._safe_get(statistics, 'yellowCardsHome', 0))
+            yellow_cards_away = self._extract_numeric(self._safe_get(statistics, 'yellowCardsAway', 0))
+            
+            passes_home = self._extract_numeric(self._safe_get(statistics, 'passesHome', 0))
+            passes_away = self._extract_numeric(self._safe_get(statistics, 'passesAway', 0))
+            
+            passes_accuracy_home = self._extract_float(self._safe_get(statistics, 'passesAccuracyHome', 0))
+            passes_accuracy_away = self._extract_float(self._safe_get(statistics, 'passesAccuracyAway', 0))
+
+            # Создаем объект LiveStats
             live_stats = LiveStats(
                 minute=minute,
-                shots_home=self._safe_get(statistics, 'totalShotsHome', 0) or 
-                          self._safe_get(statistics, 'shotsHome', 0) or 0,
-                shots_away=self._safe_get(statistics, 'totalShotsAway', 0) or 
-                          self._safe_get(statistics, 'shotsAway', 0) or 0,
-                shots_ontarget_home=self._safe_get(statistics, 'shotsOnGoalHome', 0) or 
-                                   self._safe_get(statistics, 'shotsOnTargetHome', 0) or 0,
-                shots_ontarget_away=self._safe_get(statistics, 'shotsOnGoalAway', 0) or 
-                                   self._safe_get(statistics, 'shotsOnTargetAway', 0) or 0,
-                possession_home=float(self._safe_get(statistics, 'ballPossessionHome', 50) or 50),
-                possession_away=100 - float(self._safe_get(statistics, 'ballPossessionHome', 50) or 50),
-                corners_home=self._safe_get(statistics, 'cornerKicksHome', 0) or 
-                           self._safe_get(statistics, 'cornersHome', 0) or 0,
-                corners_away=self._safe_get(statistics, 'cornerKicksAway', 0) or 
-                           self._safe_get(statistics, 'cornersAway', 0) or 0,
-                fouls_home=self._safe_get(statistics, 'foulsHome', 0) or 0,
-                fouls_away=self._safe_get(statistics, 'foulsAway', 0) or 0,
-                yellow_cards_home=self._safe_get(statistics, 'yellowCardsHome', 0) or 0,
-                yellow_cards_away=self._safe_get(statistics, 'yellowCardsAway', 0) or 0,
-                dangerous_attacks_home=self._safe_get(statistics, 'dangerousAttacksHome', 0) or 0,
-                dangerous_attacks_away=self._safe_get(statistics, 'dangerousAttacksAway', 0) or 0,
-                passes_home=self._safe_get(statistics, 'passesHome', 0) or 0,
-                passes_away=self._safe_get(statistics, 'passesAway', 0) or 0,
-                passes_accuracy_home=float(self._safe_get(statistics, 'passesAccuracyHome', 0) or 0),
-                passes_accuracy_away=float(self._safe_get(statistics, 'passesAccuracyAway', 0) or 0)
+                shots_home=shots_home,
+                shots_away=shots_away,
+                shots_ontarget_home=shots_ontarget_home,
+                shots_ontarget_away=shots_ontarget_away,
+                possession_home=possession_home,
+                possession_away=possession_away,
+                corners_home=corners_home,
+                corners_away=corners_away,
+                fouls_home=fouls_home,
+                fouls_away=fouls_away,
+                yellow_cards_home=yellow_cards_home,
+                yellow_cards_away=yellow_cards_away,
+                dangerous_attacks_home=dangerous_attacks_home,
+                dangerous_attacks_away=dangerous_attacks_away,
+                passes_home=passes_home,
+                passes_away=passes_away,
+                passes_accuracy_home=passes_accuracy_home,
+                passes_accuracy_away=passes_accuracy_away
             )
 
             # Проверяем, есть ли реальная статистика
@@ -219,8 +263,18 @@ class RealSStatsClient:
             return live_stats
 
         except Exception as e:
-            logger.error(f"Ошибка парсинга статистики матча {match_id}: {e}")
+            logger.error(f"❌ Ошибка парсинга статистики матча {match_id}: {e}")
             return None
+
+    def _deep_update(self, target: Dict, source: Dict) -> Dict:
+        """Рекурсивно обновляет словарь"""
+        for key, value in source.items():
+            if isinstance(value, dict):
+                node = target.setdefault(key, {})
+                self._deep_update(node, value)
+            else:
+                target[key] = value
+        return target
 
     async def get_match_events(self, match_id: int) -> List[Dict]:
         """Получает события матча"""
@@ -229,7 +283,7 @@ class RealSStatsClient:
             data = details.get('data', {})
             events = data.get('events', [])
             if events:
-                logger.debug(f"Получено {len(events)} событий для матча {match_id}")
+                logger.debug(f"📅 Получено {len(events)} событий для матча {match_id}")
             return events
         return []
 
@@ -250,9 +304,9 @@ class RealSStatsClient:
                 if match:
                     matches.append(match)
             except Exception as e:
-                logger.error(f"Ошибка парсинга матча: {e}")
+                logger.error(f"❌ Ошибка парсинга матча: {e}")
 
-        logger.info(f"Получено матчей: {len(matches)}")
+        logger.info(f"📊 Получено матчей: {len(matches)}")
         return matches
 
     def _parse_game_item(self, item: Dict) -> Optional[Match]:

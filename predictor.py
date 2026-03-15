@@ -40,8 +40,8 @@ class Predictor:
         self.thresholds = {
             'low': 0.15,
             'medium': 0.25,
-            'high': 0.35,
-            'very_high': 0.45
+            'high': 0.40,
+            'very_high': 0.55
         }
         
         self.predictions_history = []
@@ -191,6 +191,27 @@ class Predictor:
         url = f"https://www.sofascore.com/ru/football/match/{home_slug}-vs-{away_slug}/{match.id}"
         
         return url
+    
+    def _should_analyze_match(self, match: Match) -> bool:
+        """
+        Проверяет, стоит ли анализировать этот матч
+        """
+        # Проверяем счет - не анализируем матчи с крупным счетом
+        home_score = match.home_score or 0
+        away_score = match.away_score or 0
+        score_diff = abs(home_score - away_score)
+        
+        # Если разница в счете 3 и более гола, пропускаем
+        if score_diff >= 3:
+            logger.debug(f"Пропускаем матч {match.id}: крупный счет {home_score}:{away_score}")
+            return False
+        
+        # Если одна из команд забила 4+ голов, пропускаем
+        if home_score >= 4 or away_score >= 4:
+            logger.debug(f"Пропускаем матч {match.id}: много голов {home_score}:{away_score}")
+            return False
+        
+        return True
     
     def predict_match(self, match: Match) -> Dict:
         """Основной метод для предсказания вероятности голов в матче"""
@@ -348,7 +369,7 @@ class Predictor:
         ])
         
         if not has_real_stats:
-            # Если нет реальной статистики, используем базовые значения
+            # Если нет реальной статистики, используем базовые значения с вариацией
             base_prob = 0.25 + (0.05 if is_home else 0)
             
             if team_form:
@@ -359,8 +380,8 @@ class Predictor:
             base_prob *= league_factor
             base_prob *= top_teams_factor
             
-            # Добавляем небольшую вариацию для разнообразия
-            variation = random.uniform(0.9, 1.1)
+            # Добавляем случайную вариацию для разнообразия (±15%)
+            variation = random.uniform(0.85, 1.15)
             base_prob *= variation
             
             return max(0.1, min(0.6, base_prob))
@@ -368,10 +389,10 @@ class Predictor:
         # Нормализация значений с учетом реальной статистики
         factor_mappings = [
             ('xg', stats.get('xg', 0.5), 3.0, 0.3),
-            ('shots_ontarget', stats.get('shots_on_target', 0), 10.0, 0.2),
-            ('dangerous_attacks', stats.get('dangerous_attacks', 0), 50.0, 0.15),
-            ('shots', stats.get('shots', 0), 20.0, 0.1),
-            ('corners', stats.get('corners', 0), 10.0, 0.08),
+            ('shots_ontarget', stats.get('shots_on_target', 0), 15.0, 0.2),
+            ('dangerous_attacks', stats.get('dangerous_attacks', 0), 70.0, 0.15),
+            ('shots', stats.get('shots', 0), 30.0, 0.1),
+            ('corners', stats.get('corners', 0), 15.0, 0.08),
             ('possession', stats.get('possession', 50), 100.0, 0.05)
         ]
         
@@ -404,8 +425,8 @@ class Predictor:
         probability *= league_factor
         probability *= top_teams_factor
         
-        # Добавляем небольшую вариацию для разнообразия
-        variation = random.uniform(0.95, 1.05)
+        # Добавляем случайную вариацию для разнообразия (±10%)
+        variation = random.uniform(0.9, 1.1)
         probability *= variation
         
         return max(0.1, min(0.8, probability))
@@ -454,7 +475,7 @@ class Predictor:
         """
         Определяет уровень уверенности на основе вероятности и исторических данных
         """
-        # Базовая калибровка на основе порогов
+        # Динамические пороги на основе текущей статистики
         if probability >= self.thresholds['very_high']:
             base_level = "VERY_HIGH"
         elif probability >= self.thresholds['high']:
@@ -467,16 +488,24 @@ class Predictor:
             base_level = "VERY_LOW"
         
         # Корректируем на основе исторической точности для этого уровня
-        if len(self.accuracy_stats['calibration_data']) > 100:
+        if len(self.accuracy_stats['calibration_data']) > 50:
             level_stats = self.accuracy_stats['by_confidence'].get(base_level, {'total': 0, 'correct': 0})
-            if level_stats['total'] > 10:
-                historical_accuracy = level_stats['correct'] / level_stats['total']
+            if level_stats['total'] > 5:
+                historical_accuracy = level_stats['correct'] / level_stats['total'] if level_stats['total'] > 0 else 0
                 
-                # Если историческая точность низкая, понижаем уровень
-                if historical_accuracy < 0.4 and base_level in ["VERY_HIGH", "HIGH"]:
-                    return "MEDIUM"
-                elif historical_accuracy < 0.3 and base_level == "MEDIUM":
-                    return "LOW"
+                # Если историческая точность хорошая, повышаем уровень
+                if historical_accuracy > 0.6 and base_level in ["MEDIUM", "LOW"]:
+                    if base_level == "MEDIUM":
+                        return "HIGH"
+                    elif base_level == "LOW":
+                        return "MEDIUM"
+                
+                # Если историческая точность плохая, понижаем уровень
+                elif historical_accuracy < 0.3 and base_level in ["VERY_HIGH", "HIGH"]:
+                    if base_level == "VERY_HIGH":
+                        return "HIGH"
+                    elif base_level == "HIGH":
+                        return "MEDIUM"
         
         return base_level
     
@@ -553,7 +582,9 @@ class Predictor:
             home_stats.get('shots', 0) > 0,
             away_stats.get('shots', 0) > 0,
             home_stats.get('shots_on_target', 0) > 0,
-            away_stats.get('shots_on_target', 0) > 0
+            away_stats.get('shots_on_target', 0) > 0,
+            home_stats.get('corners', 0) > 0,
+            away_stats.get('corners', 0) > 0
         ])
         
         # Формируем сообщение
@@ -658,6 +689,10 @@ class Predictor:
     def analyze_live_match(self, match: Match) -> Optional[Dict]:
         """Анализирует live-матч и генерирует сигнал с учетом таймов"""
         try:
+            # Проверяем, стоит ли анализировать этот матч
+            if not self._should_analyze_match(match):
+                return None
+            
             # Проверяем, не было ли уже голов в этом тайме
             if self._should_skip_half(match):
                 logger.debug(f"Пропускаем матч {match.id}: уже были голы в этом тайме")
@@ -669,7 +704,7 @@ class Predictor:
                 # Определяем тайм
                 half = "1-й тайм" if match.minute and match.minute < 45 else "2-й тайм"
                 
-                logger.info(f"Сгенерирован сигнал для матча {match.id} ({half}) с вероятностью {prediction['total_goal_probability']:.2f}")
+                logger.info(f"📢 Сгенерирован сигнал для матча {match.id} ({half}) с вероятностью {prediction['total_goal_probability']:.2f}")
                 
                 # Сохраняем информацию о сигнале для этого тайма
                 self._save_signal_for_half(match, half)
@@ -704,7 +739,7 @@ class Predictor:
             return None
             
         except Exception as e:
-            logger.error(f"Ошибка при анализе live-матча {match.id}: {e}")
+            logger.error(f"❌ Ошибка при анализе live-матча {match.id}: {e}")
             return None
     
     def _should_skip_half(self, match: Match) -> bool:
@@ -966,11 +1001,11 @@ class Predictor:
             best_thresholds = {}
             
             for level, default_threshold in [('low', 0.15), ('medium', 0.25), 
-                                            ('high', 0.35), ('very_high', 0.45)]:
+                                            ('high', 0.40), ('very_high', 0.55)]:
                 best_acc = 0
                 best_thresh = default_threshold
                 
-                for threshold in np.arange(0.1, 0.6, 0.05):
+                for threshold in np.arange(0.1, 0.7, 0.05):
                     correct = 0
                     total = 0
                     
