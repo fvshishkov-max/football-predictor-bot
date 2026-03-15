@@ -5,8 +5,10 @@ from typing import Dict, List, Optional
 import json
 import os
 from collections import defaultdict
+import numpy as np
 
 from models import Match
+from betting_optimizer import BettingOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,7 @@ class StatsReporter:
     def __init__(self, telegram_bot, predictor):
         self.telegram_bot = telegram_bot
         self.predictor = predictor
+        self.betting_opt = BettingOptimizer(initial_bankroll=1000.0)
         self.stats_file = 'data/prediction_stats.json'
         self.load_stats()
         
@@ -41,6 +44,7 @@ class StatsReporter:
                     'by_minute': {},
                     'by_league': {},
                     'recent_matches': [],
+                    'financial_stats': {},
                     'last_report': None
                 }
         except Exception as e:
@@ -117,11 +121,38 @@ class StatsReporter:
         if len(self.stats['recent_matches']) > 100:
             self.stats['recent_matches'] = self.stats['recent_matches'][-100:]
         
+        # Обновляем финансовую статистику
+        self._update_financial_stats(prediction, was_correct)
+        
         self.save_stats()
         
         # Проверяем, нужно ли отправить отчет (каждые 10 матчей)
         if self.stats['total_predictions'] % 10 == 0:
             self.send_periodic_report()
+    
+    def _update_financial_stats(self, prediction: Dict, was_correct: bool):
+        """Обновляет финансовую статистику"""
+        try:
+            # Симулируем ставку с коэффициентом 1.95 (средний)
+            odds = 1.95
+            probability = prediction.get('total_goal_probability', 0.5)
+            
+            # Рассчитываем оптимальную ставку по Келли
+            kelly_fraction = self.betting_opt.kelly_criterion(probability, odds)
+            stake = self.betting_opt.current_bankroll * kelly_fraction
+            
+            # Размещаем ставку
+            bet = self.betting_opt.place_bet(probability, odds, stake)
+            
+            # Рассчитываем результат
+            self.betting_opt.settle_bet(len(self.betting_opt.bet_history) - 1, was_correct)
+            
+            # Получаем отчет
+            report = self.betting_opt.get_performance_report()
+            self.stats['financial_stats'] = report
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления финансовой статистики: {e}")
     
     def send_periodic_report(self):
         """Отправляет периодический отчет в Telegram"""
@@ -153,7 +184,9 @@ class StatsReporter:
                         f"  {minute_range} мин: {data['total']} прогнозов, точность {minute_acc:.1f}%"
                     )
             
-            # Формируем сообщение
+            # Финансовая статистика
+            fin = self.stats.get('financial_stats', {})
+            
             message_lines = [
                 f"📊 **ОТЧЕТ ПО ПРОГНОЗАМ**",
                 f"━━━━━━━━━━━━━━━━━━━━━\n",
@@ -165,6 +198,12 @@ class StatsReporter:
                 f"📊 **Последние 10 матчей:**",
                 f"  • Правильных: {last_10_correct}/10",
                 f"  • Точность: {last_10_accuracy:.1f}%\n",
+                f"💰 **Финансовые показатели:**",
+                f"  • Банкролл: {fin.get('current_bankroll', 1000):.2f}",
+                f"  • ROI: {fin.get('roi_percent', 0):.1f}%",
+                f"  • Коэф. Шарпа: {fin.get('sharpe_ratio', 0):.2f}",
+                f"  • Profit Factor: {fin.get('profit_factor', 0):.2f}",
+                f"  • Макс. просадка: {fin.get('max_drawdown', {}).get('max_drawdown', 0)*100:.1f}%\n",
                 f"🎯 **По уровням уверенности:**"
             ]
             
@@ -176,6 +215,19 @@ class StatsReporter:
                     "⏱ **По минутам:**"
                 ])
                 message_lines.extend(minute_stats)
+            
+            # Добавляем регрессионную статистику из predictor
+            predictor_stats = self.predictor.get_statistics()
+            reg_stats = predictor_stats.get('regression_stats', {})
+            
+            if reg_stats:
+                message_lines.extend([
+                    "",
+                    "📐 **Регрессионный анализ:**",
+                    f"  • AIC: {reg_stats.get('aic', 0):.1f}",
+                    f"  • R²: {reg_stats.get('pseudo_r_squared', 0):.3f}",
+                    f"  • Log-Likelihood: {reg_stats.get('log_likelihood', 0):.1f}"
+                ])
             
             message_lines.extend([
                 "",
@@ -196,14 +248,12 @@ class StatsReporter:
         if not match.is_finished:
             return
         
-        # Проверяем, был ли гол в матче
         had_goal = match.total_goals > 0
-        predicted_prob = prediction.get('probability', 0) / 100  # Переводим обратно в 0-1
+        predicted_prob = prediction.get('probability', 0) / 100
         predicted_goal = predicted_prob > 0.5
         
         was_correct = (had_goal == predicted_goal)
         
-        # Создаем словарь с данными прогноза для статистики
         prediction_data = {
             'match_id': match.id,
             'home_team': match.home_team.name if match.home_team else 'Unknown',
@@ -228,6 +278,9 @@ class StatsReporter:
             last_10_correct = sum(1 for m in last_10 if m['was_correct'])
             last_10_accuracy = (last_10_correct / len(last_10)) * 100 if last_10 else 0
             
+            # Финансовая статистика
+            fin = self.stats.get('financial_stats', {})
+            
             message = (
                 f"✅ **ПРОГНОЗ СЫГРАЛ!**\n"
                 f"━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -235,7 +288,9 @@ class StatsReporter:
                 f"📊 Итоговый счет: {match.home_score}:{match.away_score}\n\n"
                 f"📈 Прогноз: {prediction.get('probability', 0):.1f}%\n"
                 f"🎯 Уверенность: {prediction.get('confidence', 'MEDIUM')}\n\n"
-                f"📊 Точность за последние 10 матчей: {last_10_accuracy:.1f}%\n\n"
+                f"📊 Точность за последние 10 матчей: {last_10_accuracy:.1f}%\n"
+                f"💰 Текущий банкролл: {fin.get('current_bankroll', 1000):.2f}\n"
+                f"📈 Коэф. Шарпа: {fin.get('sharpe_ratio', 0):.2f}\n\n"
                 f"🔥 Отличная работа! Прогноз подтвердился."
             )
             
