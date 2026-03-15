@@ -64,6 +64,8 @@ class Predictor:
                 'LOW': {'total': 0, 'correct': 0},
                 'VERY_LOW': {'total': 0, 'correct': 0}
             },
+            'by_minute': defaultdict(lambda: {'total': 0, 'correct': 0}),
+            'by_league': defaultdict(lambda: {'total': 0, 'correct': 0}),
             'last_updated': datetime.now().isoformat()
         }
         
@@ -80,6 +82,19 @@ class Predictor:
         # Для отслеживания голов по таймам
         self.half_goals = {}
         self.half_signals = {}
+        
+        # Словарь синонимов для статистики
+        self.stat_synonyms = {
+            'shots': ['shots', 'totalShots', 'shotsTotal', 'attempts', 'total attempts'],
+            'shots_on_target': ['shotsOnTarget', 'shotsOnGoal', 'onTarget', 'shots_ontarget'],
+            'possession': ['possession', 'ballPossession', 'possessionPercentage'],
+            'corners': ['corners', 'cornerKicks', 'cornersTotal'],
+            'fouls': ['fouls', 'foulsCommitted'],
+            'yellow_cards': ['yellowCards', 'yellow'],
+            'red_cards': ['redCards', 'red'],
+            'dangerous_attacks': ['dangerousAttacks', 'attacks'],
+            'xg': ['xg', 'expectedGoals', 'xG']
+        }
         
         logger.info("Predictor инициализирован с весами: %s", self.weights)
         logger.info(f"Пороги уверенности: {self.thresholds}")
@@ -196,6 +211,11 @@ class Predictor:
         """
         Проверяет, стоит ли анализировать этот матч
         """
+        # Проверяем минуту матча - анализируем только до 75 минуты
+        if match.minute and match.minute > 75:
+            logger.debug(f"Пропускаем матч {match.id}: время {match.minute}' > 75'")
+            return False
+        
         # Проверяем счет - не анализируем матчи с крупным счетом
         home_score = match.home_score or 0
         away_score = match.away_score or 0
@@ -212,6 +232,42 @@ class Predictor:
             return False
         
         return True
+    
+    def _get_stat_value(self, stats_dict: Dict, stat_name: str, default: Any = 0) -> Any:
+        """
+        Получает значение статистики по различным синонимам
+        
+        Args:
+            stats_dict: Словарь со статистикой
+            stat_name: Название статистики (ключ из self.stat_synonyms)
+            default: Значение по умолчанию
+            
+        Returns:
+            Значение статистики или default
+        """
+        if stat_name not in self.stat_synonyms:
+            return stats_dict.get(stat_name, default)
+        
+        for synonym in self.stat_synonyms[stat_name]:
+            # Прямой поиск
+            if synonym in stats_dict:
+                return stats_dict[synonym]
+            
+            # Поиск без учета регистра
+            synonym_lower = synonym.lower()
+            for key, value in stats_dict.items():
+                if key.lower() == synonym_lower:
+                    return value
+                
+            # Поиск в значениях (если это словарь)
+            if isinstance(stats_dict, dict):
+                for key, value in stats_dict.items():
+                    if isinstance(value, dict):
+                        result = self._get_stat_value(value, stat_name, None)
+                        if result is not None:
+                            return result
+        
+        return default
     
     def predict_match(self, match: Match) -> Dict:
         """Основной метод для предсказания вероятности голов в матче"""
@@ -277,6 +333,8 @@ class Predictor:
                 'away_form': away_form,
                 'h2h_factors': h2h_factors,
                 'match_url': match_url,
+                'league_id': match.league_id,
+                'minute': match.minute,
                 'timestamp': datetime.now().isoformat()
             }
             
@@ -799,7 +857,7 @@ class Predictor:
         return False
     
     def _extract_team_stats(self, match: Match, is_home: bool) -> Dict:
-        """Извлекает статистику для команды"""
+        """Извлекает статистику для команды с использованием словаря синонимов"""
         stats = {
             'shots': 0,
             'shots_on_target': 0,
@@ -819,6 +877,8 @@ class Predictor:
         if not team_id:
             return stats
         
+        # Собираем всю статистику для команды
+        team_stats_dict = {}
         for period_stats in match.stats:
             if period_stats.get('period') == 'ALL':
                 for team_stat in period_stats.get('groups', []):
@@ -837,18 +897,15 @@ class Predictor:
                                 except:
                                     value = 0
                             
-                            if 'shots on target' in name or 'удары в створ' in name:
-                                stats['shots_on_target'] = value
-                            elif 'total shots' in name or 'всего ударов' in name:
-                                stats['shots'] = value
-                            elif 'corner kicks' in name or 'угловые' in name:
-                                stats['corners'] = value
-                            elif 'possession' in name or 'владение' in name:
-                                stats['possession'] = value
-                            elif 'dangerous attacks' in name or 'опасные атаки' in name:
-                                stats['dangerous_attacks'] = value
-                            elif 'xg' in name or 'expected goals' in name:
-                                stats['xg'] = value
+                            team_stats_dict[name] = value
+        
+        # Используем словарь синонимов для поиска значений
+        stats['shots'] = self._get_stat_value(team_stats_dict, 'shots', 0)
+        stats['shots_on_target'] = self._get_stat_value(team_stats_dict, 'shots_on_target', 0)
+        stats['corners'] = self._get_stat_value(team_stats_dict, 'corners', 0)
+        stats['possession'] = self._get_stat_value(team_stats_dict, 'possession', 50)
+        stats['dangerous_attacks'] = self._get_stat_value(team_stats_dict, 'dangerous_attacks', 0)
+        stats['xg'] = self._get_stat_value(team_stats_dict, 'xg', 0.5)
         
         return stats
     
@@ -1074,6 +1131,8 @@ class Predictor:
                 if str(pred.get('match_id')) == str(prediction_id):
                     predicted_prob = pred.get('total_goal_probability', 0)
                     confidence = pred.get('confidence_level', 'MEDIUM')
+                    minute = pred.get('minute', 0)
+                    league_id = pred.get('league_id')
                     
                     had_goal = actual_goals > 0
                     predicted_goal = predicted_prob > 0.5
@@ -1094,6 +1153,20 @@ class Predictor:
                         self.accuracy_stats['by_confidence'][confidence]['total'] += 1
                         if had_goal == predicted_goal:
                             self.accuracy_stats['by_confidence'][confidence]['correct'] += 1
+                    
+                    # Обновляем статистику по минутам
+                    minute_range = (minute // 15) * 15
+                    minute_key = f"{minute_range}-{minute_range+15}"
+                    self.accuracy_stats['by_minute'][minute_key]['total'] += 1
+                    if had_goal == predicted_goal:
+                        self.accuracy_stats['by_minute'][minute_key]['correct'] += 1
+                    
+                    # Обновляем статистику по лигам
+                    if league_id:
+                        league_key = f"league_{league_id}"
+                        self.accuracy_stats['by_league'][league_key]['total'] += 1
+                        if had_goal == predicted_goal:
+                            self.accuracy_stats['by_league'][league_key]['correct'] += 1
                     
                     if pred.get('signal'):
                         self.accuracy_stats['total_signals'] += 1
@@ -1155,7 +1228,9 @@ class Predictor:
                 'feature_importance': self.accuracy_stats['feature_importance'],
                 'current_weights': self.weights,
                 'thresholds': self.thresholds,
-                'by_confidence': self.accuracy_stats['by_confidence']
+                'by_confidence': self.accuracy_stats['by_confidence'],
+                'by_minute': dict(self.accuracy_stats['by_minute']),
+                'by_league': dict(self.accuracy_stats['by_league'])
             }
         
         total = len(self.predictions_history)
@@ -1177,7 +1252,9 @@ class Predictor:
             'feature_importance': self.accuracy_stats['feature_importance'],
             'current_weights': self.weights,
             'thresholds': self.thresholds,
-            'by_confidence': self.accuracy_stats['by_confidence']
+            'by_confidence': self.accuracy_stats['by_confidence'],
+            'by_minute': dict(self.accuracy_stats['by_minute']),
+            'by_league': dict(self.accuracy_stats['by_league'])
         }
     
     def save_predictions(self, filename: str = 'data/predictions.json'):
