@@ -91,15 +91,15 @@ class Predictor:
         self._init_ml_model()
         self._last_factors_contributions = {}
         
-         # Для отслеживания голов по таймам
-            self.half_goals = {}
-            self.half_signals = {}
-            
-            # Для контроля дублирования сигналов
-            self.match_last_signal = {}  # Время последнего сигнала для матча
-            self.match_signal_count = {}  # Количество сигналов для матча
-            self.max_signals_per_match = 3  # Максимум сигналов на матч
-            self.min_time_between_signals = 600  # Минимум 10 минут между сигналами для одного матча
+        # Для отслеживания голов по таймам
+        self.half_goals = {}
+        self.half_signals = {}
+        
+        # Для контроля дублирования сигналов
+        self.match_last_signal = {}  # Время последнего сигнала для матча
+        self.match_signal_count = {}  # Количество сигналов для матча
+        self.max_signals_per_match = 3  # Максимум сигналов на матч
+        self.min_time_between_signals = 600  # Минимум 10 минут между сигналами для одного матча
         
         # Словарь синонимов для статистики
         self.stat_synonyms = {
@@ -714,93 +714,95 @@ class Predictor:
         return signal
     
     def analyze_live_match(self, match: Match) -> Optional[Dict]:
-    """Анализирует live-матч и генерирует сигнал с учетом таймов"""
-    try:
-        # Проверяем, не слишком ли много сигналов для этого матча
-        if match.id in self.match_signal_count:
-            if self.match_signal_count[match.id] >= self.max_signals_per_match:
-                logger.debug(f"Пропускаем матч {match.id}: уже отправлено {self.match_signal_count[match.id]} сигналов")
+        """Анализирует live-матч и генерирует сигнал с учетом таймов и дублирования"""
+        try:
+            # Проверяем, не слишком ли много сигналов для этого матча
+            if match.id in self.match_signal_count:
+                if self.match_signal_count[match.id] >= self.max_signals_per_match:
+                    logger.debug(f"Пропускаем матч {match.id}: уже отправлено {self.match_signal_count[match.id]} сигналов")
+                    return None
+            
+            # Проверяем, не отправляли ли сигнал недавно для этого матча
+            if match.id in self.match_last_signal:
+                time_since_last = (datetime.now() - self.match_last_signal[match.id]).total_seconds()
+                if time_since_last < self.min_time_between_signals:
+                    logger.debug(f"Пропускаем матч {match.id}: прошло только {time_since_last:.0f}с с последнего сигнала")
+                    return None
+            
+            # Проверяем, стоит ли анализировать этот матч
+            if not self._should_analyze_match(match):
                 return None
-        
-        # Проверяем, не отправляли ли сигнал недавно для этого матча
-        if match.id in self.match_last_signal:
-            time_since_last = (datetime.now() - self.match_last_signal[match.id]).total_seconds()
-            if time_since_last < self.min_time_between_signals:
-                logger.debug(f"Пропускаем матч {match.id}: прошло только {time_since_last:.0f}с с последнего сигнала")
+            
+            # Проверяем, не было ли уже голов в этом тайме
+            if self._should_skip_half(match):
+                logger.debug(f"Пропускаем матч {match.id}: уже были голы в этом тайме")
                 return None
-        
-        # Проверяем, стоит ли анализировать этот матч
-        if not self._should_analyze_match(match):
+            
+            prediction = self.predict_match(match)
+            
+            if self._should_send_signal(prediction):
+                # Определяем тайм
+                half = "1-й тайм" if match.minute and match.minute < 45 else "2-й тайм"
+                
+                # Обновляем информацию о сигнале
+                self.match_last_signal[match.id] = datetime.now()
+                self.match_signal_count[match.id] = self.match_signal_count.get(match.id, 0) + 1
+                
+                logger.info(f"📢 Сгенерирован сигнал для матча {match.id} ({half}) с вероятностью {prediction['total_goal_probability']:.2f} (всего сигналов: {self.match_signal_count[match.id]})")
+                
+                # Сохраняем информацию о сигнале для этого тайма
+                self._save_signal_for_half(match, half)
+                
+                if match.is_finished and hasattr(self, 'team_analyzer'):
+                    try:
+                        if match.home_team and match.away_team and match.home_team.id and match.away_team.id:
+                            home_xg = prediction.get('home_stats', {}).get('xg', 0)
+                            away_xg = prediction.get('away_stats', {}).get('xg', 0)
+                            
+                            self.team_analyzer.save_match(
+                                match_id=match.id,
+                                home_id=match.home_team.id,
+                                away_id=match.away_team.id,
+                                home_score=match.home_score or 0,
+                                away_score=match.away_score or 0,
+                                match_date=match.start_time or datetime.now(),
+                                league_id=match.league_id,
+                                home_xg=home_xg,
+                                away_xg=away_xg,
+                                league_level=self.league_levels.get(match.league_id, 2)
+                            )
+                            
+                            total_goals = (match.home_score or 0) + (match.away_score or 0)
+                            self.update_accuracy(str(match.id), total_goals)
+                            
+                    except Exception as e:
+                        logger.error(f"❌ Ошибка сохранения матча {match.id} в историю: {e}")
+                
+                return prediction.get('signal')
+            
             return None
-        
-        # Проверяем, не было ли уже голов в этом тайме
-        if self._should_skip_half(match):
-            logger.debug(f"Пропускаем матч {match.id}: уже были голы в этом тайме")
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка при анализе live-матча {match.id}: {e}")
             return None
-        
-        prediction = self.predict_match(match)
-        
-        if self._should_send_signal(prediction):
-            # Определяем тайм
-            half = "1-й тайм" if match.minute and match.minute < 45 else "2-й тайм"
-            
-            # Обновляем информацию о сигнале
-            self.match_last_signal[match.id] = datetime.now()
-            self.match_signal_count[match.id] = self.match_signal_count.get(match.id, 0) + 1
-            
-            logger.info(f"📢 Сгенерирован сигнал для матча {match.id} ({half}) с вероятностью {prediction['total_goal_probability']:.2f} (всего сигналов: {self.match_signal_count[match.id]})")
-            
-            # Сохраняем информацию о сигнале для этого тайма
-            self._save_signal_for_half(match, half)
-            
-            if match.is_finished and hasattr(self, 'team_analyzer'):
-                try:
-                    if match.home_team and match.away_team and match.home_team.id and match.away_team.id:
-                        home_xg = prediction.get('home_stats', {}).get('xg', 0)
-                        away_xg = prediction.get('away_stats', {}).get('xg', 0)
-                        
-                        self.team_analyzer.save_match(
-                            match_id=match.id,
-                            home_id=match.home_team.id,
-                            away_id=match.away_team.id,
-                            home_score=match.home_score or 0,
-                            away_score=match.away_score or 0,
-                            match_date=match.start_time or datetime.now(),
-                            league_id=match.league_id,
-                            home_xg=home_xg,
-                            away_xg=away_xg,
-                            league_level=self.league_levels.get(match.league_id, 2)
-                        )
-                        
-                        total_goals = (match.home_score or 0) + (match.away_score or 0)
-                        self.update_accuracy(str(match.id), total_goals)
-                        
-                except Exception as e:
-                    logger.error(f"❌ Ошибка сохранения матча {match.id} в историю: {e}")
-            
-            return prediction.get('signal')
-        
-        return None
-        
-    except Exception as e:
-        logger.error(f"❌ Ошибка при анализе live-матча {match.id}: {e}")
-        return None
     
     def _should_skip_half(self, match: Match) -> bool:
-        """Проверка на дублирование сигналов в тайме"""
+        """Проверяет, нужно ли пропустить этот тайм (уже были голы)"""
         match_id = match.id
         current_half = "first" if match.minute and match.minute < 45 else "second"
         
+        # Получаем голы в этом тайме
         if match_id not in self.half_goals:
             self.half_goals[match_id] = {'first': 0, 'second': 0}
         
+        # Проверяем, были ли уже голы в этом тайме
         if current_half == "first":
             return self.half_goals[match_id]['first'] > 0
         else:
             return self.half_goals[match_id]['second'] > 0
     
     def _save_signal_for_half(self, match: Match, half: str):
-        """Сохранение информации о сигнале"""
+        """Сохраняет информацию о сигнале для тайма"""
         match_id = match.id
         if match_id not in self.half_signals:
             self.half_signals[match_id] = []
@@ -813,7 +815,7 @@ class Predictor:
         })
     
     def check_goal_scored(self, match: Match):
-        """Проверка забитого гола"""
+        """Проверяет, был ли забит гол, и обновляет статистику тайма"""
         match_id = match.id
         if match_id not in self.half_goals:
             self.half_goals[match_id] = {'first': 0, 'second': 0}
@@ -824,7 +826,7 @@ class Predictor:
         logger.info(f"⚽ ГОЛ в матче {match_id}! Тайм: {current_half}, всего голов в тайме: {self.half_goals[match_id][current_half]}")
     
     def _should_send_signal(self, prediction: Dict) -> bool:
-        """Проверка необходимости отправки сигнала"""
+        """Определяет, нужно ли отправлять сигнал"""
         if prediction.get('error', False):
             return False
         
@@ -840,7 +842,7 @@ class Predictor:
         return False
     
     def _extract_team_stats(self, match: Match, is_home: bool) -> Dict:
-        """Извлечение статистики команды"""
+        """Извлекает статистику для команды с использованием словаря синонимов"""
         stats = {
             'shots': 0,
             'shots_on_target': 0,
@@ -1270,7 +1272,10 @@ class Predictor:
                 'accuracy_stats': self.accuracy_stats,
                 'thresholds': self.thresholds,
                 'half_goals': self.half_goals,
-                'half_signals': self.half_signals
+                'half_signals': self.half_signals,
+                'match_last_signal': {str(k): v.isoformat() if isinstance(v, datetime) else str(v) 
+                                     for k, v in self.match_last_signal.items()},
+                'match_signal_count': self.match_signal_count
             }
             
             for p in self.predictions_history:
@@ -1306,6 +1311,17 @@ class Predictor:
                 self.thresholds.update(data.get('thresholds', self.thresholds))
                 self.half_goals = data.get('half_goals', {})
                 self.half_signals = data.get('half_signals', {})
+                
+                # Загружаем данные о сигналах
+                match_last_signal = data.get('match_last_signal', {})
+                self.match_last_signal = {}
+                for k, v in match_last_signal.items():
+                    try:
+                        self.match_last_signal[int(k)] = datetime.fromisoformat(v)
+                    except:
+                        pass
+                
+                self.match_signal_count = data.get('match_signal_count', {})
                 
                 logger.info(f"Загружено {len(self.predictions_history)} предсказаний из {filename}")
                 
