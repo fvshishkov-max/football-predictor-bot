@@ -338,7 +338,6 @@ class FootballApp:
             f"✈️ **{away_team}:** {signal.get('away_prob', 0)*100:.1f}%",
         ]
         
-        # Добавляем статистику только если она есть
         if has_stats:
             message_lines.extend([
                 "",
@@ -416,12 +415,10 @@ class FootballApp:
                 home_score = match.home_score or 0
                 away_score = match.away_score or 0
                 
-                # Пропускаем матчи с разницей 3+ гола
                 if abs(home_score - away_score) >= 3:
                     logger.debug(f"Пропускаем матч {match.id}: крупный счет {home_score}:{away_score}")
                     continue
                 
-                # Пропускаем матчи, где одна команда забила 4+
                 if home_score >= 4 or away_score >= 4:
                     logger.debug(f"Пропускаем матч {match.id}: много голов {home_score}:{away_score}")
                     continue
@@ -431,6 +428,8 @@ class FootballApp:
             logger.info(f"📊 Найдено {len(matches)} матчей, после фильтрации: {len(filtered_matches)}")
             
             signals_generated = 0
+            telegram_queue = 0
+            
             for match in filtered_matches:
                 try:
                     if not match or not hasattr(match, 'id'):
@@ -453,12 +452,20 @@ class FootballApp:
                         # Форматируем сообщение
                         formatted_message = self._format_signal_message(match, signal)
                         
+                        # Для отладки - выводим сообщение в лог
+                        logger.debug(f"📨 Сообщение для отправки (первые 100 символов): {formatted_message[:100]}...")
+                        
                         # Отправляем сигнал через Telegram бота
                         if self.telegram_bot.send_goal_signal(match, analysis, formatted_message):
                             signals_generated += 1
                             self.stats['signals_sent'] += 1
                             
-                            logger.info(f"📨 Сигнал отправлен для матча {match.id}: "
+                            # Проверяем статус отправки
+                            queue_size = self.telegram_bot.get_queue_size()
+                            if queue_size > 0:
+                                telegram_queue = queue_size
+                            
+                            logger.info(f"📨 Сигнал сгенерирован для матча {match.id}: "
                                        f"{home_team} vs {away_team} - "
                                        f"счет {match.home_score or 0}:{match.away_score or 0}, "
                                        f"вероятность {signal.get('probability', 0)*100:.1f}%")
@@ -479,7 +486,12 @@ class FootballApp:
                     logger.error(f"❌ Ошибка при анализе матча {getattr(match, 'id', 'unknown')}: {e}")
             
             if signals_generated > 0:
-                logger.info(f"📊 Всего сгенерировано сигналов: {signals_generated}")
+                queue_size = self.telegram_bot.get_queue_size()
+                logger.info(f"📊 Всего сгенерировано сигналов: {signals_generated}, в очереди: {queue_size}")
+                
+                # Если очередь большая, логируем предупреждение
+                if queue_size > 10:
+                    logger.warning(f"⚠️ Большая очередь Telegram: {queue_size} сообщений")
             
         except Exception as e:
             self.stats['errors_count'] += 1
@@ -568,7 +580,8 @@ class FootballApp:
             f"🔁 Вызовов API: {self.stats['api_calls']}",
             f"❌ Ошибок: {self.stats['errors_count']}",
             f"📤 Размер очереди Telegram: {self.telegram_bot.get_queue_size()}",
-            f"📤 Отправлено всего: {telegram_stats.get('sent_signals', 0)}",
+            f"📤 Успешно отправлено: {telegram_stats.get('successful_sends', 0)}",
+            f"📤 Всего сигналов в памяти: {telegram_stats.get('sent_signals', 0)}",
             f"📤 Неудачных попыток: {telegram_stats.get('failed_attempts', 0)}",
             "-"*60,
             "📊 СТАТИСТИКА ПРЕДИКТОРА",
@@ -617,7 +630,8 @@ class FootballApp:
                 f.write(f"Размер очереди Telegram: {self.telegram_bot.get_queue_size()}\n")
                 
                 telegram_stats = self.telegram_bot.get_stats() if hasattr(self.telegram_bot, 'get_stats') else {}
-                f.write(f"Отправлено всего: {telegram_stats.get('sent_signals', 0)}\n")
+                f.write(f"Успешно отправлено: {telegram_stats.get('successful_sends', 0)}\n")
+                f.write(f"Всего сигналов в памяти: {telegram_stats.get('sent_signals', 0)}\n")
                 f.write(f"Неудачных попыток: {telegram_stats.get('failed_attempts', 0)}\n")
                 
                 if hasattr(self.predictor, 'accuracy_stats'):
@@ -678,5 +692,10 @@ class FootballApp:
         if hasattr(self, 'stats_reporter'):
             self.stats_reporter.save_stats()
             logger.info("✅ Статистика репортера сохранена")
+        
+        # Очищаем старые сигналы в Telegram боте
+        if hasattr(self, 'telegram_bot') and hasattr(self.telegram_bot, 'clear_old_signals'):
+            self.telegram_bot.clear_old_signals()
+            logger.info("✅ Старые сигналы очищены")
         
         logger.info("✅ Очистка завершена")

@@ -19,14 +19,16 @@ class TelegramBot:
     def __init__(self, token: str, channel_id: str):
         self.token = token
         self.channel_id = channel_id
-        self.sent_signals = set()
-        self.max_retries = 5  # Увеличили количество попыток
-        self.retry_delay = 3   # Увеличили задержку
-        self.message_queue = Queue(maxsize=100)  # Увеличили размер очереди
+        self.sent_signals = set()  # Уже отправленные сигналы (глобально)
+        self.sent_signals_per_match = {}  # Сигналы по матчам для проверки дублирования
+        self.max_retries = 5
+        self.retry_delay = 2
+        self.message_queue = Queue(maxsize=100)
         self.last_send_time = 0
-        self.min_interval = 5   # Увеличили интервал между сообщениями
+        self.min_interval = 3  # Уменьшили до 3 секунд
         self.sent_lock = threading.Lock()
         self.failed_attempts = 0
+        self.successful_sends = 0
         self.start_queue_processor()
         logger.info(f"🚀 Запущен обработчик очереди Telegram для канала {channel_id}")
 
@@ -42,10 +44,22 @@ class TelegramBot:
                         break
                     
                     with self.sent_lock:
+                        # Проверяем, не отправляли ли уже такой сигнал
                         if message_data['key'] in self.sent_signals:
-                            logger.debug(f"⏭️ Сигнал {message_data['key']} уже отправлен")
+                            logger.debug(f"⏭️ Сигнал {message_data['key']} уже отправлен глобально")
                             self.message_queue.task_done()
                             continue
+                        
+                        # Проверяем дублирование для этого матча (не чаще чем раз в 15 минут)
+                        match_id = message_data['key'].split('_')[0]
+                        current_time = time.time()
+                        
+                        if match_id in self.sent_signals_per_match:
+                            last_signal_time = self.sent_signals_per_match[match_id]
+                            if current_time - last_signal_time < 900:  # 15 минут
+                                logger.debug(f"⏭️ Пропускаем сигнал для матча {match_id}: слишком часто (прошло {current_time - last_signal_time:.0f}с)")
+                                self.message_queue.task_done()
+                                continue
                     
                     # Проверяем интервал между сообщениями
                     current_time = time.time()
@@ -61,7 +75,10 @@ class TelegramBot:
                     if success:
                         with self.sent_lock:
                             self.sent_signals.add(message_data['key'])
-                            logger.info(f"✅ Сигнал отправлен: {message_data['key']}")
+                            match_id = message_data['key'].split('_')[0]
+                            self.sent_signals_per_match[match_id] = time.time()
+                            self.successful_sends += 1
+                            logger.info(f"✅ Сигнал отправлен: {message_data['key']} (всего успешно: {self.successful_sends})")
                         self.last_send_time = time.time()
                         consecutive_failures = 0
                         self.failed_attempts = 0
@@ -72,7 +89,7 @@ class TelegramBot:
                         
                         # Если много ошибок подряд, увеличиваем интервал
                         if consecutive_failures > 3:
-                            logger.warning(f"⚠️ Много ошибок подряд, увеличиваем интервал до 10с")
+                            logger.warning(f"⚠️ Много ошибок подряд ({consecutive_failures}), увеличиваем интервал до 10с")
                             time.sleep(10)
                     
                     self.message_queue.task_done()
@@ -93,32 +110,42 @@ class TelegramBot:
                 bot = Bot(token=self.token)
                 
                 # Отправляем сообщение
-                loop.run_until_complete(
+                result = loop.run_until_complete(
                     asyncio.wait_for(
                         bot.send_message(
                             chat_id=self.channel_id,
                             text=text
                         ),
-                        timeout=20.0  # Увеличили таймаут
+                        timeout=30.0  # Увеличили таймаут
                     )
                 )
                 loop.close()
-                return True
+                
+                # Проверяем, что сообщение действительно отправлено
+                if result and result.message_id:
+                    logger.debug(f"✅ Сообщение отправлено, ID: {result.message_id}")
+                    return True
+                else:
+                    logger.warning(f"⚠️ Сообщение отправлено, но нет подтверждения")
+                    return True
                 
             except TimedOut:
-                logger.warning(f"⏰ Таймаут {attempt + 1}/{self.max_retries}, повтор через {self.retry_delay * (attempt + 1)}с")
+                wait_time = self.retry_delay * (attempt + 1)
+                logger.warning(f"⏰ Таймаут {attempt + 1}/{self.max_retries}, повтор через {wait_time}с")
                 if attempt < self.max_retries - 1:
-                    time.sleep(self.retry_delay * (attempt + 1))
+                    time.sleep(wait_time)
                     
             except NetworkError as e:
-                logger.warning(f"🌐 Сетевая ошибка {attempt + 1}/{self.max_retries}: {e}")
+                wait_time = self.retry_delay * (attempt + 2)
+                logger.warning(f"🌐 Сетевая ошибка {attempt + 1}/{self.max_retries}: {e}, повтор через {wait_time}с")
                 if attempt < self.max_retries - 1:
-                    time.sleep(self.retry_delay * (attempt + 2))
+                    time.sleep(wait_time)
                     
             except Exception as e:
-                logger.warning(f"❌ Ошибка {attempt + 1}/{self.max_retries}: {e}")
+                wait_time = self.retry_delay * (attempt + 1)
+                logger.warning(f"❌ Ошибка {attempt + 1}/{self.max_retries}: {e}, повтор через {wait_time}с")
                 if attempt < self.max_retries - 1:
-                    time.sleep(self.retry_delay * (attempt + 1))
+                    time.sleep(wait_time)
                     
             finally:
                 try:
@@ -130,16 +157,26 @@ class TelegramBot:
         return False
 
     def send_goal_signal(self, match: Match, analysis: MatchAnalysis, formatted_message: str) -> bool:
-        """Отправляет сигнал о голе"""
+        """Отправляет сигнал о голе с проверкой на дублирование"""
         if not analysis.next_signal:
             return False
         
+        # Создаем уникальный ключ для сигнала
         signal_key = f"{match.id}_{analysis.next_signal.predicted_minute}"
         
         with self.sent_lock:
+            # Проверяем, не отправляли ли уже такой сигнал
             if signal_key in self.sent_signals:
                 logger.debug(f"⏭️ Сигнал {signal_key} уже был отправлен")
                 return True
+            
+            # Проверяем, не отправляли ли сигнал для этого матча в последние 15 минут
+            if match.id in self.sent_signals_per_match:
+                last_time = self.sent_signals_per_match[match.id]
+                time_diff = time.time() - last_time
+                if time_diff < 900:  # 15 минут
+                    logger.debug(f"⏭️ Сигнал для матча {match.id} уже отправлялся {time_diff:.0f}с назад")
+                    return True
         
         # Проверяем размер очереди
         if self.message_queue.qsize() >= 90:
@@ -167,5 +204,24 @@ class TelegramBot:
         return {
             'queue_size': self.message_queue.qsize(),
             'sent_signals': len(self.sent_signals),
+            'successful_sends': self.successful_sends,
             'failed_attempts': self.failed_attempts
         }
+    
+    def clear_old_signals(self, max_age_hours: int = 24):
+        """Очищает старые сигналы из памяти"""
+        with self.sent_lock:
+            current_time = time.time()
+            # Очищаем sent_signals_per_match (сигналы старше 24 часов)
+            old_matches = [
+                match_id for match_id, timestamp in self.sent_signals_per_match.items()
+                if current_time - timestamp > max_age_hours * 3600
+            ]
+            for match_id in old_matches:
+                del self.sent_signals_per_match[match_id]
+            
+            # Очищаем sent_signals (оставляем только последние 1000)
+            if len(self.sent_signals) > 1000:
+                self.sent_signals = set(list(self.sent_signals)[-1000:])
+            
+            logger.info(f"🧹 Очищено старых сигналов: {len(old_matches)} матчей")
