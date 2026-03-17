@@ -6,6 +6,7 @@ from collections import defaultdict
 import json
 import os
 import random
+import traceback
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 import joblib
@@ -168,6 +169,26 @@ class Predictor:
                             return result
         
         return default
+    
+    def _ensure_dict(self, data: Any, name: str = "data") -> Dict:
+        """Гарантированно преобразует данные в словарь"""
+        if data is None:
+            logger.debug(f"{name} is None, возвращаем пустой словарь")
+            return {}
+        
+        if isinstance(data, dict):
+            return data
+        
+        if hasattr(data, '__dict__'):
+            logger.debug(f"{name} является объектом, конвертируем в dict")
+            return data.__dict__
+        
+        if isinstance(data, (list, tuple, set)):
+            logger.debug(f"{name} является {type(data)}, конвертируем в dict")
+            return {str(i): v for i, v in enumerate(data)}
+        
+        logger.debug(f"{name} имеет неожиданный тип {type(data)}, возвращаем пустой словарь")
+        return {}
     
     def _generate_match_url(self, match: Match) -> str:
         """Генерирует ссылку на Sofascore с правильной обработкой спецсимволов"""
@@ -446,8 +467,15 @@ class Predictor:
     def predict_match(self, match: Match) -> Dict:
         """Предсказание с использованием всех статистических моделей"""
         try:
-            home_stats = self._extract_team_stats(match, is_home=True)
-            away_stats = self._extract_team_stats(match, is_home=False)
+            # Получаем статистику и гарантируем, что это словари
+            home_stats_raw = self._extract_team_stats(match, is_home=True)
+            away_stats_raw = self._extract_team_stats(match, is_home=False)
+            
+            # Принудительно преобразуем в словари
+            home_stats = self._ensure_dict(home_stats_raw, "home_stats")
+            away_stats = self._ensure_dict(away_stats_raw, "away_stats")
+            
+            logger.debug(f"home_stats тип: {type(home_stats)}, содержимое: {list(home_stats.keys()) if isinstance(home_stats, dict) else 'не словарь'}")
             
             home_form = None
             away_form = None
@@ -542,7 +570,8 @@ class Predictor:
             return result
             
         except Exception as e:
-            logger.error(f"Ошибка при предсказании матча {match.id}: {e}")
+            logger.error(f"❌ Ошибка при предсказании матча {match.id}: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return self._get_default_prediction(match)
     
     def _get_h2h_factor(self, match: Match) -> Dict:
@@ -627,11 +656,12 @@ class Predictor:
         factors = []
         total_weight = 0
         
-        # Проверяем, является ли stats словарем (а не LiveStats)
-        if hasattr(stats, '__dict__'):
-            # Если это объект LiveStats, конвертируем в словарь
-            stats = stats.__dict__
+        # Убеждаемся, что stats - словарь
+        if not isinstance(stats, dict):
+            logger.warning(f"stats не является словарем: {type(stats)}, используем пустой словарь")
+            stats = {}
         
+        # Проверяем, есть ли реальная статистика
         has_real_stats = any([
             stats.get('shots', 0) > 0,
             stats.get('shots_on_target', 0) > 0,
@@ -641,7 +671,7 @@ class Predictor:
         if not has_real_stats:
             base_prob = 0.25 + (0.05 if is_home else 0)
             
-            if team_form:
+            if team_form and isinstance(team_form, dict):
                 form_factor = team_form.get('weighted_form', team_form.get('form', 0.5))
                 base_prob += (form_factor - 0.5) * 0.15
             
@@ -654,6 +684,7 @@ class Predictor:
             
             return max(0.1, min(0.6, base_prob))
         
+        # Нормализация значений с учетом реальной статистики
         factor_mappings = [
             ('xg', stats.get('xg', 0.5), 3.0, 0.3),
             ('shots_ontarget', stats.get('shots_on_target', 0), 15.0, 0.2),
@@ -670,7 +701,7 @@ class Predictor:
                 factors.append(normalized * weight)
                 total_weight += weight
         
-        if team_form and 'team_form' in self.weights:
+        if team_form and 'team_form' in self.weights and isinstance(team_form, dict):
             form_factor = team_form.get('weighted_form', team_form.get('form', 0.5))
             factors.append(form_factor * self.weights['team_form'])
             total_weight += self.weights['team_form']
@@ -809,10 +840,13 @@ class Predictor:
                 period = "Доп. время"
         
         # Убеждаемся, что home_stats и away_stats - словари
-        if hasattr(home_stats, '__dict__'):
-            home_stats = home_stats.__dict__
-        if hasattr(away_stats, '__dict__'):
-            away_stats = away_stats.__dict__
+        if not isinstance(home_stats, dict):
+            logger.warning(f"home_stats не словарь: {type(home_stats)}")
+            home_stats = self._ensure_dict(home_stats, "home_stats")
+        
+        if not isinstance(away_stats, dict):
+            logger.warning(f"away_stats не словарь: {type(away_stats)}")
+            away_stats = self._ensure_dict(away_stats, "away_stats")
         
         has_stats = any([
             home_stats.get('shots', 0) > 0,
@@ -880,7 +914,7 @@ class Predictor:
                 "📈 **ФОРМА КОМАНД (последние 5 матчей):**",
             ])
             
-            if home_form:
+            if home_form and isinstance(home_form, dict):
                 form_string = home_form.get('form_string', '')
                 points = home_form.get('points_per_game', 0) * 5
                 if form_string:
@@ -888,7 +922,7 @@ class Predictor:
                 else:
                     message_lines.append(f"  • {home_name}: нет данных")
             
-            if away_form:
+            if away_form and isinstance(away_form, dict):
                 form_string = away_form.get('form_string', '')
                 points = away_form.get('points_per_game', 0) * 5
                 if form_string:
@@ -1084,68 +1118,94 @@ class Predictor:
         }
         
         if not match.stats:
+            logger.debug(f"match.stats пуст для match.id={match.id}")
             return stats
         
         # Если match.stats уже является словарем, используем его
         if isinstance(match.stats, dict):
+            logger.debug(f"match.stats является словарем для match.id={match.id}")
+            
+            # Извлекаем значения для конкретной команды
+            if is_home:
+                stats['shots'] = match.stats.get('shots_home', 0)
+                stats['shots_on_target'] = match.stats.get('shots_ontarget_home', 0)
+                stats['possession'] = match.stats.get('possession_home', 50)
+                stats['corners'] = match.stats.get('corners_home', 0)
+                stats['dangerous_attacks'] = match.stats.get('dangerous_attacks_home', 0)
+                stats['xg'] = match.stats.get('xg_home', 0.5)
+            else:
+                stats['shots'] = match.stats.get('shots_away', 0)
+                stats['shots_on_target'] = match.stats.get('shots_ontarget_away', 0)
+                stats['possession'] = match.stats.get('possession_away', 50)
+                stats['corners'] = match.stats.get('corners_away', 0)
+                stats['dangerous_attacks'] = match.stats.get('dangerous_attacks_away', 0)
+                stats['xg'] = match.stats.get('xg_away', 0.5)
+            
+            return stats
+        
+        # Если match.stats - объект с атрибутами
+        if hasattr(match.stats, '__dict__'):
+            logger.debug(f"match.stats является объектом для match.id={match.id}, конвертируем")
+            stats_dict = match.stats.__dict__
+            
+            if is_home:
+                stats['shots'] = stats_dict.get('shots_home', 0)
+                stats['shots_on_target'] = stats_dict.get('shots_ontarget_home', 0)
+                stats['possession'] = stats_dict.get('possession_home', 50)
+                stats['corners'] = stats_dict.get('corners_home', 0)
+                stats['dangerous_attacks'] = stats_dict.get('dangerous_attacks_home', 0)
+                stats['xg'] = stats_dict.get('xg_home', 0.5)
+            else:
+                stats['shots'] = stats_dict.get('shots_away', 0)
+                stats['shots_on_target'] = stats_dict.get('shots_ontarget_away', 0)
+                stats['possession'] = stats_dict.get('possession_away', 50)
+                stats['corners'] = stats_dict.get('corners_away', 0)
+                stats['dangerous_attacks'] = stats_dict.get('dangerous_attacks_away', 0)
+                stats['xg'] = stats_dict.get('xg_away', 0.5)
+            
+            return stats
+        
+        # Если match.stats - список (старый формат)
+        if isinstance(match.stats, list):
+            logger.debug(f"match.stats является списком для match.id={match.id}")
             team_id = match.home_team.id if is_home and match.home_team else None
             if not team_id and not is_home and match.away_team:
                 team_id = match.away_team.id
             
-            if team_id and 'statistics' in match.stats:
-                stats_data = match.stats.get('statistics', {})
-                stats['shots'] = stats_data.get('totalShotsHome' if is_home else 'totalShotsAway', 0)
-                stats['shots_on_target'] = stats_data.get('shotsOnGoalHome' if is_home else 'shotsOnGoalAway', 0)
-                stats['possession'] = stats_data.get('ballPossessionHome' if is_home else 'ballPossessionAway', 50)
-                stats['corners'] = stats_data.get('cornerKicksHome' if is_home else 'cornerKicksAway', 0)
-                stats['dangerous_attacks'] = stats_data.get('dangerousAttacksHome' if is_home else 'dangerousAttacksAway', 0)
-                
-                # Извлекаем xG из otherStats
-                other_stats = stats_data.get('otherStatsHome' if is_home else 'otherStatsAway', {})
-                if other_stats and 'Expected goals (xG)' in other_stats:
-                    try:
-                        stats['xg'] = float(other_stats['Expected goals (xG)'])
-                    except:
-                        pass
+            if not team_id:
+                return stats
+            
+            team_stats_dict = {}
+            for period_stats in match.stats:
+                if period_stats.get('period') == 'ALL':
+                    for team_stat in period_stats.get('groups', []):
+                        if team_stat.get('teamId') == team_id:
+                            items = team_stat.get('statisticsItems', [])
+                            for item in items:
+                                name = item.get('name', '').lower()
+                                value = item.get('value', 0)
+                                
+                                if isinstance(value, str):
+                                    try:
+                                        if '%' in value:
+                                            value = float(value.replace('%', ''))
+                                        else:
+                                            value = float(value)
+                                    except:
+                                        value = 0
+                                
+                                team_stats_dict[name] = value
+            
+            stats['shots'] = self._get_stat_value(team_stats_dict, 'shots', 0)
+            stats['shots_on_target'] = self._get_stat_value(team_stats_dict, 'shots_on_target', 0)
+            stats['corners'] = self._get_stat_value(team_stats_dict, 'corners', 0)
+            stats['possession'] = self._get_stat_value(team_stats_dict, 'possession', 50)
+            stats['dangerous_attacks'] = self._get_stat_value(team_stats_dict, 'dangerous_attacks', 0)
+            stats['xg'] = self._get_stat_value(team_stats_dict, 'xg', 0.5)
             
             return stats
         
-        # Если match.stats - список (как в старой версии)
-        team_id = match.home_team.id if is_home and match.home_team else None
-        if not team_id and not is_home and match.away_team:
-            team_id = match.away_team.id
-        
-        if not team_id:
-            return stats
-        
-        team_stats_dict = {}
-        for period_stats in match.stats:
-            if period_stats.get('period') == 'ALL':
-                for team_stat in period_stats.get('groups', []):
-                    if team_stat.get('teamId') == team_id:
-                        items = team_stat.get('statisticsItems', [])
-                        for item in items:
-                            name = item.get('name', '').lower()
-                            value = item.get('value', 0)
-                            
-                            if isinstance(value, str):
-                                try:
-                                    if '%' in value:
-                                        value = float(value.replace('%', ''))
-                                    else:
-                                        value = float(value)
-                                except:
-                                    value = 0
-                            
-                            team_stats_dict[name] = value
-        
-        stats['shots'] = self._get_stat_value(team_stats_dict, 'shots', 0)
-        stats['shots_on_target'] = self._get_stat_value(team_stats_dict, 'shots_on_target', 0)
-        stats['corners'] = self._get_stat_value(team_stats_dict, 'corners', 0)
-        stats['possession'] = self._get_stat_value(team_stats_dict, 'possession', 50)
-        stats['dangerous_attacks'] = self._get_stat_value(team_stats_dict, 'dangerous_attacks', 0)
-        stats['xg'] = self._get_stat_value(team_stats_dict, 'xg', 0.5)
-        
+        logger.warning(f"match.stats имеет неожиданный тип {type(match.stats)} для match.id={match.id}")
         return stats
     
     def _prepare_training_data(self) -> Tuple[np.ndarray, np.ndarray]:

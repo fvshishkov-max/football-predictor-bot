@@ -475,10 +475,14 @@ class FootballApp:
                     if not match or not hasattr(match, 'id'):
                         continue
                     
-                    # Получаем статистику для матча
-                    stats = await self.api_client.get_match_statistics(match)
-                    if stats:
-                        match.stats = stats
+                    # Получаем статистику для матча в виде словаря
+                    stats_dict = await self.api_client.get_match_statistics(match)
+                    if stats_dict and isinstance(stats_dict, dict):
+                        # Сохраняем статистику как словарь
+                        match.stats = stats_dict
+                        logger.debug(f"✅ Статистика для матча {match.id} загружена: {list(stats_dict.keys())}")
+                    else:
+                        logger.debug(f"ℹ️ Статистика для матча {match.id} не получена")
                     
                     # Проверяем, изменился ли счет (был ли гол)
                     self._check_goal_scored(match)
@@ -542,6 +546,7 @@ class FootballApp:
                 except Exception as e:
                     self.stats['errors_count'] += 1
                     logger.error(f"❌ Ошибка при анализе матча {getattr(match, 'id', 'unknown')}: {e}")
+                    logger.error(traceback.format_exc())
             
             if signals_generated > 0:
                 queue_size = self.telegram_bot.get_queue_size()

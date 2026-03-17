@@ -249,7 +249,7 @@ class CacheDatabase:
         except Exception as e:
             logger.error(f"❌ Ошибка инициализации кэш-БД: {e}")
     
-    def save_match(self, match: Match, stats: Optional[LiveStats] = None):
+    def save_match(self, match: Match, stats: Optional[Dict] = None):
         """Сохраняет матч в кэш"""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -280,16 +280,16 @@ class CacheDatabase:
                 ))
                 
                 # Сохраняем статистику
-                if stats:
+                if stats and isinstance(stats, dict):
                     stat_mappings = [
-                        ('shots', stats.shots_home, stats.shots_away),
-                        ('shots_on_target', stats.shots_ontarget_home, stats.shots_ontarget_away),
-                        ('possession', stats.possession_home, stats.possession_away),
-                        ('corners', stats.corners_home, stats.corners_away),
-                        ('fouls', stats.fouls_home, stats.fouls_away),
-                        ('yellow_cards', stats.yellow_cards_home, stats.yellow_cards_away),
-                        ('dangerous_attacks', stats.dangerous_attacks_home, stats.dangerous_attacks_away),
-                        ('xg', stats.xg_last_15_home, stats.xg_last_15_away)  # Используем последние xG
+                        ('shots', stats.get('shots_home', 0), stats.get('shots_away', 0)),
+                        ('shots_on_target', stats.get('shots_ontarget_home', 0), stats.get('shots_ontarget_away', 0)),
+                        ('possession', stats.get('possession_home', 50), stats.get('possession_away', 50)),
+                        ('corners', stats.get('corners_home', 0), stats.get('corners_away', 0)),
+                        ('fouls', stats.get('fouls_home', 0), stats.get('fouls_away', 0)),
+                        ('yellow_cards', stats.get('yellow_cards_home', 0), stats.get('yellow_cards_away', 0)),
+                        ('dangerous_attacks', stats.get('dangerous_attacks_home', 0), stats.get('dangerous_attacks_away', 0)),
+                        ('xg', stats.get('xg_home', 0), stats.get('xg_away', 0))
                     ]
                     
                     for stat_name, home_val, away_val in stat_mappings:
@@ -357,7 +357,7 @@ class CacheDatabase:
         
         return stats
     
-    def save_team_history(self, team_id: int, match: Match, stats: Optional[LiveStats] = None):
+    def save_team_history(self, team_id: int, match: Match, stats: Optional[Dict] = None):
         """Сохраняет историю команды"""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -369,23 +369,23 @@ class CacheDatabase:
                     opponent_id = match.away_team.id
                     goals_for = match.home_score or 0
                     goals_against = match.away_score or 0
-                    xg_for = stats.xg_last_15_home if stats else 0
-                    xg_against = stats.xg_last_15_away if stats else 0
-                    shots = stats.shots_home if stats else 0
-                    shots_on_target = stats.shots_ontarget_home if stats else 0
-                    corners = stats.corners_home if stats else 0
-                    possession = stats.possession_home if stats else 50
+                    xg_for = stats.get('xg_home', 0) if stats else 0
+                    xg_against = stats.get('xg_away', 0) if stats else 0
+                    shots = stats.get('shots_home', 0) if stats else 0
+                    shots_on_target = stats.get('shots_ontarget_home', 0) if stats else 0
+                    corners = stats.get('corners_home', 0) if stats else 0
+                    possession = stats.get('possession_home', 50) if stats else 50
                 else:
                     home_away = 'away'
                     opponent_id = match.home_team.id
                     goals_for = match.away_score or 0
                     goals_against = match.home_score or 0
-                    xg_for = stats.xg_last_15_away if stats else 0
-                    xg_against = stats.xg_last_15_home if stats else 0
-                    shots = stats.shots_away if stats else 0
-                    shots_on_target = stats.shots_ontarget_away if stats else 0
-                    corners = stats.corners_away if stats else 0
-                    possession = stats.possession_away if stats else 50
+                    xg_for = stats.get('xg_away', 0) if stats else 0
+                    xg_against = stats.get('xg_home', 0) if stats else 0
+                    shots = stats.get('shots_away', 0) if stats else 0
+                    shots_on_target = stats.get('shots_ontarget_away', 0) if stats else 0
+                    corners = stats.get('corners_away', 0) if stats else 0
+                    possession = stats.get('possession_away', 50) if stats else 50
                 
                 cursor.execute('''
                     INSERT OR REPLACE INTO team_history
@@ -479,43 +479,43 @@ class UnifiedFootballClient:
         
         return matches
     
-    async def get_match_statistics(self, match: Match) -> Optional[LiveStats]:
-        """Получает статистику матча"""
+    async def get_match_statistics(self, match: Match) -> Optional[Dict]:
+        """Получает статистику матча в виде словаря"""
         stats = None
         
         # Сначала проверяем кэш
         cached_stats = self.cache.get_statistics(match.id)
         if cached_stats:
-            # Создаем LiveStats из кэша
-            stats = LiveStats(
-                minute=match.minute or 0,
-                shots_home=cached_stats.get('shots', {}).get('home', 0),
-                shots_away=cached_stats.get('shots', {}).get('away', 0),
-                shots_ontarget_home=cached_stats.get('shots_on_target', {}).get('home', 0),
-                shots_ontarget_away=cached_stats.get('shots_on_target', {}).get('away', 0),
-                possession_home=cached_stats.get('possession', {}).get('home', 50),
-                possession_away=cached_stats.get('possession', {}).get('away', 50),
-                corners_home=cached_stats.get('corners', {}).get('home', 0),
-                corners_away=cached_stats.get('corners', {}).get('away', 0),
-                fouls_home=cached_stats.get('fouls', {}).get('home', 0),
-                fouls_away=cached_stats.get('fouls', {}).get('away', 0),
-                yellow_cards_home=cached_stats.get('yellow_cards', {}).get('home', 0),
-                yellow_cards_away=cached_stats.get('yellow_cards', {}).get('away', 0),
-                dangerous_attacks_home=cached_stats.get('dangerous_attacks', {}).get('home', 0),
-                dangerous_attacks_away=cached_stats.get('dangerous_attacks', {}).get('away', 0),
-                xg_last_15_home=cached_stats.get('xg', {}).get('home', 0),
-                xg_last_15_away=cached_stats.get('xg', {}).get('away', 0)
-            )
             logger.info(f"📦 Статистика для матча {match.id} загружена из кэша")
+            # Преобразуем кэшированные данные в плоский словарь
+            stats = {
+                'minute': match.minute or 0,
+                'shots_home': cached_stats.get('shots', {}).get('home', 0),
+                'shots_away': cached_stats.get('shots', {}).get('away', 0),
+                'shots_ontarget_home': cached_stats.get('shots_on_target', {}).get('home', 0),
+                'shots_ontarget_away': cached_stats.get('shots_on_target', {}).get('away', 0),
+                'possession_home': cached_stats.get('possession', {}).get('home', 50),
+                'possession_away': cached_stats.get('possession', {}).get('away', 50),
+                'corners_home': cached_stats.get('corners', {}).get('home', 0),
+                'corners_away': cached_stats.get('corners', {}).get('away', 0),
+                'fouls_home': cached_stats.get('fouls', {}).get('home', 0),
+                'fouls_away': cached_stats.get('fouls', {}).get('away', 0),
+                'yellow_cards_home': cached_stats.get('yellow_cards', {}).get('home', 0),
+                'yellow_cards_away': cached_stats.get('yellow_cards', {}).get('away', 0),
+                'dangerous_attacks_home': cached_stats.get('dangerous_attacks', {}).get('home', 0),
+                'dangerous_attacks_away': cached_stats.get('dangerous_attacks', {}).get('away', 0),
+                'xg_home': cached_stats.get('xg', {}).get('home', 0),
+                'xg_away': cached_stats.get('xg', {}).get('away', 0)
+            }
             return stats
         
         # Если нет в кэше, пробуем получить из SStats
         if self.sstats:
-            stats = await self.sstats.get_match_statistics(match.id)
-            if stats:
-                self.cache.save_match(match, stats)
-                self.cache.save_team_history(match.home_team.id, match, stats)
-                self.cache.save_team_history(match.away_team.id, match, stats)
-                return stats
+            stats_dict = await self.sstats.get_match_statistics(match.id)
+            if stats_dict and isinstance(stats_dict, dict):
+                self.cache.save_match(match, stats_dict)
+                self.cache.save_team_history(match.home_team.id, match, stats_dict)
+                self.cache.save_team_history(match.away_team.id, match, stats_dict)
+                return stats_dict
         
         return None

@@ -62,7 +62,6 @@ class RealSStatsClient:
         if isinstance(value, (int, float)):
             return int(value)
         if isinstance(value, str):
-            # Убираем проценты и пробелы
             value = value.replace('%', '').strip()
             try:
                 return int(float(value))
@@ -165,8 +164,8 @@ class RealSStatsClient:
         logger.info(f"📊 Получение статистики матча {match_id}...")
         return await self._make_request(f"/Games/{match_id}")
 
-    async def get_match_statistics(self, match_id: int) -> Optional[LiveStats]:
-        """Получает статистику матча и преобразует в LiveStats"""
+    async def get_match_statistics(self, match_id: int) -> Optional[Dict]:
+        """Получает статистику матча и возвращает в виде словаря (НЕ LiveStats)"""
         details = await self.get_match_details(match_id)
         if not details:
             return None
@@ -174,107 +173,74 @@ class RealSStatsClient:
         try:
             data = details.get('data', {})
             game = data.get('game', {})
+            statistics = data.get('statistics', {})
             
-            # Собираем статистику из всех возможных источников
-            statistics = {}
-            possible_stat_locations = [
-                data.get('statistics', {}),
-                data.get('statisticsData', {}),
-                data.get('stats', {}),
-                game.get('statistics', {}),
-                details.get('statistics', {}),
-                data.get('liveData', {}).get('statistics', {})
-            ]
-            
-            for stats_location in possible_stat_locations:
-                if stats_location and isinstance(stats_location, dict):
-                    # Рекурсивно обновляем словарь
-                    self._deep_update(statistics, stats_location)
-
+            # Получаем minute
             minute = game.get('elapsed') or game.get('minute') or 0
-
-            # Извлекаем статистику для обеих команд
-            shots_home = self._extract_numeric(self._safe_get(statistics, 'totalShotsHome', 0))
-            shots_away = self._extract_numeric(self._safe_get(statistics, 'totalShotsAway', 0))
             
-            shots_ontarget_home = self._extract_numeric(self._safe_get(statistics, 'shotsOnGoalHome', 0))
-            shots_ontarget_away = self._extract_numeric(self._safe_get(statistics, 'shotsOnGoalAway', 0))
+            # Извлекаем xG из otherStats
+            other_stats_home = statistics.get('otherStatsHome', {})
+            other_stats_away = statistics.get('otherStatsAway', {})
             
-            possession_home = self._extract_float(self._safe_get(statistics, 'ballPossessionHome', 50))
-            possession_away = 100 - possession_home if possession_home <= 100 else 50
+            xg_home = 0.5
+            xg_away = 0.5
             
-            corners_home = self._extract_numeric(self._safe_get(statistics, 'cornerKicksHome', 0))
-            corners_away = self._extract_numeric(self._safe_get(statistics, 'cornerKicksAway', 0))
+            if 'Expected goals (xG)' in other_stats_home:
+                try:
+                    xg_home = float(other_stats_home['Expected goals (xG)'])
+                except:
+                    pass
             
-            dangerous_attacks_home = self._extract_numeric(self._safe_get(statistics, 'dangerousAttacksHome', 0))
-            dangerous_attacks_away = self._extract_numeric(self._safe_get(statistics, 'dangerousAttacksAway', 0))
+            if 'Expected goals (xG)' in other_stats_away:
+                try:
+                    xg_away = float(other_stats_away['Expected goals (xG)'])
+                except:
+                    pass
             
-            fouls_home = self._extract_numeric(self._safe_get(statistics, 'foulsHome', 0))
-            fouls_away = self._extract_numeric(self._safe_get(statistics, 'foulsAway', 0))
-            
-            yellow_cards_home = self._extract_numeric(self._safe_get(statistics, 'yellowCardsHome', 0))
-            yellow_cards_away = self._extract_numeric(self._safe_get(statistics, 'yellowCardsAway', 0))
-            
-            passes_home = self._extract_numeric(self._safe_get(statistics, 'passesHome', 0))
-            passes_away = self._extract_numeric(self._safe_get(statistics, 'passesAway', 0))
-            
-            passes_accuracy_home = self._extract_float(self._safe_get(statistics, 'passesAccuracyHome', 0))
-            passes_accuracy_away = self._extract_float(self._safe_get(statistics, 'passesAccuracyAway', 0))
-
-            # Создаем объект LiveStats
-            live_stats = LiveStats(
-                minute=minute,
-                shots_home=shots_home,
-                shots_away=shots_away,
-                shots_ontarget_home=shots_ontarget_home,
-                shots_ontarget_away=shots_ontarget_away,
-                possession_home=possession_home,
-                possession_away=possession_away,
-                corners_home=corners_home,
-                corners_away=corners_away,
-                fouls_home=fouls_home,
-                fouls_away=fouls_away,
-                yellow_cards_home=yellow_cards_home,
-                yellow_cards_away=yellow_cards_away,
-                dangerous_attacks_home=dangerous_attacks_home,
-                dangerous_attacks_away=dangerous_attacks_away,
-                passes_home=passes_home,
-                passes_away=passes_away,
-                passes_accuracy_home=passes_accuracy_home,
-                passes_accuracy_away=passes_accuracy_away
-            )
+            # Создаем словарь со статистикой
+            stats_dict = {
+                'minute': minute,
+                'shots_home': statistics.get('totalShotsHome', 0) or 0,
+                'shots_away': statistics.get('totalShotsAway', 0) or 0,
+                'shots_ontarget_home': statistics.get('shotsOnGoalHome', 0) or 0,
+                'shots_ontarget_away': statistics.get('shotsOnGoalAway', 0) or 0,
+                'possession_home': float(statistics.get('ballPossessionHome', 50) or 50),
+                'possession_away': 100 - float(statistics.get('ballPossessionHome', 50) or 50),
+                'corners_home': statistics.get('cornerKicksHome', 0) or 0,
+                'corners_away': statistics.get('cornerKicksAway', 0) or 0,
+                'fouls_home': statistics.get('foulsHome', 0) or 0,
+                'fouls_away': statistics.get('foulsAway', 0) or 0,
+                'yellow_cards_home': statistics.get('yellowCardsHome', 0) or 0,
+                'yellow_cards_away': statistics.get('yellowCardsAway', 0) or 0,
+                'dangerous_attacks_home': statistics.get('dangerousAttacksHome', 0) or 0,
+                'dangerous_attacks_away': statistics.get('dangerousAttacksAway', 0) or 0,
+                'xg_home': xg_home,
+                'xg_away': xg_away,
+                'passes_home': statistics.get('totalPassesHome', 0) or 0,
+                'passes_away': statistics.get('totalPassesAway', 0) or 0,
+                'passes_accuracy_home': float(statistics.get('passesAccuracyHome', 0) or 0),
+                'passes_accuracy_away': float(statistics.get('passesAccuracyAway', 0) or 0),
+            }
 
             # Проверяем, есть ли реальная статистика
             has_stats = any([
-                live_stats.shots_home > 0,
-                live_stats.shots_away > 0,
-                live_stats.shots_ontarget_home > 0,
-                live_stats.shots_ontarget_away > 0,
-                live_stats.corners_home > 0,
-                live_stats.corners_away > 0
+                stats_dict['shots_home'] > 0,
+                stats_dict['shots_away'] > 0,
+                stats_dict['shots_ontarget_home'] > 0,
+                stats_dict['shots_ontarget_away'] > 0
             ])
 
             if has_stats:
-                logger.info(f"✅ Статистика матча {match_id}: {live_stats.total_shots} ударов, "
-                           f"{live_stats.total_shots_ontarget} в створ")
+                logger.info(f"✅ Статистика матча {match_id}: {stats_dict['shots_home'] + stats_dict['shots_away']} ударов, "
+                           f"{stats_dict['shots_ontarget_home'] + stats_dict['shots_ontarget_away']} в створ")
             else:
                 logger.info(f"ℹ️ Статистика матча {match_id} отсутствует")
                 
-            return live_stats
+            return stats_dict
 
         except Exception as e:
             logger.error(f"❌ Ошибка парсинга статистики матча {match_id}: {e}")
             return None
-
-    def _deep_update(self, target: Dict, source: Dict) -> Dict:
-        """Рекурсивно обновляет словарь"""
-        for key, value in source.items():
-            if isinstance(value, dict):
-                node = target.setdefault(key, {})
-                self._deep_update(node, value)
-            else:
-                target[key] = value
-        return target
 
     async def get_match_events(self, match_id: int) -> List[Dict]:
         """Получает события матча"""
@@ -401,7 +367,8 @@ class SStatsClient:
             return self._get_mock_matches()
         return await self.real_client.get_today_matches()
 
-    async def get_match_statistics(self, match_id: int):
+    async def get_match_statistics(self, match_id: int) -> Optional[Dict]:
+        """Возвращает статистику матча в виде словаря"""
         if self.use_mock:
             return self._get_mock_stats()
         return await self.real_client.get_match_statistics(match_id)
@@ -442,18 +409,20 @@ class SStatsClient:
         return matches
 
     def _get_mock_stats(self):
-        """Создает тестовую статистику"""
+        """Создает тестовую статистику в виде словаря"""
         import random
-        return LiveStats(
-            minute=45,
-            shots_home=random.randint(5, 12),
-            shots_away=random.randint(3, 10),
-            shots_ontarget_home=random.randint(2, 6),
-            shots_ontarget_away=random.randint(1, 4),
-            possession_home=random.randint(45, 65),
-            possession_away=random.randint(35, 55),
-            corners_home=random.randint(2, 6),
-            corners_away=random.randint(1, 5),
-            fouls_home=random.randint(5, 10),
-            fouls_away=random.randint(5, 10)
-        )
+        return {
+            'minute': 45,
+            'shots_home': random.randint(5, 12),
+            'shots_away': random.randint(3, 10),
+            'shots_ontarget_home': random.randint(2, 6),
+            'shots_ontarget_away': random.randint(1, 4),
+            'possession_home': random.randint(45, 65),
+            'possession_away': random.randint(35, 55),
+            'corners_home': random.randint(2, 6),
+            'corners_away': random.randint(1, 5),
+            'fouls_home': random.randint(5, 10),
+            'fouls_away': random.randint(5, 10),
+            'xg_home': random.uniform(0.3, 1.5),
+            'xg_away': random.uniform(0.2, 1.2)
+        }
