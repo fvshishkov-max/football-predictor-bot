@@ -170,11 +170,12 @@ class Predictor:
         return default
     
     def _generate_match_url(self, match: Match) -> str:
-        """Генерирует ссылку на Sofascore"""
+        """Генерирует ссылку на Sofascore с правильной обработкой спецсимволов"""
         if not match.home_team or not match.away_team:
             return "https://www.sofascore.com"
         
         def create_slug(name: str) -> str:
+            # Транслитерация для кириллицы
             translit = {
                 'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
                 'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
@@ -195,8 +196,21 @@ class Predictor:
                 elif char.isalnum() or char == ' ':
                     result += char
                 else:
-                    if char in ['º', '°']:
+                    # Заменяем специальные символы
+                    if char in ['º', '°', 'ó', 'ò', 'ô', 'ö']:
                         result += 'o'
+                    elif char in ['á', 'à', 'â', 'ä', 'ã']:
+                        result += 'a'
+                    elif char in ['é', 'è', 'ê', 'ë']:
+                        result += 'e'
+                    elif char in ['í', 'ì', 'î', 'ï']:
+                        result += 'i'
+                    elif char in ['ú', 'ù', 'û', 'ü']:
+                        result += 'u'
+                    elif char == 'ñ':
+                        result += 'n'
+                    elif char == 'ç':
+                        result += 'c'
                     elif char == '®':
                         result += 'r'
                     elif char == '©':
@@ -205,10 +219,6 @@ class Predictor:
                         result += 'ss'
                     elif char == 'æ':
                         result += 'ae'
-                    elif char in ['ø', 'å']:
-                        result += 'o'
-                    elif char in ['ä', 'ë', 'ï', 'ö', 'ü', 'ÿ']:
-                        result += char[0] + 'e'
                     else:
                         result += ''
             
@@ -252,6 +262,179 @@ class Predictor:
             return False
         
         return True
+    
+    def calculate_total_probabilities(self, home_lambda: float, away_lambda: float) -> Dict:
+        """
+        Рассчитывает вероятности для различных тоталов используя распределение Пуассона
+        
+        Args:
+            home_lambda: Интенсивность голов хозяев
+            away_lambda: Интенсивность голов гостей
+            
+        Returns:
+            Dict с вероятностями для разных тоталов
+        """
+        max_goals = 10
+        total_probs = {}
+        
+        # Рассчитываем распределение для общего количества голов
+        for total in range(max_goals * 2 + 1):
+            prob = 0
+            for i in range(max_goals + 1):
+                for j in range(max_goals + 1):
+                    if i + j == total:
+                        prob += self.stat_models.poisson_probability(home_lambda, i) * \
+                                self.stat_models.poisson_probability(away_lambda, j)
+            total_probs[total] = prob
+        
+        # Рассчитываем вероятности для различных тоталов
+        results = {
+            'under_0.5': total_probs.get(0, 0),
+            'over_0.5': 1 - total_probs.get(0, 0),
+            'under_1.5': sum(total_probs.get(i, 0) for i in range(2)),
+            'over_1.5': 1 - sum(total_probs.get(i, 0) for i in range(2)),
+            'under_2.5': sum(total_probs.get(i, 0) for i in range(3)),
+            'over_2.5': 1 - sum(total_probs.get(i, 0) for i in range(3)),
+            'under_3.5': sum(total_probs.get(i, 0) for i in range(4)),
+            'over_3.5': 1 - sum(total_probs.get(i, 0) for i in range(4)),
+            'under_4.5': sum(total_probs.get(i, 0) for i in range(5)),
+            'over_4.5': 1 - sum(total_probs.get(i, 0) for i in range(5)),
+            'exact_0': total_probs.get(0, 0),
+            'exact_1': total_probs.get(1, 0),
+            'exact_2': total_probs.get(2, 0),
+            'exact_3': total_probs.get(3, 0),
+            'exact_4': total_probs.get(4, 0),
+        }
+        
+        return results
+    
+    def calculate_best_bet(self, home_prob: float, away_prob: float, total_prob: float, match: Optional[Match] = None) -> Dict:
+        """
+        Определяет наилучший вариант ставки на основе вероятностей
+        
+        Args:
+            home_prob: Вероятность гола хозяев
+            away_prob: Вероятность гола гостей
+            total_prob: Общая вероятность гола
+            match: Объект матча (для H2H)
+            
+        Returns:
+            Dict с рекомендациями по ставкам
+        """
+        home_lambda = home_prob * 3
+        away_lambda = away_prob * 3
+        
+        total_probs = self.calculate_total_probabilities(home_lambda, away_lambda)
+        
+        # Находим наиболее вероятные исходы
+        recommendations = []
+        
+        # Тоталы
+        for total_type in ['over_0.5', 'over_1.5', 'over_2.5', 'over_3.5', 'under_2.5']:
+            prob = total_probs.get(total_type, 0)
+            if prob > 0.55:  # 55% вероятность
+                confidence = 'HIGH' if prob > 0.65 else 'MEDIUM'
+                confidence = 'VERY_HIGH' if prob > 0.75 else confidence
+                
+                # Человеко-читаемое название
+                display_name = {
+                    'over_0.5': 'Тотал больше 0.5',
+                    'over_1.5': 'Тотал больше 1.5',
+                    'over_2.5': 'Тотал больше 2.5',
+                    'over_3.5': 'Тотал больше 3.5',
+                    'under_2.5': 'Тотал меньше 2.5'
+                }.get(total_type, total_type)
+                
+                recommendations.append({
+                    'type': 'total',
+                    'market': display_name,
+                    'probability': round(prob * 100, 1),
+                    'confidence': confidence
+                })
+        
+        # Точный счет (только если вероятность > 10%)
+        for score in ['exact_0', 'exact_1', 'exact_2', 'exact_3']:
+            prob = total_probs.get(score, 0)
+            if prob > 0.10:
+                goals = score.split('_')[1]
+                confidence = 'MEDIUM' if prob > 0.15 else 'LOW'
+                
+                recommendations.append({
+                    'type': 'exact_score',
+                    'market': f'Точный счет {goals}:{goals}',
+                    'probability': round(prob * 100, 1),
+                    'confidence': confidence
+                })
+        
+        # Победитель (если есть данные о матче)
+        if match and hasattr(self, '_get_h2h_factor'):
+            h2h_factors = self._get_h2h_factor(match)
+            
+            # Простая оценка вероятности победы
+            home_win_prob = home_prob / (home_prob + away_prob) * 0.7 + 0.15
+            away_win_prob = away_prob / (home_prob + away_prob) * 0.7 + 0.15
+            draw_prob = 1 - home_win_prob - away_win_prob
+            
+            # Корректировка на H2H
+            home_win_prob *= h2h_factors.get('home', 1.0)
+            away_win_prob *= h2h_factors.get('away', 1.0)
+            
+            # Нормализация
+            total = home_win_prob + away_win_prob + draw_prob
+            home_win_prob /= total
+            away_win_prob /= total
+            draw_prob /= total
+            
+            if home_win_prob > 0.40:
+                confidence = 'HIGH' if home_win_prob > 0.55 else 'MEDIUM'
+                recommendations.append({
+                    'type': 'winner',
+                    'market': 'Победа хозяев',
+                    'probability': round(home_win_prob * 100, 1),
+                    'confidence': confidence
+                })
+            elif away_win_prob > 0.40:
+                confidence = 'HIGH' if away_win_prob > 0.55 else 'MEDIUM'
+                recommendations.append({
+                    'type': 'winner',
+                    'market': 'Победа гостей',
+                    'probability': round(away_win_prob * 100, 1),
+                    'confidence': confidence
+                })
+            
+            if draw_prob > 0.30:
+                recommendations.append({
+                    'type': 'draw',
+                    'market': 'Ничья',
+                    'probability': round(draw_prob * 100, 1),
+                    'confidence': 'MEDIUM' if draw_prob > 0.35 else 'LOW'
+                })
+        
+        # Обе забьют
+        both_score_prob = 1 - (total_probs.get('exact_0', 0) + 
+                               (self.stat_models.poisson_probability(home_lambda, 0) * 
+                                self.stat_models.poisson_probability(away_lambda, 1)) +
+                               (self.stat_models.poisson_probability(home_lambda, 1) * 
+                                self.stat_models.poisson_probability(away_lambda, 0)))
+        
+        if both_score_prob > 0.45:
+            confidence = 'HIGH' if both_score_prob > 0.60 else 'MEDIUM'
+            confidence = 'VERY_HIGH' if both_score_prob > 0.70 else confidence
+            
+            recommendations.append({
+                'type': 'both_score',
+                'market': 'Обе забьют (ДА)',
+                'probability': round(both_score_prob * 100, 1),
+                'confidence': confidence
+            })
+        
+        # Сортируем по вероятности
+        recommendations = sorted(recommendations, key=lambda x: x['probability'], reverse=True)
+        
+        return {
+            'total_probabilities': total_probs,
+            'recommendations': recommendations[:5]  # Топ-5 рекомендаций
+        }
     
     def predict_match(self, match: Match) -> Dict:
         """Предсказание с использованием всех статистических моделей"""
@@ -302,6 +485,13 @@ class Predictor:
                 away_goal_prob * 3
             )
             
+            # Расчет рекомендаций по ставкам
+            betting_recommendations = self.calculate_best_bet(
+                home_goal_prob, away_goal_prob, 
+                home_goal_prob + away_goal_prob, 
+                match
+            )
+            
             home_goal_prob = self._calibrate_probability(home_goal_prob)
             away_goal_prob = self._calibrate_probability(away_goal_prob)
             total_goal_prob = self._calculate_total_goal_probability(home_goal_prob, away_goal_prob)
@@ -312,7 +502,7 @@ class Predictor:
             signal = self._generate_signal(
                 match, home_goal_prob, away_goal_prob, total_goal_prob, 
                 confidence_level, home_stats, away_stats, home_form, away_form, match_url,
-                poisson_probs, mc_results
+                poisson_probs, mc_results, betting_recommendations
             )
             
             result = {
@@ -320,6 +510,8 @@ class Predictor:
                 'match': match,
                 'home_team': match.home_team.name if match.home_team else 'Unknown',
                 'away_team': match.away_team.name if match.away_team else 'Unknown',
+                'league_name': match.league_name,
+                'country_code': match.home_team.country_code if match.home_team else None,
                 'home_goal_probability': round(home_goal_prob, 3),
                 'away_goal_probability': round(away_goal_prob, 3),
                 'total_goal_probability': round(total_goal_prob, 3),
@@ -335,6 +527,7 @@ class Predictor:
                 'minute': match.minute,
                 'poisson_probs': poisson_probs,
                 'monte_carlo': mc_results,
+                'betting_recommendations': betting_recommendations,
                 'timestamp': datetime.now().isoformat()
             }
             
@@ -389,7 +582,7 @@ class Predictor:
         if not match.league_id:
             return 1.0
         
-        level = self.league_levels[match.league_id]
+        level = self.league_levels.get(match.league_id, 2)
         
         if level == 1:
             return 1.1
@@ -560,8 +753,9 @@ class Predictor:
                         total_prob: float, confidence: str, home_stats: Dict,
                         away_stats: Dict, home_form: Optional[Dict], 
                         away_form: Optional[Dict], match_url: str,
-                        poisson_probs: Dict, mc_results: Dict) -> Dict:
-        """Генерация сигнала с расширенной статистикой"""
+                        poisson_probs: Dict, mc_results: Dict,
+                        betting_recommendations: Dict) -> Dict:
+        """Генерация сигнала с расширенной статистикой и рекомендациями по тоталам"""
         confidence_emojis = {
             "VERY_HIGH": "🔴",
             "HIGH": "🟠",
@@ -574,6 +768,14 @@ class Predictor:
         
         home_name = match.home_team.name if match.home_team else "Home"
         away_name = match.away_team.name if match.away_team else "Away"
+        
+        # Информация о лиге и стране
+        league_info = ""
+        if match.league_name:
+            league_info = f" ({match.league_name}"
+            if match.home_team and match.home_team.country_code:
+                league_info += f", {match.home_team.country_code}"
+            league_info += ")"
         
         current_score = f"{match.home_score or 0}:{match.away_score or 0}"
         
@@ -597,9 +799,9 @@ class Predictor:
         
         message_lines = [
             f"{emoji} **Потенциальный гол!**",
-            f"⚔️ **{home_name} vs {away_name}**",
+            f"⚔️ **{home_name} vs {away_name}**{league_info}",
             f"📊 **Счет:** {current_score}",
-            f"⏱ **Минута:** {match.minute or 0}' {period}",
+            f"⏱️ **Минута:** {match.minute or 0}' {period}",
             "",
             f"📈 **Вероятность гола:** {total_prob*100:.1f}%",
             f"🎯 **Уверенность:** {confidence}",
@@ -637,38 +839,58 @@ class Predictor:
                 f"  • ТБ 2.5: {poisson_probs.get('over_2.5', 0)*100:.1f}%"
             ])
         
+        # Добавляем рекомендации по ставкам
+        if betting_recommendations and betting_recommendations.get('recommendations'):
+            message_lines.extend([
+                "",
+                "💰 **РЕКОМЕНДАЦИИ ПО СТАВКАМ:**"
+            ])
+            
+            for rec in betting_recommendations['recommendations'][:3]:  # Топ-3
+                rec_emoji = {
+                    'VERY_HIGH': '🔴',
+                    'HIGH': '🟠',
+                    'MEDIUM': '🟡',
+                    'LOW': '🟢'
+                }.get(rec['confidence'], '⚪')
+                
+                message_lines.append(
+                    f"  {rec_emoji} {rec['market']}: {rec['probability']}% ({rec['confidence']})"
+                )
+        
         # Добавляем Монте-Карло результаты
         if mc_results:
             message_lines.extend([
                 "",
                 "🎲 **МОНТЕ-КАРЛО:**",
                 f"  • Средний тотал: {mc_results.get('total_mean', 0):.2f}",
-                f"  • VaR 95%: {mc_results.get('var_95', 0):.1f}",
-                f"  • Дов.интервал: {mc_results.get('bootstrap_ci', (0,0))[0]:.2f}-{mc_results.get('bootstrap_ci', (0,0))[1]:.2f}"
+                f"  • VaR 95%: {mc_results.get('var_95', 0):.1f}"
             ])
         
+        # Добавляем форму команд
         if home_form or away_form:
             message_lines.extend([
                 "",
-                "📈 **ФОРМА КОМАНД:**",
+                "📈 **ФОРМА КОМАНД (последние 5 матчей):**",
             ])
             
             if home_form:
                 form_string = home_form.get('form_string', '')
-                ppg = home_form.get('points_per_game', 0)
+                points = home_form.get('points_per_game', 0) * 5
                 if form_string:
-                    message_lines.append(f"  • {home_name}: {form_string} ({ppg:.1f} о/м)")
+                    message_lines.append(f"  • {home_name}: {form_string} ({points:.0f} очков)")
                 else:
                     message_lines.append(f"  • {home_name}: нет данных")
             
             if away_form:
                 form_string = away_form.get('form_string', '')
-                ppg = away_form.get('points_per_game', 0)
+                points = away_form.get('points_per_game', 0) * 5
                 if form_string:
-                    message_lines.append(f"  • {away_name}: {form_string} ({ppg:.1f} о/м)")
+                    message_lines.append(f"  • {away_name}: {form_string} ({points:.0f} очков)")
                 else:
                     message_lines.append(f"  • {away_name}: нет данных")
         
+        # Добавляем информацию о голах в таймах
         match_id = match.id
         if match_id in self.half_goals:
             first_half = self.half_goals[match_id].get('first', 0)
@@ -676,7 +898,7 @@ class Predictor:
             if first_half > 0 or second_half > 0:
                 message_lines.extend([
                     "",
-                    f"⚽ **ГОЛЫ ПО ТАЙМАМ:**",
+                    f"⚽️ **ГОЛЫ ПО ТАЙМАМ:**",
                     f"  • 1-й тайм: {first_half}",
                     f"  • 2-й тайм: {second_half}"
                 ])
@@ -708,6 +930,9 @@ class Predictor:
             },
             'poisson': poisson_probs,
             'monte_carlo': mc_results,
+            'betting': betting_recommendations,
+            'league_name': match.league_name,
+            'country_code': match.home_team.country_code if match.home_team else None,
             'timestamp': datetime.now()
         }
         

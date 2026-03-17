@@ -8,7 +8,7 @@ import asyncio
 
 # Импортируем config целиком
 import config
-from api_client import SStatsClient
+from football_api import UnifiedFootballClient
 from predictor import Predictor
 from telegram_bot import TelegramBot
 from team_form import TeamFormAnalyzer
@@ -31,6 +31,7 @@ class FootballApp:
             self.bot_token = getattr(config, 'TELEGRAM_TOKEN', None)
             self.channel_id = getattr(config, 'CHANNEL_ID', '-1001679913676')
             self.sstats_api_key = getattr(config, 'SSTATS_TOKEN', None)
+            self.football_data_key = getattr(config, 'FOOTBALL_DATA_KEY', '5b1f5b1fbec540c1bc4b4a10d620d3ed')
             self.use_mock = getattr(config, 'USE_MOCK_API', False)
             self.check_interval = getattr(config, 'CHECK_INTERVAL', 600)
             
@@ -44,6 +45,10 @@ class FootballApp:
             if self.sstats_api_key:
                 logger.info(f"    - первые 5 символов: {self.sstats_api_key[:5]}...")
             
+            logger.info(f"🔑 FOOTBALL_DATA_KEY: {'Найден' if self.football_data_key else 'НЕ НАЙДЕН'}")
+            if self.football_data_key:
+                logger.info(f"    - первые 5 символов: {self.football_data_key[:5]}...")
+            
             logger.info(f"🎭 USE_MOCK_API: {self.use_mock}")
             
             # Проверяем наличие необходимых токенов
@@ -51,17 +56,14 @@ class FootballApp:
                 logger.error("❌ TELEGRAM_TOKEN не найден в config.py!")
                 raise ValueError("TELEGRAM_TOKEN not found in config")
             
-            if not self.sstats_api_key and not self.use_mock:
-                logger.warning("⚠️ SSTATS_TOKEN не найден, переключаю в mock режим")
-                self.use_mock = True
-            
-            # Инициализация компонентов
+            # Инициализация унифицированного API клиента
             logger.info("📡 Подключение к API...")
-            self.api_client = SStatsClient(
-                api_key=self.sstats_api_key if self.sstats_api_key else "mock_key",
+            self.api_client = UnifiedFootballClient(
+                football_data_key=self.football_data_key,
+                sstats_key=self.sstats_api_key,
                 use_mock=self.use_mock
             )
-            logger.info(f"✅ API клиент инициализирован (mock режим: {self.use_mock})")
+            logger.info(f"✅ Унифицированный API клиент инициализирован")
             
             logger.info("🧠 Инициализация предиктора...")
             self.predictor = Predictor()
@@ -85,6 +87,9 @@ class FootballApp:
             
             # Словарь для отслеживания голов по таймам
             self.match_goals = {}
+            
+            # Словарь для отслеживания последних прогнозов по матчам
+            self.last_predictions = {}
             
             # Создаем event loop для асинхронных операций
             self.loop = asyncio.new_event_loop()
@@ -218,6 +223,13 @@ class FootballApp:
             # Передаем информацию о голе в predictor
             if hasattr(self.predictor, 'check_goal_scored'):
                 self.predictor.check_goal_scored(match)
+            
+            # Проверяем, был ли прогноз на этот матч
+            if match_id in self.last_predictions:
+                prediction = self.last_predictions[match_id]
+                # Уведомляем о голе после прогноза
+                if hasattr(self, 'stats_reporter'):
+                    self.stats_reporter.check_goal_scored(match, prediction)
     
     def _create_match_analysis(self, match, signal) -> MatchAnalysis:
         """Создает объект MatchAnalysis из сигнала"""
@@ -296,6 +308,14 @@ class FootballApp:
         # Ссылка на матч
         match_url = signal.get('match_url', 'https://www.sofascore.com')
         
+        # Информация о лиге
+        league_info = ""
+        if signal.get('league_name'):
+            league_info = f" ({signal.get('league_name')}"
+            if signal.get('country_code'):
+                league_info += f", {signal.get('country_code')}"
+            league_info += ")"
+        
         # Определяем период матча
         period = ""
         if match.minute:
@@ -327,9 +347,9 @@ class FootballApp:
         # Формируем сообщение
         message_lines = [
             f"{emoji} **Потенциальный гол!**",
-            f"⚔️ **{home_team} vs {away_team}**",
+            f"⚔️ **{home_team} vs {away_team}**{league_info}",
             f"📊 **Счет:** {current_score}",
-            f"⏱ **Минута:** {match.minute or 0}' {period}",
+            f"⏱️ **Минута:** {match.minute or 0}' {period}",
             "",
             f"📈 **Вероятность гола:** {signal.get('probability', 0)*100:.1f}%",
             f"🎯 **Уверенность:** {confidence}",
@@ -356,26 +376,46 @@ class FootballApp:
                 "  • Статистика временно недоступна"
             ])
         
-        # Добавляем форму команд если она есть
+        # Добавляем рекомендации по ставкам
+        betting = signal.get('betting', {})
+        if betting and betting.get('recommendations'):
+            message_lines.extend([
+                "",
+                "💰 **РЕКОМЕНДАЦИИ ПО СТАВКАМ:**"
+            ])
+            
+            for rec in betting['recommendations'][:3]:  # Топ-3
+                rec_emoji = {
+                    'VERY_HIGH': '🔴',
+                    'HIGH': '🟠',
+                    'MEDIUM': '🟡',
+                    'LOW': '🟢'
+                }.get(rec['confidence'], '⚪')
+                
+                message_lines.append(
+                    f"  {rec_emoji} {rec['market']}: {rec['probability']}% ({rec['confidence']})"
+                )
+        
+        # Добавляем форму команд
         if home_form or away_form:
             message_lines.extend([
                 "",
-                "📈 **ФОРМА КОМАНД:**",
+                "📈 **ФОРМА КОМАНД (последние 5 матчей):**",
             ])
             
             if home_form:
                 form_string = home_form.get('form_string', '')
-                ppg = home_form.get('points_per_game', 0)
+                points = home_form.get('points_per_game', 0) * 5
                 if form_string:
-                    message_lines.append(f"  • {home_team}: {form_string} ({ppg:.1f} о/м)")
+                    message_lines.append(f"  • {home_team}: {form_string} ({points:.0f} очков)")
                 else:
                     message_lines.append(f"  • {home_team}: нет данных")
             
             if away_form:
                 form_string = away_form.get('form_string', '')
-                ppg = away_form.get('points_per_game', 0)
+                points = away_form.get('points_per_game', 0) * 5
                 if form_string:
-                    message_lines.append(f"  • {away_team}: {form_string} ({ppg:.1f} о/м)")
+                    message_lines.append(f"  • {away_team}: {form_string} ({points:.0f} очков)")
                 else:
                     message_lines.append(f"  • {away_team}: нет данных")
         
@@ -387,7 +427,7 @@ class FootballApp:
             if first_half > 0 or second_half > 0:
                 message_lines.extend([
                     "",
-                    f"⚽ **ГОЛЫ ПО ТАЙМАМ:**",
+                    f"⚽️ **ГОЛЫ ПО ТАЙМАМ:**",
                     f"  • 1-й тайм: {first_half}",
                     f"  • 2-й тайм: {second_half}"
                 ])
@@ -435,6 +475,11 @@ class FootballApp:
                     if not match or not hasattr(match, 'id'):
                         continue
                     
+                    # Получаем статистику для матча
+                    stats = await self.api_client.get_match_statistics(match)
+                    if stats:
+                        match.stats = stats
+                    
                     # Проверяем, изменился ли счет (был ли гол)
                     self._check_goal_scored(match)
                     
@@ -446,6 +491,13 @@ class FootballApp:
                     signal = self.predictor.analyze_live_match(match)
                     
                     if signal:
+                        # Сохраняем прогноз для этого матча
+                        self.last_predictions[match.id] = signal
+                        
+                        # Регистрируем прогноз в репортере статистики
+                        if hasattr(self, 'stats_reporter'):
+                            self.stats_reporter.register_prediction(match.id, signal)
+                        
                         # Создаем объект MatchAnalysis
                         analysis = self._create_match_analysis(match, signal)
                         
@@ -478,6 +530,12 @@ class FootballApp:
                                     self.stats_reporter.check_prediction_accuracy(match, signal)
                         else:
                             logger.debug(f"⏳ Сигнал для матча {match.id} поставлен в очередь")
+                    
+                    # Если матч завершен, проверяем его в любом случае (даже без нового сигнала)
+                    elif match.is_finished and match.id in self.last_predictions:
+                        # Проверяем точность предыдущего прогноза
+                        if hasattr(self, 'stats_reporter'):
+                            self.stats_reporter.check_prediction_accuracy(match, self.last_predictions[match.id])
                     
                     self.stats['matches_analyzed'] += 1
                     
@@ -583,6 +641,7 @@ class FootballApp:
             f"📤 Успешно отправлено: {telegram_stats.get('successful_sends', 0)}",
             f"📤 Всего сигналов в памяти: {telegram_stats.get('sent_signals', 0)}",
             f"📤 Неудачных попыток: {telegram_stats.get('failed_attempts', 0)}",
+            f"📤 Отслеживаемых матчей: {len(self.last_predictions)}",
             "-"*60,
             "📊 СТАТИСТИКА ПРЕДИКТОРА",
             f"   Всего предсказаний: {predictor_stats.get('total_predictions', 0)}",
@@ -633,6 +692,7 @@ class FootballApp:
                 f.write(f"Успешно отправлено: {telegram_stats.get('successful_sends', 0)}\n")
                 f.write(f"Всего сигналов в памяти: {telegram_stats.get('sent_signals', 0)}\n")
                 f.write(f"Неудачных попыток: {telegram_stats.get('failed_attempts', 0)}\n")
+                f.write(f"Отслеживаемых матчей: {len(self.last_predictions)}\n")
                 
                 if hasattr(self.predictor, 'accuracy_stats'):
                     accuracy = self.predictor.accuracy_stats
@@ -667,6 +727,7 @@ class FootballApp:
             'telegram_queue_size': self.telegram_bot.get_queue_size(),
             'telegram_stats': self.telegram_bot.get_stats() if hasattr(self.telegram_bot, 'get_stats') else {},
             'thresholds': self.predictor.thresholds,
+            'tracked_matches': len(self.last_predictions),
             'timestamp': datetime.now().isoformat()
         }
         
