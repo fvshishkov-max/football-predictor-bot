@@ -418,26 +418,26 @@ class UnifiedFastClient:
     
     def __init__(self):
         self.sstats = OptimizedSStatsClient(config.SSTATS_TOKEN) if config.SSTATS_TOKEN else None
-        self.rapidapi = RapidAPIClient(config.RAPIDAPI_KEY) if config.RAPIDAPI_KEY else None
+        # Временно отключаем RapidAPI до получения правильного ключа
+        self.rapidapi = None  # RapidAPIClient(config.RAPIDAPI_KEY) if config.RAPIDAPI_KEY else None
         self.use_mock = config.USE_MOCK_API
         
     async def get_live_matches(self) -> List[Match]:
-        """Быстро получает live матчи из всех источников параллельно"""
+        """Быстро получает live матчи из доступных источников"""
         matches = []
         tasks = []
         
         if self.sstats and not self.use_mock:
             tasks.append(self.sstats.get_live_matches())
         
-        if self.rapidapi and not self.use_mock:
-            tasks.append(self.rapidapi.get_live_matches())
+        # RapidAPI временно отключен
         
         if tasks:
             results = await asyncio.gather(*tasks, return_exceptions=True)
             
             for result in results:
                 if isinstance(result, Exception):
-                    logger.error(f"Ошибка в одном из API: {result}")
+                    logger.error(f"Ошибка в API: {result}")
                 elif result:
                     matches.extend(result)
         

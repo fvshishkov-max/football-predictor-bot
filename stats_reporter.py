@@ -63,10 +63,15 @@ class StatsReporter:
     
     def register_prediction(self, match_id: int, prediction: Dict):
         """Регистрирует прогноз для последующего отслеживания"""
+        # Получаем минуту из match, если есть
+        minute = 0
+        if hasattr(self, 'last_match') and self.last_match:
+            minute = self.last_match.minute or 0
+            
         self.pending_predictions[match_id] = {
             'prediction': prediction,
             'timestamp': datetime.now(),
-            'match_minute': prediction.get('minute', 0),
+            'match_minute': minute,
             'home_score': 0,
             'away_score': 0,
             'processed': False
@@ -122,7 +127,7 @@ class StatsReporter:
             'match_id': prediction.get('match_id'),
             'home_team': prediction.get('home_team'),
             'away_team': prediction.get('away_team'),
-            'probability': prediction.get('total_goal_probability', 0),
+            'probability': prediction.get('goal_probability', 0),
             'confidence': confidence,
             'minute': minute,
             'league_id': league_id,
@@ -147,7 +152,7 @@ class StatsReporter:
         """Обновляет финансовую статистику"""
         try:
             odds = 1.95
-            probability = prediction.get('total_goal_probability', 0.5)
+            probability = prediction.get('goal_probability', 0.5)
             
             kelly_fraction = self.betting_opt.kelly_criterion(probability, odds)
             stake = self.betting_opt.current_bankroll * kelly_fraction
@@ -164,7 +169,6 @@ class StatsReporter:
     def check_prediction_accuracy(self, match: Match, prediction: Dict):
         """Проверяет точность прогноза после завершения матча"""
         if not match.is_finished:
-            # Если матч не завершен, просто регистрируем прогноз
             self.register_prediction(match.id, prediction)
             return
         
@@ -178,18 +182,21 @@ class StatsReporter:
             'match_id': match.id,
             'home_team': match.home_team.name if match.home_team else 'Unknown',
             'away_team': match.away_team.name if match.away_team else 'Unknown',
-            'total_goal_probability': predicted_prob,
+            'goal_probability': predicted_prob,
             'confidence_level': prediction.get('confidence', 'MEDIUM'),
             'minute': match.minute,
-            'league_id': match.league_id
+            'league_id': match.league_id,
+            'was_correct': was_correct
         }
         
         self.update_stats(prediction_data, was_correct)
         
-        # Отправляем уведомление о результате
-        self.send_result_notification(match, prediction, was_correct)
+        # Отправляем соответствующее уведомление
+        if was_correct:
+            self.send_success_notification(match, prediction)
+        else:
+            self.send_failed_prediction_notification(match, prediction)
         
-        # Удаляем из списка ожидающих
         if match.id in self.pending_predictions:
             del self.pending_predictions[match.id]
     
@@ -212,42 +219,11 @@ class StatsReporter:
             
             pending['processed'] = True
     
-    def send_result_notification(self, match: Match, prediction: Dict, was_correct: bool):
-        """Отправляет уведомление о результате прогноза через send_goal_signal"""
+    def send_success_notification(self, match: Match, prediction: Dict):
+        """Отправляет уведомление о совпадении прогноза"""
         try:
-            from models import MatchAnalysis, GoalSignal, LiveStats
-            
-            # Создаем простой анализ для передачи в сигнал
-            stats = LiveStats(minute=match.minute or 0)
-            goal_signal = GoalSignal(
-                match_id=match.id,
-                predicted_minute=match.minute or 0,
-                probability=prediction.get('probability', 0),
-                signal_type=prediction.get('confidence', 'MEDIUM'),
-                description=f"Результат прогноза",
-                timestamp=datetime.now(),
-                stats=stats.to_dict(),
-                minutes_left=0
-            )
-            analysis = MatchAnalysis(
-                match_id=match.id,
-                timestamp=datetime.now(),
-                minute=match.minute or 0,
-                score=f"{match.home_score}:{match.away_score}",
-                stats=stats,
-                activity_level="NORMAL",
-                activity_description="Матч завершен",
-                attack_potential="NORMAL",
-                next_signal=goal_signal,
-                has_signal=True
-            )
-            
-            if was_correct:
-                emoji = "✅"
-                title = "ПРОГНОЗ СЫГРАЛ!"
-            else:
-                emoji = "❌"
-                title = "ПРОГНОЗ НЕ СЫГРАЛ"
+            prob = prediction.get('probability', 0)
+            confidence = prediction.get('confidence', 'MEDIUM')
             
             # Получаем статистику точности
             last_10 = self.stats['recent_matches'][-10:]
@@ -255,59 +231,49 @@ class StatsReporter:
             last_10_accuracy = (last_10_correct / len(last_10)) * 100 if last_10 else 0
             
             message = (
-                f"{emoji} **{title}**\n"
+                f"✅ **ПРОГНОЗ СЫГРАЛ!**\n"
                 f"━━━━━━━━━━━━━━━━━━━━━\n\n"
                 f"⚔️ {match.home_team.name} vs {match.away_team.name}\n"
                 f"📊 Итоговый счет: {match.home_score}:{match.away_score}\n\n"
-                f"📈 Прогноз: {prediction.get('probability', 0):.1f}%\n"
-                f"🎯 Уверенность: {prediction.get('confidence', 'MEDIUM')}\n"
-                f"📊 Прогнозировался гол: {'ДА' if prediction.get('probability', 0) > 50 else 'НЕТ'}\n"
-                f"⚽ Голы в матче: {'БЫЛИ' if match.total_goals > 0 else 'НЕТ'}\n\n"
-                f"📊 Точность за последние 10 матчей: {last_10_accuracy:.1f}%\n"
+                f"📈 Прогноз: {prob:.1f}%\n"
+                f"🎯 Уверенность: {confidence}\n\n"
+                f"📊 Точность за последние 10 матчей: {last_10_accuracy:.1f}%\n\n"
+                f"🔥 Отличная работа! Прогноз подтвердился."
             )
             
-            if was_correct:
-                message += f"\n🔥 Отличная работа! Прогноз подтвердился."
-            else:
-                message += f"\n💪 В следующий раз повезет больше!"
-            
-            # Используем send_goal_signal вместо send_message
-            self.telegram_bot.send_goal_signal(match, analysis, message)
-            logger.info(f"{emoji} Отправлено уведомление о результате для матча {match.id}")
+            # Отправляем простое сообщение без analysis
+            self.telegram_bot.send_goal_signal(match, None, message)
+            logger.info(f"✅ Отправлено уведомление о совпадении для матча {match.id}")
             
         except Exception as e:
-            logger.error(f"Ошибка отправки уведомления о результате: {e}")
+            logger.error(f"Ошибка отправки уведомления о совпадении: {e}")
+    
+    def send_failed_prediction_notification(self, match: Match, prediction: Dict):
+        """Отправляет уведомление о том, что прогноз не зашел"""
+        try:
+            prob = prediction.get('probability', 0)
+            confidence = prediction.get('confidence', 'MEDIUM')
+            
+            message = (
+                f"❌ **ПРОГНОЗ НЕ СЫГРАЛ**\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n\n"
+                f"⚔️ {match.home_team.name} vs {match.away_team.name}\n"
+                f"📊 Итоговый счет: {match.home_score}:{match.away_score}\n\n"
+                f"📈 Прогноз был: {prob:.1f}%\n"
+                f"🎯 Уверенность: {confidence}\n\n"
+                f"💪 В следующий раз повезет больше!"
+            )
+            
+            # Отправляем простое сообщение без analysis
+            self.telegram_bot.send_goal_signal(match, None, message)
+            logger.info(f"❌ Отправлено уведомление о несыгравшем прогнозе для матча {match.id}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка отправки уведомления о несыгравшем прогнозе: {e}")
     
     def send_goal_notification(self, match: Match, prediction: Dict):
-        """Отправляет уведомление о забитом голе после прогноза через send_goal_signal"""
+        """Отправляет уведомление о забитом голе после прогноза"""
         try:
-            from models import MatchAnalysis, GoalSignal, LiveStats
-            
-            # Создаем простой анализ для передачи в сигнал
-            stats = LiveStats(minute=match.minute or 0)
-            goal_signal = GoalSignal(
-                match_id=match.id,
-                predicted_minute=match.minute or 0,
-                probability=prediction.get('probability', 0),
-                signal_type=prediction.get('confidence', 'MEDIUM'),
-                description=f"Гол после прогноза",
-                timestamp=datetime.now(),
-                stats=stats.to_dict(),
-                minutes_left=90 - (match.minute or 0)
-            )
-            analysis = MatchAnalysis(
-                match_id=match.id,
-                timestamp=datetime.now(),
-                minute=match.minute or 0,
-                score=f"{match.home_score}:{match.away_score}",
-                stats=stats,
-                activity_level="HIGH",
-                activity_description="Гол забит!",
-                attack_potential="HIGH",
-                next_signal=goal_signal,
-                has_signal=True
-            )
-            
             message = (
                 f"⚽ **ГОЛ ПОСЛЕ ПРОГНОЗА!**\n"
                 f"━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -319,19 +285,16 @@ class StatsReporter:
                 f"🔥 Прогноз сработал!"
             )
             
-            # Используем send_goal_signal вместо send_message
-            self.telegram_bot.send_goal_signal(match, analysis, message)
+            # Отправляем простое сообщение без analysis
+            self.telegram_bot.send_goal_signal(match, None, message)
             logger.info(f"⚽ Отправлено уведомление о голе для матча {match.id}")
             
         except Exception as e:
             logger.error(f"Ошибка отправки уведомления о голе: {e}")
     
     def send_periodic_report(self):
-        """Отправляет периодический отчет в Telegram через send_goal_signal"""
+        """Отправляет периодический отчет в Telegram"""
         try:
-            from models import MatchAnalysis, GoalSignal, LiveStats
-            from datetime import datetime
-            
             total = self.stats['total_predictions']
             correct = self.stats['correct_predictions']
             accuracy = self.stats['accuracy_rate'] * 100
@@ -393,7 +356,7 @@ class StatsReporter:
             
             message = "\n".join(message_lines)
             
-            # Создаем фиктивный match и analysis для send_goal_signal
+            # Создаем фиктивный match для send_goal_signal
             dummy_match = type('Match', (), {
                 'id': 0,
                 'home_team': type('Team', (), {'name': 'Статистика'}),
@@ -404,31 +367,8 @@ class StatsReporter:
                 'is_finished': False
             })()
             
-            stats = LiveStats(minute=0)
-            goal_signal = GoalSignal(
-                match_id=0,
-                predicted_minute=0,
-                probability=0,
-                signal_type='INFO',
-                description='Периодический отчет',
-                timestamp=datetime.now(),
-                stats=stats.to_dict(),
-                minutes_left=0
-            )
-            analysis = MatchAnalysis(
-                match_id=0,
-                timestamp=datetime.now(),
-                minute=0,
-                score='0:0',
-                stats=stats,
-                activity_level='INFO',
-                activity_description='Отчет',
-                attack_potential='INFO',
-                next_signal=goal_signal,
-                has_signal=True
-            )
-            
-            self.telegram_bot.send_goal_signal(dummy_match, analysis, message)
+            # Отправляем отчет
+            self.telegram_bot.send_goal_signal(dummy_match, None, message)
             self.stats['last_report'] = datetime.now().isoformat()
             logger.info(f"📊 Отправлен периодический отчет (матч #{total})")
             
