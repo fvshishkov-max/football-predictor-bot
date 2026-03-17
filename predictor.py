@@ -14,6 +14,7 @@ import joblib
 from models import Match, LiveStats
 from team_form import TeamFormAnalyzer
 from statistical_models import StatisticalModels, MonteCarloSimulator, TimeSeriesAnalyzer
+from club_elo_api import IntegratedEloPredictor
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,10 @@ class Predictor:
         self.match_signal_count = {}  # Количество сигналов для матча
         self.max_signals_per_match = 3  # Максимум сигналов на матч
         self.min_time_between_signals = 600  # Минимум 10 минут между сигналами для одного матча
+        
+        # Инициализация Elo интеграции
+        self.elo_predictor = None
+        self.use_elo = True
         
         # Словарь синонимов для статистики
         self.stat_synonyms = {
@@ -573,6 +578,50 @@ class Predictor:
             logger.error(f"❌ Ошибка при предсказании матча {match.id}: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             return self._get_default_prediction(match)
+    
+    async def predict_match_with_elo(self, match: Match) -> Dict:
+        """
+        Предсказание с интеграцией Elo рейтингов
+        """
+        try:
+            # Получаем базовое предсказание
+            base_prediction = self.predict_match(match)
+            
+            # Если есть ошибка, возвращаем базовое
+            if base_prediction.get('error', False):
+                return base_prediction
+            
+            # Инициализируем Elo при первом использовании
+            if self.use_elo and not self.elo_predictor:
+                try:
+                    self.elo_predictor = IntegratedEloPredictor(self)
+                    logger.info("✅ Elo интеграция инициализирована")
+                except Exception as e:
+                    logger.error(f"❌ Ошибка инициализации Elo: {e}")
+                    self.use_elo = False
+                    return base_prediction
+            
+            # Улучшаем предсказание с помощью Elo
+            if self.use_elo and self.elo_predictor:
+                enhanced = await self.elo_predictor.enhance_prediction(match, base_prediction)
+                
+                # Добавляем Elo данные в сигнал для отображения
+                if enhanced.get('elo_data'):
+                    base_prediction['elo_data'] = enhanced['elo_data']
+                    base_prediction['home_goal_probability'] = enhanced['home_goal_probability']
+                    base_prediction['away_goal_probability'] = enhanced['away_goal_probability']
+                    base_prediction['total_goal_probability'] = enhanced['total_goal_probability']
+                    
+                    # Пересчитываем уровень уверенности
+                    base_prediction['confidence_level'] = self._determine_confidence_level(
+                        base_prediction['total_goal_probability']
+                    )
+            
+            return base_prediction
+            
+        except Exception as e:
+            logger.error(f"Ошибка Elo предсказания: {e}")
+            return self.predict_match(match)  # Fallback к обычному методу
     
     def _get_h2h_factor(self, match: Match) -> Dict:
         """Анализирует историю личных встреч"""
