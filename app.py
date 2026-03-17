@@ -145,13 +145,14 @@ class FastFootballApp:
                     
                     if signal:
                         self.last_predictions[match.id] = signal
-                        self.stats_reporter.register_prediction(match.id, signal)
+                        # Передаем match в register_prediction
+                        self.stats_reporter.register_prediction(match.id, signal, match)
                         
                         # Отправка без лишних проверок
                         if self.telegram_bot.send_goal_signal(match, None, signal['message']):
                             self.stats['signals_sent'] += 1
                             logger.info(f"📨 Сигнал: {match.home_team.name} vs {match.away_team.name} - {signal['probability']*100:.1f}%")
-                    
+                                        
                     self.stats['matches_analyzed'] += 1
                     
                 except Exception as e:

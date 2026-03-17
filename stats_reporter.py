@@ -61,19 +61,23 @@ class StatsReporter:
         except Exception as e:
             logger.error(f"Ошибка сохранения статистики: {e}")
     
-    def register_prediction(self, match_id: int, prediction: Dict):
+    def register_prediction(self, match_id: int, prediction: Dict, match: Optional[Match] = None):
         """Регистрирует прогноз для последующего отслеживания"""
-        # Получаем минуту из match, если есть
         minute = 0
-        if hasattr(self, 'last_match') and self.last_match:
-            minute = self.last_match.minute or 0
+        home_score = 0
+        away_score = 0
+        
+        if match:
+            minute = match.minute or 0
+            home_score = match.home_score or 0
+            away_score = match.away_score or 0
             
         self.pending_predictions[match_id] = {
             'prediction': prediction,
             'timestamp': datetime.now(),
             'match_minute': minute,
-            'home_score': 0,
-            'away_score': 0,
+            'home_score': home_score,
+            'away_score': away_score,
             'processed': False
         }
         logger.info(f"📝 Зарегистрирован прогноз для матча {match_id}")
@@ -169,7 +173,7 @@ class StatsReporter:
     def check_prediction_accuracy(self, match: Match, prediction: Dict):
         """Проверяет точность прогноза после завершения матча"""
         if not match.is_finished:
-            self.register_prediction(match.id, prediction)
+            self.register_prediction(match.id, prediction, match)
             return
         
         had_goal = match.total_goals > 0
@@ -210,7 +214,10 @@ class StatsReporter:
             return
         
         # Проверяем, изменился ли счет
-        if match.home_score > pending['home_score'] or match.away_score > pending['away_score']:
+        current_home = match.home_score or 0
+        current_away = match.away_score or 0
+        
+        if current_home > pending['home_score'] or current_away > pending['away_score']:
             # Гол забит!
             logger.info(f"⚽ ГОЛ после прогноза в матче {match.id}!")
             
@@ -218,6 +225,9 @@ class StatsReporter:
             self.send_goal_notification(match, prediction)
             
             pending['processed'] = True
+            # Обновляем счет
+            pending['home_score'] = current_home
+            pending['away_score'] = current_away
     
     def send_success_notification(self, match: Match, prediction: Dict):
         """Отправляет уведомление о совпадении прогноза"""
@@ -225,13 +235,23 @@ class StatsReporter:
             prob = prediction.get('probability', 0)
             confidence = prediction.get('confidence', 'MEDIUM')
             
+            # Определяем эмодзи для уверенности
+            confidence_emojis = {
+                "VERY_HIGH": "🔴",
+                "HIGH": "🟠",
+                "MEDIUM": "🟡",
+                "LOW": "🟢",
+                "VERY_LOW": "⚪"
+            }
+            emoji = confidence_emojis.get(confidence, "⚪")
+            
             # Получаем статистику точности
             last_10 = self.stats['recent_matches'][-10:]
             last_10_correct = sum(1 for m in last_10 if m['was_correct'])
             last_10_accuracy = (last_10_correct / len(last_10)) * 100 if last_10 else 0
             
             message = (
-                f"✅ **ПРОГНОЗ СЫГРАЛ!**\n"
+                f"{emoji} **ПРОГНОЗ СЫГРАЛ!**\n"
                 f"━━━━━━━━━━━━━━━━━━━━━\n\n"
                 f"⚔️ {match.home_team.name} vs {match.away_team.name}\n"
                 f"📊 Итоговый счет: {match.home_score}:{match.away_score}\n\n"
@@ -254,8 +274,18 @@ class StatsReporter:
             prob = prediction.get('probability', 0)
             confidence = prediction.get('confidence', 'MEDIUM')
             
+            # Определяем эмодзи для уверенности
+            confidence_emojis = {
+                "VERY_HIGH": "🔴",
+                "HIGH": "🟠",
+                "MEDIUM": "🟡",
+                "LOW": "🟢",
+                "VERY_LOW": "⚪"
+            }
+            emoji = confidence_emojis.get(confidence, "⚪")
+            
             message = (
-                f"❌ **ПРОГНОЗ НЕ СЫГРАЛ**\n"
+                f"{emoji} **ПРОГНОЗ НЕ СЫГРАЛ**\n"
                 f"━━━━━━━━━━━━━━━━━━━━━\n\n"
                 f"⚔️ {match.home_team.name} vs {match.away_team.name}\n"
                 f"📊 Итоговый счет: {match.home_score}:{match.away_score}\n\n"
@@ -274,14 +304,27 @@ class StatsReporter:
     def send_goal_notification(self, match: Match, prediction: Dict):
         """Отправляет уведомление о забитом голе после прогноза"""
         try:
+            prob = prediction.get('probability', 0)
+            confidence = prediction.get('confidence', 'MEDIUM')
+            
+            # Определяем эмодзи для уверенности
+            confidence_emojis = {
+                "VERY_HIGH": "🔴",
+                "HIGH": "🟠",
+                "MEDIUM": "🟡",
+                "LOW": "🟢",
+                "VERY_LOW": "⚪"
+            }
+            emoji = confidence_emojis.get(confidence, "⚪")
+            
             message = (
-                f"⚽ **ГОЛ ПОСЛЕ ПРОГНОЗА!**\n"
+                f"{emoji} **ГОЛ ПОСЛЕ ПРОГНОЗА!**\n"
                 f"━━━━━━━━━━━━━━━━━━━━━\n\n"
                 f"⚔️ {match.home_team.name} vs {match.away_team.name}\n"
                 f"📊 Текущий счет: {match.home_score}:{match.away_score}\n"
                 f"⏱ Минута: {match.minute}'\n\n"
-                f"📈 Прогноз был: {prediction.get('probability', 0):.1f}%\n"
-                f"🎯 Уверенность: {prediction.get('confidence', 'MEDIUM')}\n\n"
+                f"📈 Прогноз был: {prob:.1f}%\n"
+                f"🎯 Уверенность: {confidence}\n\n"
                 f"🔥 Прогноз сработал!"
             )
             
