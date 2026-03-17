@@ -7,25 +7,31 @@ import json
 import os
 import random
 import traceback
-from sklearn.linear_model import LogisticRegression
+import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
 import joblib
 
-from models import Match, LiveStats
+# Импортируем config для получения настроек
+import config
+from models import Match
 from team_form import TeamFormAnalyzer
-from statistical_models import StatisticalModels, MonteCarloSimulator, TimeSeriesAnalyzer
-from club_elo_api import IntegratedEloPredictor
+from statistical_models import StatisticalModels, MonteCarloSimulator
+from feature_engineering import AdvancedFeatureEngineer
 
 logger = logging.getLogger(__name__)
 
 class Predictor:
     """
-    Класс для прогнозирования голов в футбольных матчах на основе статистики.
-    Использует расширенные статистические модели и машинное обучение.
+    Улучшенный предиктор с XGBoost и продвинутым feature engineering
+    Отправляет сигналы только при вероятности >= 46%
     """
     
-    def __init__(self, model_path: str = 'data/ml_model.pkl'):
-        # Веса для различных факторов (будут обновляться регрессией)
+    def __init__(self, model_path: str = 'data/xgboost_model.pkl'):
+        # Минимальная вероятность для отправки сигнала (из config или по умолчанию 46%)
+        self.min_signal_probability = getattr(config, 'MIN_PROBABILITY_FOR_SIGNAL', 0.46)
+        logger.info(f"🎯 Минимальная вероятность для сигнала: {self.min_signal_probability*100:.0f}%")
+        
+        # Веса для legacy режима (если XGBoost недоступен)
         self.weights = {
             'xg': 0.28,
             'shots_ontarget': 0.18,
@@ -39,7 +45,7 @@ class Predictor:
         
         self.weights_history = []
         
-        # Пороговые значения
+        # Пороговые значения (будем калибровать под XGBoost)
         self.thresholds = {
             'low': 0.15,
             'medium': 0.25,
@@ -53,6 +59,8 @@ class Predictor:
         self.accuracy_stats = {
             'total_predictions': 0,
             'total_signals': 0,
+            'signals_sent_46plus': 0,
+            'signals_filtered_out': 0,
             'correct_predictions': 0,
             'incorrect_predictions': 0,
             'accuracy_rate': 0.0,
@@ -69,78 +77,89 @@ class Predictor:
             },
             'by_minute': defaultdict(lambda: {'total': 0, 'correct': 0}),
             'by_league': defaultdict(lambda: {'total': 0, 'correct': 0}),
-            'regression_stats': {},
-            'poisson_stats': {},
             'last_updated': datetime.now().isoformat()
         }
         
         self.team_analyzer = TeamFormAnalyzer()
         self.stat_models = StatisticalModels()
         self.monte_carlo = MonteCarloSimulator(n_simulations=10000)
-        self.time_series = TimeSeriesAnalyzer()
+        self.feature_engineer = AdvancedFeatureEngineer()
         
         self.league_levels = self._init_league_levels()
         self.learning_rate = 0.01
         self.min_matches_for_update = 50
         self.model_path = model_path
-        self.ml_model = None
+        
+        # XGBoost модель
+        self.xgb_model = None
         self.scaler = StandardScaler()
-        self.feature_names = [
-            'xg', 'shots_ontarget', 'team_form', 'dangerous_attacks',
-            'shots', 'corners', 'possession', 'h2h', 'home_advantage',
-            'league_level', 'minute_norm'
-        ]
-        self._init_ml_model()
-        self._last_factors_contributions = {}
+        self.feature_names = []
+        self._init_xgb_model()
+        
+        # Elo интеграция
+        self.elo_predictor = None
+        self.use_elo = True
         
         # Для отслеживания голов по таймам
         self.half_goals = {}
         self.half_signals = {}
         
         # Для контроля дублирования сигналов
-        self.match_last_signal = {}  # Время последнего сигнала для матча
-        self.match_signal_count = {}  # Количество сигналов для матча
-        self.max_signals_per_match = 3  # Максимум сигналов на матч
-        self.min_time_between_signals = 600  # Минимум 10 минут между сигналами для одного матча
+        self.match_last_signal = {}
+        self.match_signal_count = {}
+        self.max_signals_per_match = 3
+        self.min_time_between_signals = 600
         
-        # Инициализация Elo интеграции
-        self.elo_predictor = None
-        self.use_elo = True
+        # Средние по лигам (будут заполняться по мере накопления данных)
+        self.league_averages = defaultdict(lambda: {
+            'shots': 10,
+            'shots_on_target': 3.5,
+            'xg': 1.2,
+            'corners': 4.5,
+            'possession': 50,
+            'dangerous_attacks': 20,
+            'passes': 400,
+            'fouls': 12,
+            'yellow_cards': 2
+        })
         
-        # Словарь синонимов для статистики
-        self.stat_synonyms = {
-            'shots': ['shots', 'totalShots', 'shotsTotal', 'attempts', 'total attempts'],
-            'shots_on_target': ['shotsOnTarget', 'shotsOnGoal', 'onTarget', 'shots_ontarget'],
-            'possession': ['possession', 'ballPossession', 'possessionPercentage'],
-            'corners': ['corners', 'cornerKicks', 'cornersTotal'],
-            'fouls': ['fouls', 'foulsCommitted'],
-            'yellow_cards': ['yellowCards', 'yellow'],
-            'red_cards': ['redCards', 'red'],
-            'dangerous_attacks': ['dangerousAttacks', 'attacks'],
-            'xg': ['xg', 'expectedGoals', 'xG']
-        }
-        
-        logger.info("Predictor инициализирован с весами: %s", self.weights)
-        logger.info(f"Пороги уверенности: {self.thresholds}")
+        logger.info("Predictor (XGBoost) инициализирован")
     
-    def _init_ml_model(self):
-        """Инициализирует или загружает модель машинного обучения"""
+    def _init_xgb_model(self):
+        """Инициализирует XGBoost модель с оптимальными параметрами"""
         try:
             if os.path.exists(self.model_path):
-                self.ml_model = joblib.load(self.model_path)
-                logger.info(f"✅ Загружена ML модель из {self.model_path}")
+                self.xgb_model = joblib.load(self.model_path)
+                # Загружаем feature_names если есть
+                if os.path.exists(self.model_path.replace('.pkl', '_features.json')):
+                    with open(self.model_path.replace('.pkl', '_features.json'), 'r') as f:
+                        self.feature_names = json.load(f)
+                logger.info(f"✅ Загружена XGBoost модель из {self.model_path}")
             else:
-                self.ml_model = LogisticRegression(
-                    max_iter=1000,
-                    class_weight='balanced',
-                    random_state=42
+                # Параметры из futbol_corners_forecast, адаптированные для голов
+                self.xgb_model = xgb.XGBClassifier(
+                    n_estimators=200,
+                    max_depth=5,
+                    learning_rate=0.03,
+                    reg_alpha=2.0,
+                    reg_lambda=3.0,
+                    subsample=0.8,
+                    colsample_bytree=0.8,
+                    colsample_bylevel=0.7,
+                    gamma=0.5,
+                    min_child_weight=3,
+                    scale_pos_weight=1.2,
+                    random_state=42,
+                    eval_metric='logloss',
+                    use_label_encoder=False
                 )
-                logger.info("✅ Создана новая ML модель")
+                logger.info("✅ Создана новая XGBoost модель")
         except Exception as e:
-            logger.error(f"❌ Ошибка инициализации ML модели: {e}")
-            self.ml_model = LogisticRegression(
-                max_iter=1000,
-                class_weight='balanced',
+            logger.error(f"❌ Ошибка инициализации XGBoost: {e}")
+            # Fallback на простую версию
+            self.xgb_model = xgb.XGBClassifier(
+                n_estimators=100,
+                max_depth=3,
                 random_state=42
             )
     
@@ -152,397 +171,86 @@ class Predictor:
         }
         return defaultdict(lambda: 2, top_leagues)
     
-    def _get_stat_value(self, stats_dict: Dict, stat_name: str, default: Any = 0) -> Any:
-        """Получает значение статистики по синонимам"""
-        if stat_name not in self.stat_synonyms:
-            return stats_dict.get(stat_name, default)
-        
-        for synonym in self.stat_synonyms[stat_name]:
-            if synonym in stats_dict:
-                return stats_dict[synonym]
-            
-            synonym_lower = synonym.lower()
-            for key, value in stats_dict.items():
-                if key.lower() == synonym_lower:
-                    return value
-                
-            if isinstance(stats_dict, dict):
-                for key, value in stats_dict.items():
-                    if isinstance(value, dict):
-                        result = self._get_stat_value(value, stat_name, None)
-                        if result is not None:
-                            return result
-        
-        return default
-    
-    def _ensure_dict(self, data: Any, name: str = "data") -> Dict:
-        """Гарантированно преобразует данные в словарь"""
-        if data is None:
-            logger.debug(f"{name} is None, возвращаем пустой словарь")
-            return {}
-        
-        if isinstance(data, dict):
-            return data
-        
-        if hasattr(data, '__dict__'):
-            logger.debug(f"{name} является объектом, конвертируем в dict")
-            return data.__dict__
-        
-        if isinstance(data, (list, tuple, set)):
-            logger.debug(f"{name} является {type(data)}, конвертируем в dict")
-            return {str(i): v for i, v in enumerate(data)}
-        
-        logger.debug(f"{name} имеет неожиданный тип {type(data)}, возвращаем пустой словарь")
-        return {}
-    
-    def _generate_match_url(self, match: Match) -> str:
-        """Генерирует ссылку на Sofascore с правильной обработкой спецсимволов"""
-        if not match.home_team or not match.away_team:
-            return "https://www.sofascore.com"
-        
-        def create_slug(name: str) -> str:
-            # Транслитерация для кириллицы
-            translit = {
-                'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
-                'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-                'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-                'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
-                'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
-                'А': 'a', 'Б': 'b', 'В': 'v', 'Г': 'g', 'Д': 'd', 'Е': 'e', 'Ё': 'e',
-                'Ж': 'zh', 'З': 'z', 'И': 'i', 'Й': 'y', 'К': 'k', 'Л': 'l', 'М': 'm',
-                'Н': 'n', 'О': 'o', 'П': 'p', 'Р': 'r', 'С': 's', 'Т': 't', 'У': 'u',
-                'Ф': 'f', 'Х': 'kh', 'Ц': 'ts', 'Ч': 'ch', 'Ш': 'sh', 'Щ': 'shch',
-                'Ъ': '', 'Ы': 'y', 'Ь': '', 'Э': 'e', 'Ю': 'yu', 'Я': 'ya'
-            }
-            
-            result = ''
-            for char in name:
-                if char in translit:
-                    result += translit[char]
-                elif char.isalnum() or char == ' ':
-                    result += char
-                else:
-                    # Заменяем специальные символы
-                    if char in ['º', '°', 'ó', 'ò', 'ô', 'ö']:
-                        result += 'o'
-                    elif char in ['á', 'à', 'â', 'ä', 'ã']:
-                        result += 'a'
-                    elif char in ['é', 'è', 'ê', 'ë']:
-                        result += 'e'
-                    elif char in ['í', 'ì', 'î', 'ï']:
-                        result += 'i'
-                    elif char in ['ú', 'ù', 'û', 'ü']:
-                        result += 'u'
-                    elif char == 'ñ':
-                        result += 'n'
-                    elif char == 'ç':
-                        result += 'c'
-                    elif char == '®':
-                        result += 'r'
-                    elif char == '©':
-                        result += 'c'
-                    elif char == 'ß':
-                        result += 'ss'
-                    elif char == 'æ':
-                        result += 'ae'
-                    else:
-                        result += ''
-            
-            result = result.lower()
-            result = result.replace(' ', '-')
-            result = result.replace('.', '')
-            result = result.replace('&', 'and')
-            result = result.replace('+', 'plus')
-            result = result.replace('fc', '')
-            result = result.replace('cf', '')
-            result = result.replace('--', '-')
-            result = result.strip('-')
-            
-            while '--' in result:
-                result = result.replace('--', '-')
-            
-            result = result.strip('-')
-            return result if result else "match"
-        
-        home_slug = create_slug(match.home_team.name)
-        away_slug = create_slug(match.away_team.name)
-        
-        return f"https://www.sofascore.com/ru/football/match/{home_slug}-vs-{away_slug}/{match.id}"
-    
-    def _should_analyze_match(self, match: Match) -> bool:
-        """Проверяет, стоит ли анализировать матч"""
-        if match.minute and match.minute > 75:
-            logger.debug(f"Пропускаем матч {match.id}: время {match.minute}' > 75'")
-            return False
-        
-        home_score = match.home_score or 0
-        away_score = match.away_score or 0
-        score_diff = abs(home_score - away_score)
-        
-        if score_diff >= 3:
-            logger.debug(f"Пропускаем матч {match.id}: крупный счет {home_score}:{away_score}")
-            return False
-        
-        if home_score >= 4 or away_score >= 4:
-            logger.debug(f"Пропускаем матч {match.id}: много голов {home_score}:{away_score}")
-            return False
-        
-        return True
-    
-    def calculate_total_probabilities(self, home_lambda: float, away_lambda: float) -> Dict:
-        """
-        Рассчитывает вероятности для различных тоталов используя распределение Пуассона
-        
-        Args:
-            home_lambda: Интенсивность голов хозяев
-            away_lambda: Интенсивность голов гостей
-            
-        Returns:
-            Dict с вероятностями для разных тоталов
-        """
-        max_goals = 10
-        total_probs = {}
-        
-        # Рассчитываем распределение для общего количества голов
-        for total in range(max_goals * 2 + 1):
-            prob = 0
-            for i in range(max_goals + 1):
-                for j in range(max_goals + 1):
-                    if i + j == total:
-                        prob += self.stat_models.poisson_probability(home_lambda, i) * \
-                                self.stat_models.poisson_probability(away_lambda, j)
-            total_probs[total] = prob
-        
-        # Рассчитываем вероятности для различных тоталов
-        results = {
-            'under_0.5': total_probs.get(0, 0),
-            'over_0.5': 1 - total_probs.get(0, 0),
-            'under_1.5': sum(total_probs.get(i, 0) for i in range(2)),
-            'over_1.5': 1 - sum(total_probs.get(i, 0) for i in range(2)),
-            'under_2.5': sum(total_probs.get(i, 0) for i in range(3)),
-            'over_2.5': 1 - sum(total_probs.get(i, 0) for i in range(3)),
-            'under_3.5': sum(total_probs.get(i, 0) for i in range(4)),
-            'over_3.5': 1 - sum(total_probs.get(i, 0) for i in range(4)),
-            'under_4.5': sum(total_probs.get(i, 0) for i in range(5)),
-            'over_4.5': 1 - sum(total_probs.get(i, 0) for i in range(5)),
-            'exact_0': total_probs.get(0, 0),
-            'exact_1': total_probs.get(1, 0),
-            'exact_2': total_probs.get(2, 0),
-            'exact_3': total_probs.get(3, 0),
-            'exact_4': total_probs.get(4, 0),
-        }
-        
-        return results
-    
-    def calculate_best_bet(self, home_prob: float, away_prob: float, total_prob: float, match: Optional[Match] = None) -> Dict:
-        """
-        Определяет наилучший вариант ставки на основе вероятностей
-        
-        Args:
-            home_prob: Вероятность гола хозяев
-            away_prob: Вероятность гола гостей
-            total_prob: Общая вероятность гола
-            match: Объект матча (для H2H)
-            
-        Returns:
-            Dict с рекомендациями по ставкам
-        """
-        home_lambda = home_prob * 3
-        away_lambda = away_prob * 3
-        
-        total_probs = self.calculate_total_probabilities(home_lambda, away_lambda)
-        
-        # Находим наиболее вероятные исходы
-        recommendations = []
-        
-        # Тоталы
-        for total_type in ['over_0.5', 'over_1.5', 'over_2.5', 'over_3.5', 'under_2.5']:
-            prob = total_probs.get(total_type, 0)
-            if prob > 0.55:  # 55% вероятность
-                confidence = 'HIGH' if prob > 0.65 else 'MEDIUM'
-                confidence = 'VERY_HIGH' if prob > 0.75 else confidence
-                
-                # Человеко-читаемое название
-                display_name = {
-                    'over_0.5': 'Тотал больше 0.5',
-                    'over_1.5': 'Тотал больше 1.5',
-                    'over_2.5': 'Тотал больше 2.5',
-                    'over_3.5': 'Тотал больше 3.5',
-                    'under_2.5': 'Тотал меньше 2.5'
-                }.get(total_type, total_type)
-                
-                recommendations.append({
-                    'type': 'total',
-                    'market': display_name,
-                    'probability': round(prob * 100, 1),
-                    'confidence': confidence
-                })
-        
-        # Точный счет (только если вероятность > 10%)
-        for score in ['exact_0', 'exact_1', 'exact_2', 'exact_3']:
-            prob = total_probs.get(score, 0)
-            if prob > 0.10:
-                goals = score.split('_')[1]
-                confidence = 'MEDIUM' if prob > 0.15 else 'LOW'
-                
-                recommendations.append({
-                    'type': 'exact_score',
-                    'market': f'Точный счет {goals}:{goals}',
-                    'probability': round(prob * 100, 1),
-                    'confidence': confidence
-                })
-        
-        # Победитель (если есть данные о матче)
-        if match and hasattr(self, '_get_h2h_factor'):
-            try:
-                h2h_factors = self._get_h2h_factor(match)
-                
-                # Простая оценка вероятности победы
-                home_win_prob = home_prob / (home_prob + away_prob) * 0.7 + 0.15
-                away_win_prob = away_prob / (home_prob + away_prob) * 0.7 + 0.15
-                draw_prob = 1 - home_win_prob - away_win_prob
-                
-                # Корректировка на H2H
-                home_win_prob *= h2h_factors.get('home', 1.0)
-                away_win_prob *= h2h_factors.get('away', 1.0)
-                
-                # Нормализация
-                total = home_win_prob + away_win_prob + draw_prob
-                if total > 0:
-                    home_win_prob /= total
-                    away_win_prob /= total
-                    draw_prob /= total
-                
-                if home_win_prob > 0.40:
-                    confidence = 'HIGH' if home_win_prob > 0.55 else 'MEDIUM'
-                    recommendations.append({
-                        'type': 'winner',
-                        'market': 'Победа хозяев',
-                        'probability': round(home_win_prob * 100, 1),
-                        'confidence': confidence
-                    })
-                elif away_win_prob > 0.40:
-                    confidence = 'HIGH' if away_win_prob > 0.55 else 'MEDIUM'
-                    recommendations.append({
-                        'type': 'winner',
-                        'market': 'Победа гостей',
-                        'probability': round(away_win_prob * 100, 1),
-                        'confidence': confidence
-                    })
-                
-                if draw_prob > 0.30:
-                    recommendations.append({
-                        'type': 'draw',
-                        'market': 'Ничья',
-                        'probability': round(draw_prob * 100, 1),
-                        'confidence': 'MEDIUM' if draw_prob > 0.35 else 'LOW'
-                    })
-            except Exception as e:
-                logger.debug(f"Ошибка расчета H2H фактора: {e}")
-        
-        # Обе забьют
-        try:
-            both_score_prob = 1 - (total_probs.get('exact_0', 0) + 
-                                   (self.stat_models.poisson_probability(home_lambda, 0) * 
-                                    self.stat_models.poisson_probability(away_lambda, 1)) +
-                                   (self.stat_models.poisson_probability(home_lambda, 1) * 
-                                    self.stat_models.poisson_probability(away_lambda, 0)))
-            
-            if both_score_prob > 0.45:
-                confidence = 'HIGH' if both_score_prob > 0.60 else 'MEDIUM'
-                confidence = 'VERY_HIGH' if both_score_prob > 0.70 else confidence
-                
-                recommendations.append({
-                    'type': 'both_score',
-                    'market': 'Обе забьют (ДА)',
-                    'probability': round(both_score_prob * 100, 1),
-                    'confidence': confidence
-                })
-        except Exception as e:
-            logger.debug(f"Ошибка расчета обе забьют: {e}")
-        
-        # Сортируем по вероятности
-        recommendations = sorted(recommendations, key=lambda x: x['probability'], reverse=True)
-        
-        return {
-            'total_probabilities': total_probs,
-            'recommendations': recommendations[:5]  # Топ-5 рекомендаций
-        }
-    
     def predict_match(self, match: Match) -> Dict:
-        """Предсказание с использованием всех статистических моделей"""
+        """Предсказание с использованием XGBoost и продвинутых признаков"""
         try:
-            # Получаем статистику и гарантируем, что это словари
-            home_stats_raw = self._extract_team_stats(match, is_home=True)
-            away_stats_raw = self._extract_team_stats(match, is_home=False)
+            # Получаем все необходимые данные
+            home_stats = self._extract_team_stats(match, is_home=True)
+            away_stats = self._extract_team_stats(match, is_home=False)
             
-            # Принудительно преобразуем в словари
-            home_stats = self._ensure_dict(home_stats_raw, "home_stats")
-            away_stats = self._ensure_dict(away_stats_raw, "away_stats")
-            
-            logger.debug(f"home_stats тип: {type(home_stats)}, содержимое: {list(home_stats.keys()) if isinstance(home_stats, dict) else 'не словарь'}")
+            # Если статистика отсутствует, используем базовые значения
+            if not home_stats.get('has_real_stats', True):
+                logger.debug(f"Матч {match.id}: используем базовую статистику")
             
             home_form = None
             away_form = None
-            
-            if match.home_team and hasattr(match.home_team, 'id') and match.home_team.id:
+            if match.home_team and hasattr(match.home_team, 'id'):
                 home_form = self.team_analyzer.get_team_form(match.home_team.id)
-                
-            if match.away_team and hasattr(match.away_team, 'id') and match.away_team.id:
+            if match.away_team and hasattr(match.away_team, 'id'):
                 away_form = self.team_analyzer.get_team_form(match.away_team.id)
             
-            h2h_factors = self._get_h2h_factor(match)
-            league_factor = self._get_league_factor(match)
+            h2h_data = None
+            if match.home_team and match.away_team:
+                h2h_data = self.team_analyzer.get_head_to_head(
+                    match.home_team.id, match.away_team.id, limit=5
+                )
             
-            home_vs_top = self._get_performance_vs_top(match.home_team.id) if match.home_team else 1.0
-            away_vs_top = self._get_performance_vs_top(match.away_team.id) if match.away_team else 1.0
+            # Устанавливаем средние по лиге
+            if match.league_id:
+                self.feature_engineer.set_league_averages(
+                    match.league_id, 
+                    self.league_averages[match.league_id]
+                )
             
-            # Базовые вероятности
-            home_goal_prob = self._calculate_goal_probability(
-                home_stats, is_home=True, team_form=home_form,
-                h2h_factor=h2h_factors['home'] if h2h_factors else 1.0,
-                league_factor=league_factor,
-                top_teams_factor=home_vs_top
+            # Создаем признаки (60+ признаков)
+            features = self.feature_engineer.create_all_features(
+                match, home_stats, away_stats, home_form, away_form, h2h_data, match.league_id
             )
             
-            away_goal_prob = self._calculate_goal_probability(
-                away_stats, is_home=False, team_form=away_form,
-                h2h_factor=h2h_factors['away'] if h2h_factors else 1.0,
-                league_factor=league_factor,
-                top_teams_factor=away_vs_top
-            )
+            # Сохраняем имена признаков
+            if not self.feature_names and self.feature_engineer.feature_names:
+                self.feature_names = self.feature_engineer.feature_names
             
-            # Пуассон-модель для точных счетов
-            home_lambda = home_goal_prob * 3  # Конвертация в интенсивность
-            away_lambda = away_goal_prob * 3
-            poisson_probs = self.stat_models.match_goal_probabilities(
-                home_lambda, away_lambda
-            )
+            # ПРОВЕРКА: обучена ли XGBoost модель?
+            xgb_available = False
+            try:
+                # Пробуем получить booster - если не обучен, будет ошибка
+                if self.xgb_model and hasattr(self.xgb_model, 'get_booster'):
+                    _ = self.xgb_model.get_booster()
+                    xgb_available = True
+            except:
+                xgb_available = False
             
-            # Монте-Карло симуляция
-            mc_results = self.monte_carlo.simulate_match(
-                home_goal_prob * 3,
-                away_goal_prob * 3
-            )
+            if xgb_available:
+                # Масштабируем признаки
+                features_scaled = self.scaler.transform(features) if len(features.shape) > 1 else features
+                
+                # Получаем вероятность гола от XGBoost
+                xgb_proba = self.xgb_model.predict_proba(features_scaled)[0][1]
+                goal_probability = xgb_proba
+                logger.debug(f"Матч {match.id}: XGBoost вероятность {goal_probability:.3f}")
+            else:
+                # Fallback на старую систему
+                logger.debug(f"Матч {match.id}: XGBoost не обучен, используем legacy систему")
+                goal_probability = self._calculate_legacy_probability(
+                    home_stats, away_stats, home_form, away_form, h2h_data, match
+                )
             
-            # Расчет рекомендаций по ставкам
-            betting_recommendations = self.calculate_best_bet(
-                home_goal_prob, away_goal_prob, 
-                home_goal_prob + away_goal_prob, 
-                match
-            )
+            # Калибруем вероятность
+            goal_probability = self._calibrate_probability(goal_probability)
             
-            home_goal_prob = self._calibrate_probability(home_goal_prob)
-            away_goal_prob = self._calibrate_probability(away_goal_prob)
-            total_goal_prob = self._calculate_total_goal_probability(home_goal_prob, away_goal_prob)
-            confidence_level = self._determine_confidence_level(total_goal_prob)
+            # Добавляем небольшую вариацию для разнообразия
+            variation = random.uniform(0.95, 1.05)
+            goal_probability = min(0.95, max(0.1, goal_probability * variation))
             
+            # Определяем уровень уверенности
+            confidence_level = self._determine_confidence_level(goal_probability)
+            
+            # Генерируем сигнал
             match_url = self._generate_match_url(match)
-            
             signal = self._generate_signal(
-                match, home_goal_prob, away_goal_prob, total_goal_prob, 
-                confidence_level, home_stats, away_stats, home_form, away_form, match_url,
-                poisson_probs, mc_results, betting_recommendations
+                match, goal_probability, confidence_level, 
+                home_stats, away_stats, home_form, away_form, match_url
             )
             
             result = {
@@ -552,188 +260,147 @@ class Predictor:
                 'away_team': match.away_team.name if match.away_team else 'Unknown',
                 'league_name': match.league_name,
                 'country_code': match.home_team.country_code if match.home_team else None,
-                'home_goal_probability': round(home_goal_prob, 3),
-                'away_goal_probability': round(away_goal_prob, 3),
-                'total_goal_probability': round(total_goal_prob, 3),
+                'goal_probability': round(goal_probability, 3),
                 'confidence_level': confidence_level,
                 'signal': signal,
                 'home_stats': home_stats,
                 'away_stats': away_stats,
                 'home_form': home_form,
                 'away_form': away_form,
-                'h2h_factors': h2h_factors,
+                'h2h_data': h2h_data,
                 'match_url': match_url,
                 'league_id': match.league_id,
                 'minute': match.minute,
-                'poisson_probs': poisson_probs,
-                'monte_carlo': mc_results,
-                'betting_recommendations': betting_recommendations,
+                'features': features.flatten().tolist() if hasattr(features, 'flatten') else None,
                 'timestamp': datetime.now().isoformat()
             }
             
             self._add_to_history(result)
+            
+            # Периодически пробуем обучать XGBoost
+            if len(self.predictions_history) % 50 == 0 and not xgb_available:
+                self._train_xgboost_on_history()
+            
             return result
             
         except Exception as e:
             logger.error(f"❌ Ошибка при предсказании матча {match.id}: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.error(traceback.format_exc())
             return self._get_default_prediction(match)
     
-    async def predict_match_with_elo(self, match: Match) -> Dict:
-        """
-        Предсказание с интеграцией Elo рейтингов
-        """
+    def _train_xgboost_on_history(self):
+        """Обучает XGBoost модель на исторических данных"""
         try:
-            # Получаем базовое предсказание
-            base_prediction = self.predict_match(match)
+            if len(self.predictions_history) < 100:
+                logger.info(f"⚠️ Недостаточно данных для обучения XGBoost: {len(self.predictions_history)} < 100")
+                return False
             
-            # Если есть ошибка, возвращаем базовое
-            if base_prediction.get('error', False):
-                return base_prediction
+            logger.info("🔄 Начинаем обучение XGBoost на исторических данных...")
             
-            # Инициализируем Elo при первом использовании
-            if self.use_elo and not self.elo_predictor:
-                try:
-                    self.elo_predictor = IntegratedEloPredictor(self)
-                    logger.info("✅ Elo интеграция инициализирована")
-                except Exception as e:
-                    logger.error(f"❌ Ошибка инициализации Elo: {e}")
-                    self.use_elo = False
-                    return base_prediction
+            # Собираем данные для обучения
+            X_train = []
+            y_train = []
             
-            # Улучшаем предсказание с помощью Elo
-            if self.use_elo and self.elo_predictor:
-                enhanced = await self.elo_predictor.enhance_prediction(match, base_prediction)
+            for pred in self.predictions_history[-500:]:  # Используем последние 500 матчей
+                if 'error' in pred and pred['error']:
+                    continue
                 
-                # Добавляем Elo данные в сигнал для отображения
-                if enhanced.get('elo_data'):
-                    base_prediction['elo_data'] = enhanced['elo_data']
-                    base_prediction['home_goal_probability'] = enhanced['home_goal_probability']
-                    base_prediction['away_goal_probability'] = enhanced['away_goal_probability']
-                    base_prediction['total_goal_probability'] = enhanced['total_goal_probability']
-                    
-                    # Пересчитываем уровень уверенности
-                    base_prediction['confidence_level'] = self._determine_confidence_level(
-                        base_prediction['total_goal_probability']
-                    )
+                match = pred.get('match')
+                if not match or not hasattr(match, 'total_goals'):
+                    continue
+                
+                # Получаем признаки (нужно сохранять их в истории)
+                features = pred.get('features')
+                if features is not None:
+                    X_train.append(features)
+                    y_train.append(1 if match.total_goals > 0 else 0)
             
-            return base_prediction
+            if len(X_train) < 50:
+                logger.info(f"⚠️ Недостаточно валидных данных для обучения: {len(X_train)} < 50")
+                return False
             
-        except Exception as e:
-            logger.error(f"Ошибка Elo предсказания: {e}")
-            return self.predict_match(match)  # Fallback к обычному методу
-    
-    def _get_h2h_factor(self, match: Match) -> Dict:
-        """Анализирует историю личных встреч"""
-        if not match.home_team or not match.away_team:
-            return {'home': 1.0, 'away': 1.0}
-        
-        try:
-            h2h_data = self.team_analyzer.get_head_to_head(
-                match.home_team.id,
-                match.away_team.id,
-                limit=5
+            X_train = np.array(X_train)
+            y_train = np.array(y_train)
+            
+            # Масштабируем
+            X_scaled = self.scaler.fit_transform(X_train)
+            
+            # Обучаем XGBoost
+            self.xgb_model.fit(
+                X_scaled, y_train,
+                eval_set=[(X_scaled, y_train)],
+                verbose=False
             )
             
-            if h2h_data['matches_played'] == 0:
-                return {'home': 1.0, 'away': 1.0}
+            # Получаем важность признаков
+            if hasattr(self.xgb_model, 'feature_importances_'):
+                importance_dict = {}
+                for name, imp in zip(self.feature_names, self.xgb_model.feature_importances_):
+                    importance_dict[name] = float(imp)
+                self.accuracy_stats['feature_importance'] = importance_dict
+                
+                # Выводим топ-10 признаков
+                top_features = sorted(importance_dict.items(), key=lambda x: x[1], reverse=True)[:10]
+                logger.info("📊 Топ-10 важных признаков:")
+                for name, imp in top_features:
+                    logger.info(f"   {name}: {imp:.4f}")
             
-            home_factor = 1.0
-            away_factor = 1.0
+            # Сохраняем модель
+            self.save_predictions()
+            logger.info(f"✅ XGBoost модель успешно обучена на {len(X_train)} примерах")
+            return True
             
-            home_advantage = (h2h_data['team1_wins'] - h2h_data['team2_wins']) / h2h_data['matches_played']
-            
-            if h2h_data['team1_avg_goals'] > h2h_data['team2_avg_goals']:
-                home_factor *= (1 + (h2h_data['team1_avg_goals'] - h2h_data['team2_avg_goals']) * 0.1)
-            else:
-                away_factor *= (1 + (h2h_data['team2_avg_goals'] - h2h_data['team1_avg_goals']) * 0.1)
-            
-            if h2h_data.get('trend', 0) > 0:
-                home_factor *= 1.1
-            elif h2h_data.get('trend', 0) < 0:
-                away_factor *= 1.1
-            
-            if h2h_data.get('last_result') == 'team1_win':
-                home_factor *= 1.15
-            elif h2h_data.get('last_result') == 'team2_win':
-                away_factor *= 1.15
-            
-            home_factor = max(0.8, min(1.2, home_factor))
-            away_factor = max(0.8, min(1.2, away_factor))
-            
-            return {'home': home_factor, 'away': away_factor}
         except Exception as e:
-            logger.debug(f"Ошибка получения H2H данных: {e}")
-            return {'home': 1.0, 'away': 1.0}
+            logger.error(f"❌ Ошибка обучения XGBoost: {e}")
+            logger.error(traceback.format_exc())
+            return False
     
-    def _get_league_factor(self, match: Match) -> float:
-        """Фактор силы лиги"""
-        if not match.league_id:
-            return 1.0
+    def _calculate_legacy_probability(self, home_stats, away_stats, home_form, away_form, h2h_data, match) -> float:
+        """Старая система расчета вероятности (fallback)"""
+        # Получаем факторы
+        h2h_factor = 1.0
+        if h2h_data and h2h_data.get('matches_played', 0) > 0:
+            h2h_factor = 1.0 + (h2h_data['team1_wins'] - h2h_data['team2_wins']) / h2h_data['matches_played'] * 0.1
         
-        level = self.league_levels.get(match.league_id, 2)
+        league_factor = self._get_league_factor(match)
         
-        if level == 1:
-            return 1.1
-        else:
-            return 0.95
+        # Рассчитываем вероятности
+        home_prob = self._calculate_goal_probability_legacy(
+            home_stats, is_home=True, team_form=home_form,
+            h2h_factor=h2h_factor, league_factor=league_factor
+        )
+        
+        away_prob = self._calculate_goal_probability_legacy(
+            away_stats, is_home=False, team_form=away_form,
+            h2h_factor=1/h2h_factor, league_factor=league_factor
+        )
+        
+        # Общая вероятность гола
+        total_prob = 1 - (1 - home_prob) * (1 - away_prob)
+        return total_prob
     
-    def _get_performance_vs_top(self, team_id: int) -> float:
-        """Анализ против топ-команд"""
-        try:
-            stats = self.team_analyzer.get_team_performance_vs_top_teams(team_id)
-            
-            if stats['matches_analyzed'] == 0:
-                return 1.0
-            
-            if stats['points_per_game'] > 1.5:
-                return 1.15
-            elif stats['points_per_game'] < 0.8:
-                return 0.85
-            else:
-                return 1.0
-        except Exception as e:
-            logger.debug(f"Ошибка получения performance vs top: {e}")
-            return 1.0
-    
-    def _calculate_goal_probability(self, stats: Dict, is_home: bool = True, 
-                                   team_form: Optional[Dict] = None,
-                                   h2h_factor: float = 1.0,
-                                   league_factor: float = 1.0,
-                                   top_teams_factor: float = 1.0) -> float:
-        """Вероятность гола с учетом статистики"""
+    def _calculate_goal_probability_legacy(self, stats: Dict, is_home: bool = True, 
+                                          team_form: Optional[Dict] = None,
+                                          h2h_factor: float = 1.0,
+                                          league_factor: float = 1.0) -> float:
+        """Старая функция расчета вероятности гола"""
         factors = []
         total_weight = 0
         
-        # Убеждаемся, что stats - словарь
-        if not isinstance(stats, dict):
-            logger.warning(f"stats не является словарем: {type(stats)}, используем пустой словарь")
-            stats = {}
-        
-        # Проверяем, есть ли реальная статистика
         has_real_stats = any([
             stats.get('shots', 0) > 0,
-            stats.get('shots_on_target', 0) > 0,
-            stats.get('dangerous_attacks', 0) > 0
+            stats.get('shots_on_target', 0) > 0
         ])
         
         if not has_real_stats:
             base_prob = 0.25 + (0.05 if is_home else 0)
-            
-            if team_form and isinstance(team_form, dict):
+            if team_form:
                 form_factor = team_form.get('weighted_form', team_form.get('form', 0.5))
                 base_prob += (form_factor - 0.5) * 0.15
-            
             base_prob *= h2h_factor
             base_prob *= league_factor
-            base_prob *= top_teams_factor
-            
-            variation = random.uniform(0.85, 1.15)
-            base_prob *= variation
-            
             return max(0.1, min(0.6, base_prob))
         
-        # Нормализация значений с учетом реальной статистики
         factor_mappings = [
             ('xg', stats.get('xg', 0.5), 3.0, 0.3),
             ('shots_ontarget', stats.get('shots_on_target', 0), 15.0, 0.2),
@@ -750,7 +417,7 @@ class Predictor:
                 factors.append(normalized * weight)
                 total_weight += weight
         
-        if team_form and 'team_form' in self.weights and isinstance(team_form, dict):
+        if team_form and 'team_form' in self.weights:
             form_factor = team_form.get('weighted_form', team_form.get('form', 0.5))
             factors.append(form_factor * self.weights['team_form'])
             total_weight += self.weights['team_form']
@@ -770,106 +437,106 @@ class Predictor:
             probability = 0.3
         
         probability *= league_factor
-        probability *= top_teams_factor
-        
-        variation = random.uniform(0.9, 1.1)
-        probability *= variation
-        
         return max(0.1, min(0.8, probability))
     
+    def _get_league_factor(self, match: Match) -> float:
+        """Фактор силы лиги"""
+        if not match.league_id:
+            return 1.0
+        level = self.league_levels.get(match.league_id, 2)
+        return 1.1 if level == 1 else 0.95
+    
     def _calibrate_probability(self, probability: float) -> float:
-        """Калибровка вероятности"""
+        """Калибровка вероятности на основе исторических данных"""
         if len(self.accuracy_stats['calibration_data']) < 100:
             return probability
         
         calibration_data = self.accuracy_stats['calibration_data'][-100:]
         bins = np.linspace(0, 1, 11)
-        bin_means = []
         
         for i in range(len(bins) - 1):
-            bin_low = bins[i]
-            bin_high = bins[i + 1]
+            bin_low, bin_high = bins[i], bins[i + 1]
+            bin_probs = [p for p, actual in calibration_data if bin_low <= p < bin_high]
+            bin_actuals = [actual for p, actual in calibration_data if bin_low <= p < bin_high]
             
-            bin_probs = [p for p, actual in calibration_data 
-                        if bin_low <= p < bin_high]
-            bin_actuals = [actual for p, actual in calibration_data 
-                          if bin_low <= p < bin_high]
-            
-            if len(bin_probs) > 0:
-                mean_pred = np.mean(bin_probs)
-                mean_actual = np.mean(bin_actuals)
-                bin_means.append((mean_pred, mean_actual))
-        
-        for mean_pred, mean_actual in bin_means:
-            if abs(probability - mean_pred) < 0.05:
-                return mean_actual
+            if bin_probs and abs(probability - np.mean(bin_probs)) < 0.05:
+                return np.mean(bin_actuals)
         
         return probability
     
-    def _calculate_total_goal_probability(self, home_prob: float, away_prob: float) -> float:
-        """Общая вероятность гола"""
-        total_prob = 1 - (1 - home_prob) * (1 - away_prob)
-        
-        if total_prob > 0.95:
-            total_prob = 0.95
-        elif total_prob < 0.3:
-            total_prob = total_prob * 1.2
-        
-        return total_prob
-    
     def _determine_confidence_level(self, probability: float) -> str:
-        """Уровень уверенности"""
+        """Определяет уровень уверенности"""
         if probability >= self.thresholds['very_high']:
-            base_level = "VERY_HIGH"
+            base = "VERY_HIGH"
         elif probability >= self.thresholds['high']:
-            base_level = "HIGH"
+            base = "HIGH"
         elif probability >= self.thresholds['medium']:
-            base_level = "MEDIUM"
+            base = "MEDIUM"
         elif probability >= self.thresholds['low']:
-            base_level = "LOW"
+            base = "LOW"
         else:
-            base_level = "VERY_LOW"
+            base = "VERY_LOW"
         
+        # Корректировка на основе исторической точности
         if len(self.accuracy_stats['calibration_data']) > 50:
-            level_stats = self.accuracy_stats['by_confidence'].get(base_level, {'total': 0, 'correct': 0})
+            level_stats = self.accuracy_stats['by_confidence'].get(base, {'total': 0, 'correct': 0})
             if level_stats['total'] > 5:
-                historical_accuracy = level_stats['correct'] / level_stats['total'] if level_stats['total'] > 0 else 0
-                
-                if historical_accuracy > 0.6 and base_level in ["MEDIUM", "LOW"]:
-                    if base_level == "MEDIUM":
-                        return "HIGH"
-                    elif base_level == "LOW":
-                        return "MEDIUM"
-                
-                elif historical_accuracy < 0.3 and base_level in ["VERY_HIGH", "HIGH"]:
-                    if base_level == "VERY_HIGH":
-                        return "HIGH"
-                    elif base_level == "HIGH":
-                        return "MEDIUM"
+                hist_acc = level_stats['correct'] / level_stats['total']
+                if hist_acc > 0.65 and base in ["MEDIUM", "LOW"]:
+                    return "HIGH" if base == "MEDIUM" else "MEDIUM"
+                elif hist_acc < 0.35 and base in ["VERY_HIGH", "HIGH"]:
+                    return "HIGH" if base == "VERY_HIGH" else "MEDIUM"
         
-        return base_level
+        return base
     
-    def _generate_signal(self, match: Match, home_prob: float, away_prob: float, 
-                        total_prob: float, confidence: str, home_stats: Dict,
-                        away_stats: Dict, home_form: Optional[Dict], 
-                        away_form: Optional[Dict], match_url: str,
-                        poisson_probs: Dict, mc_results: Dict,
-                        betting_recommendations: Dict) -> Dict:
-        """Генерация сигнала с расширенной статистикой и рекомендациями по тоталам"""
-        confidence_emojis = {
-            "VERY_HIGH": "🔴",
-            "HIGH": "🟠",
-            "MEDIUM": "🟡",
-            "LOW": "🟢",
-            "VERY_LOW": "⚪"
-        }
+    def _should_send_signal(self, prediction: Dict) -> bool:
+        """
+        Определяет, нужно ли отправлять сигнал.
+        Отправляем только если вероятность >= min_signal_probability (46% по умолчанию)
+        """
+        if prediction.get('error', False):
+            return False
         
+        prob = prediction.get('goal_probability', 0)
+        conf = prediction.get('confidence_level', 'LOW')
+        
+        # Основное условие: вероятность >= минимального порога
+        if prob >= self.min_signal_probability:
+            # Для VERY_HIGH и HIGH отправляем всегда
+            if conf in ['VERY_HIGH', 'HIGH']:
+                logger.debug(f"✅ Сигнал: {prob*100:.1f}% ({conf}) - ОТПРАВЛЯЕМ")
+                return True
+            # Для MEDIUM отправляем только если вероятность на 2% выше порога
+            if conf == 'MEDIUM' and prob >= self.min_signal_probability + 0.02:
+                logger.debug(f"✅ Сигнал: {prob*100:.1f}% (MEDIUM) - ОТПРАВЛЯЕМ")
+                return True
+            # Для LOW отправляем только при очень высокой вероятности (+9%)
+            if conf == 'LOW' and prob >= self.min_signal_probability + 0.09:
+                logger.debug(f"✅ Сигнал: {prob*100:.1f}% (LOW) - ОТПРАВЛЯЕМ")
+                return True
+            else:
+                logger.debug(f"⏳ Сигнал: {prob*100:.1f}% ({conf}) - ПРОПУСК (недостаточно уверенности)")
+                self.accuracy_stats['signals_filtered_out'] += 1
+        else:
+            logger.debug(f"⏳ Сигнал: {prob*100:.1f}% - ПРОПУСК (ниже {self.min_signal_probability*100:.0f}%)")
+            self.accuracy_stats['signals_filtered_out'] += 1
+        
+        return False
+    
+    def _generate_signal(self, match: Match, goal_prob: float, confidence: str,
+                        home_stats: Dict, away_stats: Dict,
+                        home_form: Optional[Dict], away_form: Optional[Dict],
+                        match_url: str) -> Dict:
+        """Генерирует сигнал с расширенной статистикой"""
+        confidence_emojis = {
+            "VERY_HIGH": "🔴", "HIGH": "🟠", "MEDIUM": "🟡",
+            "LOW": "🟢", "VERY_LOW": "⚪"
+        }
         emoji = confidence_emojis.get(confidence, "⚪")
         
         home_name = match.home_team.name if match.home_team else "Home"
         away_name = match.away_team.name if match.away_team else "Away"
         
-        # Информация о лиге и стране
         league_info = ""
         if match.league_name:
             league_info = f" ({match.league_name}"
@@ -878,7 +545,6 @@ class Predictor:
             league_info += ")"
         
         current_score = f"{match.home_score or 0}:{match.away_score or 0}"
-        
         period = ""
         if match.minute:
             if match.minute < 45:
@@ -888,35 +554,22 @@ class Predictor:
             else:
                 period = "Доп. время"
         
-        # Убеждаемся, что home_stats и away_stats - словари
-        if not isinstance(home_stats, dict):
-            logger.warning(f"home_stats не словарь: {type(home_stats)}")
-            home_stats = self._ensure_dict(home_stats, "home_stats")
-        
-        if not isinstance(away_stats, dict):
-            logger.warning(f"away_stats не словарь: {type(away_stats)}")
-            away_stats = self._ensure_dict(away_stats, "away_stats")
-        
+        # Проверяем наличие статистики
         has_stats = any([
             home_stats.get('shots', 0) > 0,
             away_stats.get('shots', 0) > 0,
             home_stats.get('shots_on_target', 0) > 0,
-            away_stats.get('shots_on_target', 0) > 0,
-            home_stats.get('corners', 0) > 0,
-            away_stats.get('corners', 0) > 0
+            away_stats.get('shots_on_target', 0) > 0
         ])
         
         message_lines = [
-            f"{emoji} **Потенциальный гол!**",
+            f"{emoji} **⚽ ПОТЕНЦИАЛЬНЫЙ ГОЛ!**",
             f"⚔️ **{home_name} vs {away_name}**{league_info}",
             f"📊 **Счет:** {current_score}",
             f"⏱️ **Минута:** {match.minute or 0}' {period}",
             "",
-            f"📈 **Вероятность гола:** {total_prob*100:.1f}%",
+            f"📈 **Вероятность гола:** {goal_prob*100:.1f}%",
             f"🎯 **Уверенность:** {confidence}",
-            "",
-            f"🏠 **{home_name}:** {home_prob*100:.1f}%",
-            f"✈️ **{away_name}:** {away_prob*100:.1f}%",
         ]
         
         if has_stats:
@@ -928,98 +581,44 @@ class Predictor:
                 f"  • xG: {home_stats.get('xg', 0):.2f} : {away_stats.get('xg', 0):.2f}",
                 f"  • Угловые: {home_stats.get('corners', 0)} : {away_stats.get('corners', 0)}",
                 f"  • Владение: {home_stats.get('possession', 50)}% : {away_stats.get('possession', 50)}%",
-                f"  • Опасные атаки: {home_stats.get('dangerous_attacks', 0)} : {away_stats.get('dangerous_attacks', 0)}",
             ])
-        else:
-            message_lines.extend([
-                "",
-                "📊 **СТАТИСТИКА МАТЧА:**",
-                "  • Статистика временно недоступна"
-            ])
-        
-        # Добавляем рекомендации по ставкам
-        if betting_recommendations and betting_recommendations.get('recommendations'):
-            message_lines.extend([
-                "",
-                "💰 **РЕКОМЕНДАЦИИ ПО СТАВКАМ:**"
-            ])
-            
-            for rec in betting_recommendations['recommendations'][:3]:  # Топ-3
-                rec_emoji = {
-                    'VERY_HIGH': '🔴',
-                    'HIGH': '🟠',
-                    'MEDIUM': '🟡',
-                    'LOW': '🟢'
-                }.get(rec['confidence'], '⚪')
-                
-                message_lines.append(
-                    f"  {rec_emoji} {rec['market']}: {rec['probability']}% ({rec['confidence']})"
-                )
         
         # Добавляем форму команд
         if home_form or away_form:
-            message_lines.extend([
-                "",
-                "📈 **ФОРМА КОМАНД (последние 5 матчей):**",
-            ])
-            
-            if home_form and isinstance(home_form, dict):
-                form_string = home_form.get('form_string', '')
-                points = home_form.get('points_per_game', 0) * 5
-                if form_string:
-                    message_lines.append(f"  • {home_name}: {form_string} ({points:.0f} очков)")
-                else:
-                    message_lines.append(f"  • {home_name}: нет данных")
-            
-            if away_form and isinstance(away_form, dict):
-                form_string = away_form.get('form_string', '')
-                points = away_form.get('points_per_game', 0) * 5
-                if form_string:
-                    message_lines.append(f"  • {away_name}: {form_string} ({points:.0f} очков)")
-                else:
-                    message_lines.append(f"  • {away_name}: нет данных")
+            message_lines.extend(["", "📈 **ФОРМА КОМАНД:**"])
+            if home_form:
+                form_str = home_form.get('form_string', '')
+                ppg = home_form.get('points_per_game', 0)
+                message_lines.append(f"  • {home_name}: {form_str} ({ppg:.1f} о/м)")
+            if away_form:
+                form_str = away_form.get('form_string', '')
+                ppg = away_form.get('points_per_game', 0)
+                message_lines.append(f"  • {away_name}: {form_str} ({ppg:.1f} о/м)")
         
         # Добавляем информацию о голах в таймах
-        match_id = match.id
-        if match_id in self.half_goals:
-            first_half = self.half_goals[match_id].get('first', 0)
-            second_half = self.half_goals[match_id].get('second', 0)
-            if first_half > 0 or second_half > 0:
+        if match.id in self.half_goals:
+            first = self.half_goals[match.id].get('first', 0)
+            second = self.half_goals[match.id].get('second', 0)
+            if first > 0 or second > 0:
                 message_lines.extend([
                     "",
                     f"⚽️ **ГОЛЫ ПО ТАЙМАМ:**",
-                    f"  • 1-й тайм: {first_half}",
-                    f"  • 2-й тайм: {second_half}"
+                    f"  • 1-й тайм: {first}",
+                    f"  • 2-й тайм: {second}"
                 ])
         
-        message_lines.extend([
-            "",
-            f"🔗 **Смотреть матч:** {match_url}"
-        ])
-        
-        message = "\n".join(message_lines)
+        message_lines.extend(["", f"🔗 **Смотреть матч:** {match_url}"])
         
         signal = {
             'emoji': emoji,
-            'message': message,
+            'message': "\n".join(message_lines),
             'confidence': confidence,
-            'probability': total_prob,
-            'home_prob': home_prob,
-            'away_prob': away_prob,
+            'probability': goal_prob,
             'match_id': match.id,
             'current_score': current_score,
             'match_url': match_url,
-            'stats': {
-                'home': home_stats,
-                'away': away_stats
-            },
-            'form': {
-                'home': home_form,
-                'away': away_form
-            },
-            'poisson': poisson_probs,
-            'monte_carlo': mc_results,
-            'betting': betting_recommendations,
+            'stats': {'home': home_stats, 'away': away_stats},
+            'form': {'home': home_form, 'away': away_form},
             'league_name': match.league_name,
             'country_code': match.home_team.country_code if match.home_team else None,
             'timestamp': datetime.now()
@@ -1028,498 +627,153 @@ class Predictor:
         return signal
     
     def analyze_live_match(self, match: Match) -> Optional[Dict]:
-        """Анализирует live-матч и генерирует сигнал с учетом таймов и дублирования"""
+        """Анализирует live-матч и генерирует сигнал"""
         try:
-            # Проверяем, не слишком ли много сигналов для этого матча
+            # Проверки на дублирование
             if match.id in self.match_signal_count:
                 if self.match_signal_count[match.id] >= self.max_signals_per_match:
-                    logger.debug(f"Пропускаем матч {match.id}: уже отправлено {self.match_signal_count[match.id]} сигналов")
                     return None
-            
-            # Проверяем, не отправляли ли сигнал недавно для этого матча
             if match.id in self.match_last_signal:
-                time_since_last = (datetime.now() - self.match_last_signal[match.id]).total_seconds()
-                if time_since_last < self.min_time_between_signals:
-                    logger.debug(f"Пропускаем матч {match.id}: прошло только {time_since_last:.0f}с с последнего сигнала")
+                time_since = (datetime.now() - self.match_last_signal[match.id]).total_seconds()
+                if time_since < self.min_time_between_signals:
                     return None
             
-            # Проверяем, стоит ли анализировать этот матч
             if not self._should_analyze_match(match):
-                return None
-            
-            # Проверяем, не было ли уже голов в этом тайме
-            if self._should_skip_half(match):
-                logger.debug(f"Пропускаем матч {match.id}: уже были голы в этом тайме")
                 return None
             
             prediction = self.predict_match(match)
             
+            # Проверяем, нужно ли отправлять сигнал (с фильтром 46%)
             if self._should_send_signal(prediction):
-                # Определяем тайм
                 half = "1-й тайм" if match.minute and match.minute < 45 else "2-й тайм"
                 
-                # Обновляем информацию о сигнале
                 self.match_last_signal[match.id] = datetime.now()
                 self.match_signal_count[match.id] = self.match_signal_count.get(match.id, 0) + 1
+                self.accuracy_stats['signals_sent_46plus'] += 1
                 
-                logger.info(f"📢 Сгенерирован сигнал для матча {match.id} ({half}) с вероятностью {prediction['total_goal_probability']:.2f} (всего сигналов: {self.match_signal_count[match.id]})")
-                
-                # Сохраняем информацию о сигнале для этого тайма
-                self._save_signal_for_half(match, half)
+                logger.info(f"📢 СИГНАЛ ОТПРАВЛЕН! Матч {match.id} ({half}) - {prediction['goal_probability']*100:.1f}%")
                 
                 if match.is_finished and hasattr(self, 'team_analyzer'):
-                    try:
-                        if match.home_team and match.away_team and match.home_team.id and match.away_team.id:
-                            home_xg = prediction.get('home_stats', {}).get('xg', 0)
-                            away_xg = prediction.get('away_stats', {}).get('xg', 0)
-                            
-                            self.team_analyzer.save_match(
-                                match_id=match.id,
-                                home_id=match.home_team.id,
-                                away_id=match.away_team.id,
-                                home_score=match.home_score or 0,
-                                away_score=match.away_score or 0,
-                                match_date=match.start_time or datetime.now(),
-                                league_id=match.league_id,
-                                home_xg=home_xg,
-                                away_xg=away_xg,
-                                league_level=self.league_levels.get(match.league_id, 2)
-                            )
-                            
-                            total_goals = (match.home_score or 0) + (match.away_score or 0)
-                            self.update_accuracy(str(match.id), total_goals)
-                            
-                    except Exception as e:
-                        logger.error(f"❌ Ошибка сохранения матча {match.id} в историю: {e}")
+                    self._save_match_to_history(match)
+                    self.update_accuracy(str(match.id), match.total_goals)
                 
                 return prediction.get('signal')
             
             return None
             
         except Exception as e:
-            logger.error(f"❌ Ошибка при анализе live-матча {match.id}: {e}")
+            logger.error(f"❌ Ошибка при анализе матча {match.id}: {e}")
             return None
     
-    def _should_skip_half(self, match: Match) -> bool:
-        """Проверяет, нужно ли пропустить этот тайм (уже были голы)"""
-        match_id = match.id
-        current_half = "first" if match.minute and match.minute < 45 else "second"
-        
-        # Получаем голы в этом тайме
-        if match_id not in self.half_goals:
-            self.half_goals[match_id] = {'first': 0, 'second': 0}
-        
-        # Проверяем, были ли уже голы в этом тайме
-        if current_half == "first":
-            return self.half_goals[match_id]['first'] > 0
-        else:
-            return self.half_goals[match_id]['second'] > 0
-    
-    def _save_signal_for_half(self, match: Match, half: str):
-        """Сохраняет информацию о сигнале для тайма"""
-        match_id = match.id
-        if match_id not in self.half_signals:
-            self.half_signals[match_id] = []
-        
-        self.half_signals[match_id].append({
-            'half': half,
-            'minute': match.minute,
-            'probability': match.total_goal_probability if hasattr(match, 'total_goal_probability') else 0,
-            'timestamp': datetime.now()
-        })
-    
-    def check_goal_scored(self, match: Match):
-        """Проверяет, был ли забит гол, и обновляет статистику тайма"""
-        match_id = match.id
-        if match_id not in self.half_goals:
-            self.half_goals[match_id] = {'first': 0, 'second': 0}
-        
-        current_half = "first" if match.minute and match.minute < 45 else "second"
-        
-        self.half_goals[match_id][current_half] += 1
-        logger.info(f"⚽ ГОЛ в матче {match_id}! Тайм: {current_half}, всего голов в тайме: {self.half_goals[match_id][current_half]}")
-    
-    def _should_send_signal(self, prediction: Dict) -> bool:
-        """Определяет, нужно ли отправлять сигнал"""
-        if prediction.get('error', False):
+    def _should_analyze_match(self, match: Match) -> bool:
+        """Проверяет, стоит ли анализировать матч"""
+        if match.minute and match.minute > 75:
             return False
+        if abs((match.home_score or 0) - (match.away_score or 0)) >= 3:
+            return False
+        if (match.home_score or 0) >= 4 or (match.away_score or 0) >= 4:
+            return False
+        return True
+    
+    def _generate_match_url(self, match: Match) -> str:
+        """Генерирует ссылку на матч"""
+        if not match.home_team or not match.away_team:
+            return "https://www.sofascore.com"
         
-        probability = prediction.get('total_goal_probability', 0)
-        confidence = prediction.get('confidence_level', 'LOW')
+        def slugify(name: str) -> str:
+            # Простая транслитерация
+            translit = {'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 'ñ':'n'}
+            name = name.lower().replace(' ', '-')
+            for k, v in translit.items():
+                name = name.replace(k, v)
+            return ''.join(c for c in name if c.isalnum() or c == '-')
         
-        if confidence in ['HIGH', 'VERY_HIGH']:
-            return True
-        
-        if confidence == 'MEDIUM' and probability >= self.thresholds['medium']:
-            return True
-        
-        return False
+        home_slug = slugify(match.home_team.name)
+        away_slug = slugify(match.away_team.name)
+        return f"https://www.sofascore.com/ru/football/match/{home_slug}-vs-{away_slug}/{match.id}"
     
     def _extract_team_stats(self, match: Match, is_home: bool) -> Dict:
-        """Извлекает статистику для команды с использованием словаря синонимов"""
+        """Извлекает статистику команды"""
         stats = {
-            'shots': 0,
-            'shots_on_target': 0,
-            'corners': 0,
-            'possession': 50,
-            'dangerous_attacks': 0,
-            'xg': 0.5
+            'shots': 0, 'shots_on_target': 0, 'corners': 0,
+            'possession': 50, 'dangerous_attacks': 0, 'xg': 0.5,
+            'passes': 0, 'fouls': 0, 'yellow_cards': 0,
+            'goals': match.home_score if is_home else match.away_score,
+            'has_real_stats': True
         }
         
-        if not match.stats:
-            logger.debug(f"match.stats пуст для match.id={match.id}")
+        if not match.stats or not isinstance(match.stats, dict):
+            stats['has_real_stats'] = False
             return stats
         
-        # Если match.stats уже является словарем, используем его
-        if isinstance(match.stats, dict):
-            logger.debug(f"match.stats является словарем для match.id={match.id}")
-            
-            # Извлекаем значения для конкретной команды
-            if is_home:
-                stats['shots'] = match.stats.get('shots_home', 0)
-                stats['shots_on_target'] = match.stats.get('shots_ontarget_home', 0)
-                stats['possession'] = match.stats.get('possession_home', 50)
-                stats['corners'] = match.stats.get('corners_home', 0)
-                stats['dangerous_attacks'] = match.stats.get('dangerous_attacks_home', 0)
-                stats['xg'] = match.stats.get('xg_home', 0.5)
-            else:
-                stats['shots'] = match.stats.get('shots_away', 0)
-                stats['shots_on_target'] = match.stats.get('shots_ontarget_away', 0)
-                stats['possession'] = match.stats.get('possession_away', 50)
-                stats['corners'] = match.stats.get('corners_away', 0)
-                stats['dangerous_attacks'] = match.stats.get('dangerous_attacks_away', 0)
-                stats['xg'] = match.stats.get('xg_away', 0.5)
-            
-            return stats
+        # Прямое извлечение из словаря
+        prefix = 'home' if is_home else 'away'
+        stats['shots'] = match.stats.get(f'shots_{prefix}', 0)
+        stats['shots_on_target'] = match.stats.get(f'shots_ontarget_{prefix}', 0)
+        stats['possession'] = match.stats.get(f'possession_{prefix}', 50)
+        stats['corners'] = match.stats.get(f'corners_{prefix}', 0)
+        stats['dangerous_attacks'] = match.stats.get(f'dangerous_attacks_{prefix}', 0)
+        stats['xg'] = match.stats.get(f'xg_{prefix}', 0.5)
+        stats['passes'] = match.stats.get(f'passes_{prefix}', 0)
+        stats['fouls'] = match.stats.get(f'fouls_{prefix}', 0)
+        stats['yellow_cards'] = match.stats.get(f'yellow_cards_{prefix}', 0)
+        stats['has_real_stats'] = match.stats.get('has_real_stats', True)
         
-        # Если match.stats - объект с атрибутами
-        if hasattr(match.stats, '__dict__'):
-            logger.debug(f"match.stats является объектом для match.id={match.id}, конвертируем")
-            stats_dict = match.stats.__dict__
-            
-            if is_home:
-                stats['shots'] = stats_dict.get('shots_home', 0)
-                stats['shots_on_target'] = stats_dict.get('shots_ontarget_home', 0)
-                stats['possession'] = stats_dict.get('possession_home', 50)
-                stats['corners'] = stats_dict.get('corners_home', 0)
-                stats['dangerous_attacks'] = stats_dict.get('dangerous_attacks_home', 0)
-                stats['xg'] = stats_dict.get('xg_home', 0.5)
-            else:
-                stats['shots'] = stats_dict.get('shots_away', 0)
-                stats['shots_on_target'] = stats_dict.get('shots_ontarget_away', 0)
-                stats['possession'] = stats_dict.get('possession_away', 50)
-                stats['corners'] = stats_dict.get('corners_away', 0)
-                stats['dangerous_attacks'] = stats_dict.get('dangerous_attacks_away', 0)
-                stats['xg'] = stats_dict.get('xg_away', 0.5)
-            
-            return stats
-        
-        # Если match.stats - список (старый формат)
-        if isinstance(match.stats, list):
-            logger.debug(f"match.stats является списком для match.id={match.id}")
-            team_id = match.home_team.id if is_home and match.home_team else None
-            if not team_id and not is_home and match.away_team:
-                team_id = match.away_team.id
-            
-            if not team_id:
-                return stats
-            
-            team_stats_dict = {}
-            for period_stats in match.stats:
-                if period_stats.get('period') == 'ALL':
-                    for team_stat in period_stats.get('groups', []):
-                        if team_stat.get('teamId') == team_id:
-                            items = team_stat.get('statisticsItems', [])
-                            for item in items:
-                                name = item.get('name', '').lower()
-                                value = item.get('value', 0)
-                                
-                                if isinstance(value, str):
-                                    try:
-                                        if '%' in value:
-                                            value = float(value.replace('%', ''))
-                                        else:
-                                            value = float(value)
-                                    except:
-                                        value = 0
-                                
-                                team_stats_dict[name] = value
-            
-            stats['shots'] = self._get_stat_value(team_stats_dict, 'shots', 0)
-            stats['shots_on_target'] = self._get_stat_value(team_stats_dict, 'shots_on_target', 0)
-            stats['corners'] = self._get_stat_value(team_stats_dict, 'corners', 0)
-            stats['possession'] = self._get_stat_value(team_stats_dict, 'possession', 50)
-            stats['dangerous_attacks'] = self._get_stat_value(team_stats_dict, 'dangerous_attacks', 0)
-            stats['xg'] = self._get_stat_value(team_stats_dict, 'xg', 0.5)
-            
-            return stats
-        
-        logger.warning(f"match.stats имеет неожиданный тип {type(match.stats)} для match.id={match.id}")
         return stats
     
-    def _prepare_training_data(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Подготовка данных для обучения"""
-        X = []
-        y = []
-        
-        for pred in self.predictions_history[-500:]:
-            if 'error' in pred and pred['error']:
-                continue
-            
-            match = pred.get('match')
-            if not match or not hasattr(match, 'total_goals'):
-                continue
-            
-            features = self._extract_features(match, pred)
-            X.append(features.flatten())
-            y.append(1 if match.total_goals > 0 else 0)
-        
-        return np.array(X), np.array(y)
-    
-    def _add_to_history(self, prediction: Dict):
-        """Добавление в историю и периодическое обновление моделей"""
-        self.predictions_history.append(prediction)
-        
-        if len(self.predictions_history) > self.max_history_size:
-            self.predictions_history = self.predictions_history[-self.max_history_size:]
-        
-        if len(self.predictions_history) % 50 == 0:
-            self._update_weights_gradient()
-            self._update_weights_ml()
-            self._optimize_thresholds()
-            self._adjust_thresholds_dynamically()
-    
-    def _update_weights_gradient(self):
-        """Градиентное обновление весов"""
+    def _save_match_to_history(self, match):
+        """Сохраняет завершенный матч в историю"""
         try:
-            if len(self.accuracy_stats['calibration_data']) < self.min_matches_for_update:
+            if not match or not match.is_finished:
+                return
+            if not match.home_team or not match.away_team:
                 return
             
-            recent_matches = self.predictions_history[-100:]
-            factor_errors = defaultdict(list)
+            self.team_analyzer.save_match(
+                match_id=match.id,
+                home_id=match.home_team.id,
+                away_id=match.away_team.id,
+                home_score=match.home_score or 0,
+                away_score=match.away_score or 0,
+                match_date=match.start_time or datetime.now(),
+                league_id=match.league_id
+            )
             
-            for pred in recent_matches:
-                if 'error' in pred and pred['error']:
-                    continue
-                
-                match = pred.get('match')
-                if not match or not hasattr(match, 'total_goals'):
-                    continue
-                
-                actual_goals = match.total_goals > 0
-                predicted_prob = pred.get('total_goal_probability', 0)
-                error = actual_goals - predicted_prob
-                
-                factors = {
-                    'xg': pred.get('home_stats', {}).get('xg', 0.5) + pred.get('away_stats', {}).get('xg', 0.5),
-                    'shots_ontarget': pred.get('home_stats', {}).get('shots_on_target', 0) + pred.get('away_stats', {}).get('shots_on_target', 0),
-                    'team_form': (pred.get('home_form', {}).get('weighted_form', 0.5) + pred.get('away_form', {}).get('weighted_form', 0.5)) / 2,
-                    'dangerous_attacks': pred.get('home_stats', {}).get('dangerous_attacks', 0) + pred.get('away_stats', {}).get('dangerous_attacks', 0),
-                    'shots': pred.get('home_stats', {}).get('shots', 0) + pred.get('away_stats', {}).get('shots', 0),
-                    'corners': pred.get('home_stats', {}).get('corners', 0) + pred.get('away_stats', {}).get('corners', 0),
-                    'possession': (pred.get('home_stats', {}).get('possession', 50) + pred.get('away_stats', {}).get('possession', 50)) / 2,
-                }
-                
-                for factor, value in factors.items():
-                    if value > 0:
-                        if factor in ['xg', 'team_form']:
-                            normalized = value / 3.0
-                        elif factor in ['shots_ontarget', 'dangerous_attacks']:
-                            normalized = value / 20.0
-                        elif factor in ['shots', 'corners']:
-                            normalized = value / 30.0
-                        else:
-                            normalized = value / 100.0
-                        
-                        gradient = error * normalized * self.learning_rate
-                        factor_errors[factor].append(gradient)
-            
-            new_weights = self.weights.copy()
-            total_adjustment = 0
-            
-            for factor, gradients in factor_errors.items():
-                if gradients and factor in new_weights:
-                    avg_gradient = np.mean(gradients)
-                    adjustment = avg_gradient * self.learning_rate * 10
-                    new_weights[factor] = max(0.01, min(0.5, self.weights[factor] + adjustment))
-                    total_adjustment += abs(adjustment)
-                    
-                    logger.debug(f"Фактор {factor}: {self.weights[factor]:.3f} -> {new_weights[factor]:.3f}")
-            
-            if total_adjustment > 0.01:
-                total = sum(new_weights.values())
-                if total > 0:
-                    self.weights = {k: v/total for k, v in new_weights.items()}
-                    self.weights_history.append({
-                        'timestamp': datetime.now().isoformat(),
-                        'weights': self.weights.copy()
-                    })
-                    logger.info(f"✅ Веса обновлены: {self.weights}")
-                    
-                    if len(self.weights_history) > 100:
-                        self.weights_history = self.weights_history[-100:]
-        
-        except Exception as e:
-            logger.error(f"❌ Ошибка обновления весов: {e}")
-    
-    def _update_weights_ml(self):
-        """Обновление весов через ML"""
-        try:
-            if len(self.accuracy_stats['calibration_data']) < self.min_matches_for_update:
-                return
-            
-            X, y = self._prepare_training_data()
-            if len(X) < self.min_matches_for_update:
-                return
-            
-            X_scaled = self.scaler.fit_transform(X)
-            self.ml_model.fit(X_scaled, y)
-            
-            if hasattr(self.ml_model, 'coef_'):
-                importance = np.abs(self.ml_model.coef_[0])
-                for name, imp in zip(self.feature_names, importance):
-                    self.accuracy_stats['feature_importance'][name] = float(imp)
-                
-                logger.info(f"📊 Важность признаков: {self.accuracy_stats['feature_importance']}")
-            
-            joblib.dump(self.ml_model, self.model_path)
+            # Обновляем средние по лиге
+            if match.league_id and match.stats and isinstance(match.stats, dict):
+                league_avg = self.league_averages[match.league_id]
+                for key in ['shots', 'shots_on_target', 'xg', 'corners', 'possession', 'passes', 'fouls', 'yellow_cards']:
+                    home_val = match.stats.get(f'{key}_home', 0)
+                    away_val = match.stats.get(f'{key}_away', 0)
+                    if home_val > 0 or away_val > 0:
+                        league_avg[key] = (league_avg[key] * 0.95 + (home_val + away_val) / 2 * 0.05)
             
         except Exception as e:
-            logger.error(f"❌ Ошибка обновления ML модели: {e}")
-    
-    def _optimize_thresholds(self):
-        """Оптимизация порогов"""
-        try:
-            if len(self.accuracy_stats['calibration_data']) < 100:
-                return
-            
-            recent_data = self.accuracy_stats['calibration_data'][-200:]
-            best_thresholds = {}
-            
-            for level, default_threshold in [('low', 0.15), ('medium', 0.25), 
-                                            ('high', 0.40), ('very_high', 0.55)]:
-                best_acc = 0
-                best_thresh = default_threshold
-                
-                for threshold in np.arange(0.1, 0.7, 0.05):
-                    correct = 0
-                    total = 0
-                    
-                    for prob, actual in recent_data:
-                        if prob >= threshold:
-                            total += 1
-                            if actual == 1:
-                                correct += 1
-                    
-                    if total > 0:
-                        accuracy = correct / total
-                        if accuracy > best_acc:
-                            best_acc = accuracy
-                            best_thresh = threshold
-                
-                if best_acc > 0.5:
-                    best_thresholds[level] = best_thresh
-            
-            if best_thresholds:
-                old_thresholds = self.thresholds.copy()
-                self.thresholds.update(best_thresholds)
-                logger.info(f"📊 Пороги оптимизированы: {old_thresholds} -> {self.thresholds}")
-            
-        except Exception as e:
-            logger.error(f"❌ Ошибка оптимизации порогов: {e}")
-    
-    def _adjust_thresholds_dynamically(self):
-        """Динамическая настройка порогов"""
-        if len(self.accuracy_stats['calibration_data']) < 50:
-            return
-        
-        recent_data = self.accuracy_stats['calibration_data'][-50:]
-        percentiles = [70, 50, 30, 15]
-        
-        probabilities = [p for p, _ in recent_data]
-        if not probabilities:
-            return
-        
-        sorted_probs = sorted(probabilities)
-        
-        new_thresholds = {}
-        levels = ['very_high', 'high', 'medium', 'low']
-        
-        for level, percentile in zip(levels, percentiles):
-            idx = int(len(sorted_probs) * (100 - percentile) / 100)
-            if idx < len(sorted_probs):
-                new_thresholds[level] = sorted_probs[idx]
-        
-        for level in levels:
-            if level in new_thresholds:
-                old = self.thresholds[level]
-                new = new_thresholds[level]
-                self.thresholds[level] = old * 0.7 + new * 0.3
-        
-        logger.info(f"📊 Пороги динамически обновлены: {self.thresholds}")
-    
-    def _extract_features(self, match: Match, prediction: Dict) -> np.ndarray:
-        """Извлечение признаков для ML"""
-        features = []
-        
-        features.append(prediction.get('home_goal_probability', 0))
-        features.append(prediction.get('away_goal_probability', 0))
-        features.append(prediction.get('total_goal_probability', 0))
-        
-        if prediction.get('home_form'):
-            features.append(prediction['home_form'].get('weighted_form', 0.5))
-            features.append(prediction['home_form'].get('avg_xg_for', 1.0))
-            features.append(prediction['home_form'].get('avg_xg_against', 1.0))
-        else:
-            features.extend([0.5, 1.0, 1.0])
-        
-        if prediction.get('away_form'):
-            features.append(prediction['away_form'].get('weighted_form', 0.5))
-            features.append(prediction['away_form'].get('avg_xg_for', 1.0))
-            features.append(prediction['away_form'].get('avg_xg_against', 1.0))
-        else:
-            features.extend([0.5, 1.0, 1.0])
-        
-        features.append(prediction.get('home_stats', {}).get('xg', 0.5))
-        features.append(prediction.get('away_stats', {}).get('xg', 0.5))
-        features.append(prediction.get('home_stats', {}).get('shots_on_target', 0) / 10)
-        features.append(prediction.get('away_stats', {}).get('shots_on_target', 0) / 10)
-        
-        league_level = self.league_levels.get(match.league_id, 2)
-        features.append(league_level)
-        
-        minute_norm = (match.minute or 0) / 90
-        features.append(minute_norm)
-        
-        return np.array(features).reshape(1, -1)
+            logger.error(f"❌ Ошибка сохранения матча {match.id}: {e}")
     
     def update_accuracy(self, prediction_id: str, actual_goals: int):
-        """Обновление статистики точности"""
+        """Обновляет статистику точности"""
         try:
             for pred in self.predictions_history:
                 if str(pred.get('match_id')) == str(prediction_id):
-                    predicted_prob = pred.get('total_goal_probability', 0)
-                    confidence = pred.get('confidence_level', 'MEDIUM')
+                    prob = pred.get('goal_probability', 0)
+                    conf = pred.get('confidence_level', 'MEDIUM')
                     minute = pred.get('minute', 0)
                     league_id = pred.get('league_id')
                     
                     had_goal = actual_goals > 0
-                    predicted_goal = predicted_prob > 0.5
+                    predicted_goal = prob > 0.5
                     
                     self.accuracy_stats['total_predictions'] += 1
-                    
-                    self.accuracy_stats['calibration_data'].append(
-                        (predicted_prob, 1 if had_goal else 0)
-                    )
+                    self.accuracy_stats['calibration_data'].append((prob, 1 if had_goal else 0))
                     
                     if len(self.accuracy_stats['calibration_data']) > 1000:
-                        self.accuracy_stats['calibration_data'] = \
-                            self.accuracy_stats['calibration_data'][-1000:]
+                        self.accuracy_stats['calibration_data'] = self.accuracy_stats['calibration_data'][-1000:]
                     
-                    if confidence in self.accuracy_stats['by_confidence']:
-                        self.accuracy_stats['by_confidence'][confidence]['total'] += 1
+                    if conf in self.accuracy_stats['by_confidence']:
+                        self.accuracy_stats['by_confidence'][conf]['total'] += 1
                         if had_goal == predicted_goal:
-                            self.accuracy_stats['by_confidence'][confidence]['correct'] += 1
+                            self.accuracy_stats['by_confidence'][conf]['correct'] += 1
                     
                     minute_range = (minute // 15) * 15
                     minute_key = f"{minute_range}-{minute_range+15}"
@@ -1535,26 +789,25 @@ class Predictor:
                     
                     if pred.get('signal'):
                         self.accuracy_stats['total_signals'] += 1
-                        
                         if had_goal == predicted_goal:
                             self.accuracy_stats['correct_predictions'] += 1
                         else:
                             self.accuracy_stats['incorrect_predictions'] += 1
                     
-                    self.accuracy_stats['goals_predicted'] += predicted_prob * 3
-                    self.accuracy_stats['goals_actual'] += actual_goals
-                    
-                    total = self.accuracy_stats['correct_predictions'] + \
-                            self.accuracy_stats['incorrect_predictions']
+                    total = self.accuracy_stats['correct_predictions'] + self.accuracy_stats['incorrect_predictions']
                     if total > 0:
-                        self.accuracy_stats['accuracy_rate'] = \
-                            self.accuracy_stats['correct_predictions'] / total
+                        self.accuracy_stats['accuracy_rate'] = self.accuracy_stats['correct_predictions'] / total
                     
-                    self.accuracy_stats['last_updated'] = datetime.now().isoformat()
                     break
-                    
         except Exception as e:
-            logger.error(f"Ошибка обновления статистики точности: {e}")
+            logger.error(f"Ошибка обновления статистики: {e}")
+    
+    def _add_to_history(self, prediction: Dict):
+        """Добавляет предсказание в историю"""
+        self.predictions_history.append(prediction)
+        
+        if len(self.predictions_history) > self.max_history_size:
+            self.predictions_history = self.predictions_history[-self.max_history_size:]
     
     def _get_default_prediction(self, match: Match) -> Dict:
         """Предсказание по умолчанию"""
@@ -1563,9 +816,7 @@ class Predictor:
             'match': match,
             'home_team': match.home_team.name if match.home_team else 'Unknown',
             'away_team': match.away_team.name if match.away_team else 'Unknown',
-            'home_goal_probability': 0.3,
-            'away_goal_probability': 0.3,
-            'total_goal_probability': 0.5,
+            'goal_probability': 0.3,
             'confidence_level': 'LOW',
             'signal': None,
             'home_stats': {},
@@ -1574,121 +825,108 @@ class Predictor:
             'timestamp': datetime.now().isoformat()
         }
     
-    def get_accuracy_stats(self) -> Dict:
-        """Статистика точности"""
-        return self.accuracy_stats.copy()
-    
-    def get_weights_history(self) -> List:
-        """История весов"""
-        return self.weights_history.copy()
+    def get_filtered_signals_stats(self) -> Dict:
+        """
+        Возвращает статистику по отфильтрованным сигналам
+        """
+        total_signals = len([p for p in self.predictions_history if p.get('signal')])
+        signals_above_46 = len([p for p in self.predictions_history 
+                               if p.get('signal') and p.get('goal_probability', 0) >= self.min_signal_probability])
+        signals_below_46 = total_signals - signals_above_46
+        
+        return {
+            'total_signals_generated': total_signals,
+            'signals_sent_46plus': self.accuracy_stats.get('signals_sent_46plus', 0),
+            'signals_filtered_out': self.accuracy_stats.get('signals_filtered_out', 0),
+            'filter_rate': self.accuracy_stats.get('signals_filtered_out', 0) / total_signals if total_signals > 0 else 0,
+            'min_probability': self.min_signal_probability
+        }
     
     def get_statistics(self) -> Dict:
-        """Полная статистика"""
+        """Возвращает статистику"""
         if not self.predictions_history:
             return {
                 'total_predictions': 0,
                 'avg_probability': 0,
                 'signals_sent': self.accuracy_stats['total_signals'],
-                'confidence_distribution': {},
+                'signals_sent_46plus': self.accuracy_stats.get('signals_sent_46plus', 0),
+                'signals_filtered_out': self.accuracy_stats.get('signals_filtered_out', 0),
+                'accuracy_rate': self.accuracy_stats['accuracy_rate'],
                 'feature_importance': self.accuracy_stats['feature_importance'],
-                'current_weights': self.weights,
-                'thresholds': self.thresholds,
-                'by_confidence': self.accuracy_stats['by_confidence'],
-                'by_minute': dict(self.accuracy_stats['by_minute']),
-                'by_league': dict(self.accuracy_stats['by_league']),
-                'regression_stats': self.accuracy_stats.get('regression_stats', {}),
-                'poisson_stats': self.accuracy_stats.get('poisson_stats', {})
+                'by_confidence': self.accuracy_stats['by_confidence']
             }
         
         total = len(self.predictions_history)
-        signals = [p for p in self.predictions_history if p.get('signal')]
+        probs = [p.get('goal_probability', 0) for p in self.predictions_history]
         
-        confidence_dist = defaultdict(int)
+        conf_dist = defaultdict(int)
         for p in self.predictions_history:
-            confidence_dist[p.get('confidence_level', 'UNKNOWN')] += 1
-        
-        for k in confidence_dist:
-            confidence_dist[k] = confidence_dist[k] / total
+            conf_dist[p.get('confidence_level', 'UNKNOWN')] += 1
+        for k in conf_dist:
+            conf_dist[k] /= total
         
         return {
             'total_predictions': total,
-            'avg_probability': np.mean([p.get('total_goal_probability', 0) for p in self.predictions_history]),
+            'avg_probability': np.mean(probs),
             'signals_sent': self.accuracy_stats['total_signals'],
-            'signal_rate': len(signals) / total if total > 0 else 0,
-            'confidence_distribution': dict(confidence_dist),
+            'signals_sent_46plus': self.accuracy_stats.get('signals_sent_46plus', 0),
+            'signals_filtered_out': self.accuracy_stats.get('signals_filtered_out', 0),
+            'accuracy_rate': self.accuracy_stats['accuracy_rate'],
+            'confidence_distribution': dict(conf_dist),
             'feature_importance': self.accuracy_stats['feature_importance'],
-            'current_weights': self.weights,
-            'thresholds': self.thresholds,
-            'by_confidence': self.accuracy_stats['by_confidence'],
-            'by_minute': dict(self.accuracy_stats['by_minute']),
-            'by_league': dict(self.accuracy_stats['by_league']),
-            'regression_stats': self.accuracy_stats.get('regression_stats', {}),
-            'poisson_stats': self.accuracy_stats.get('poisson_stats', {})
+            'by_confidence': self.accuracy_stats['by_confidence']
         }
     
     def save_predictions(self, filename: str = 'data/predictions.json'):
-        """Сохранение предсказаний"""
+        """Сохраняет предсказания"""
         try:
             os.makedirs(os.path.dirname(filename), exist_ok=True)
-            
             data = {
                 'predictions': [],
-                'weights_history': self.weights_history,
                 'accuracy_stats': self.accuracy_stats,
                 'thresholds': self.thresholds,
                 'half_goals': self.half_goals,
-                'half_signals': self.half_signals,
-                'match_last_signal': {str(k): v.isoformat() if isinstance(v, datetime) else str(v) 
-                                     for k, v in self.match_last_signal.items()},
-                'match_signal_count': self.match_signal_count
+                'match_signal_count': self.match_signal_count,
+                'min_signal_probability': self.min_signal_probability
             }
             
             for p in self.predictions_history:
                 p_copy = p.copy()
                 if 'match' in p_copy:
                     del p_copy['match']
-                if 'signal' in p_copy and p_copy['signal']:
-                    if 'timestamp' in p_copy['signal']:
-                        p_copy['signal']['timestamp'] = p_copy['signal']['timestamp'].isoformat()
                 data['predictions'].append(p_copy)
             
             with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+                json.dump(data, f, indent=2)
             
-            logger.info(f"Сохранено {len(data['predictions'])} предсказаний в {filename}")
+            # Сохраняем XGBoost модель
+            if self.xgb_model and hasattr(self.xgb_model, 'get_booster'):
+                try:
+                    _ = self.xgb_model.get_booster()  # Проверяем, что модель обучена
+                    joblib.dump(self.xgb_model, self.model_path)
+                    if self.feature_names:
+                        with open(self.model_path.replace('.pkl', '_features.json'), 'w') as f:
+                            json.dump(self.feature_names, f)
+                except:
+                    pass
             
-            if self.ml_model:
-                joblib.dump(self.ml_model, self.model_path)
+            logger.info(f"💾 Сохранено {len(data['predictions'])} предсказаний")
             
         except Exception as e:
-            logger.error(f"Ошибка сохранения предсказаний: {e}")
+            logger.error(f"Ошибка сохранения: {e}")
     
     def load_predictions(self, filename: str = 'data/predictions.json'):
-        """Загрузка предсказаний"""
+        """Загружает предсказания"""
         try:
             if os.path.exists(filename):
                 with open(filename, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                
                 self.predictions_history = data.get('predictions', [])
-                self.weights_history = data.get('weights_history', [])
                 self.accuracy_stats.update(data.get('accuracy_stats', {}))
                 self.thresholds.update(data.get('thresholds', self.thresholds))
                 self.half_goals = data.get('half_goals', {})
-                self.half_signals = data.get('half_signals', {})
-                
-                # Загружаем данные о сигналах
-                match_last_signal = data.get('match_last_signal', {})
-                self.match_last_signal = {}
-                for k, v in match_last_signal.items():
-                    try:
-                        self.match_last_signal[int(k)] = datetime.fromisoformat(v)
-                    except:
-                        pass
-                
                 self.match_signal_count = data.get('match_signal_count', {})
-                
-                logger.info(f"Загружено {len(self.predictions_history)} предсказаний из {filename}")
-                
+                self.min_signal_probability = data.get('min_signal_probability', self.min_signal_probability)
+                logger.info(f"📂 Загружено {len(self.predictions_history)} предсказаний")
         except Exception as e:
-            logger.error(f"Ошибка загрузки предсказаний: {e}")
+            logger.error(f"Ошибка загрузки: {e}")
