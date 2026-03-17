@@ -287,6 +287,9 @@ class Predictor:
             logger.error(f"❌ Ошибка при предсказании матча {match.id}: {e}")
             logger.error(traceback.format_exc())
             return self._get_default_prediction(match)
+            
+            if len(self.predictions_history) % 10 == 0:  # Сохраняем каждые 10 предсказаний
+                self.save_predictions()
     
     def _train_xgboost_on_history(self):
         """Обучает XGBoost модель на исторических данных"""
