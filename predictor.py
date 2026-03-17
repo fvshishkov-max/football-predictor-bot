@@ -527,107 +527,92 @@ class Predictor:
         return False
     
     def _generate_signal(self, match: Match, goal_prob: float, confidence: str,
-                        home_stats: Dict, away_stats: Dict,
-                        home_form: Optional[Dict], away_form: Optional[Dict],
-                        match_url: str) -> Dict:
-        """Генерирует сигнал с расширенной статистикой"""
-        confidence_emojis = {
-            "VERY_HIGH": "🔴", "HIGH": "🟠", "MEDIUM": "🟡",
-            "LOW": "🟢", "VERY_LOW": "⚪"
-        }
-        emoji = confidence_emojis.get(confidence, "⚪")
-        
-        home_name = match.home_team.name if match.home_team else "Home"
-        away_name = match.away_team.name if match.away_team else "Away"
-        
-        league_info = ""
-        if match.league_name:
-            league_info = f" ({match.league_name}"
-            if match.home_team and match.home_team.country_code:
-                league_info += f", {match.home_team.country_code}"
-            league_info += ")"
-        
-        current_score = f"{match.home_score or 0}:{match.away_score or 0}"
-        period = ""
-        if match.minute:
-            if match.minute < 45:
-                period = "1-й тайм"
-            elif match.minute < 90:
-                period = "2-й тайм"
-            else:
-                period = "Доп. время"
-        
-        # Проверяем наличие статистики
-        has_stats = any([
-            home_stats.get('shots', 0) > 0,
-            away_stats.get('shots', 0) > 0,
-            home_stats.get('shots_on_target', 0) > 0,
-            away_stats.get('shots_on_target', 0) > 0
-        ])
-        
-        message_lines = [
-            f"{emoji} **⚽ ПОТЕНЦИАЛЬНЫЙ ГОЛ!**",
-            f"⚔️ **{home_name} vs {away_name}**{league_info}",
-            f"📊 **Счет:** {current_score}",
-            f"⏱️ **Минута:** {match.minute or 0}' {period}",
+                    home_stats: Dict, away_stats: Dict,
+                    home_form: Optional[Dict], away_form: Optional[Dict],
+                    match_url: str) -> Dict:
+    """Генерирует чистый сигнал без лишних данных"""
+    
+    confidence_emojis = {
+        "VERY_HIGH": "🔴", "HIGH": "🟠", "MEDIUM": "🟡",
+        "LOW": "🟢", "VERY_LOW": "⚪"
+    }
+    emoji = confidence_emojis.get(confidence, "⚪")
+    
+    home_name = match.home_team.name if match.home_team else "Home"
+    away_name = match.away_team.name if match.away_team else "Away"
+    
+    # Информация о лиге (оставляем только если есть)
+    league_info = ""
+    if match.league_name:
+        league_info = f" ({match.league_name})"
+    
+    current_score = f"{match.home_score or 0}:{match.away_score or 0}"
+    
+    # Определяем период матча
+    period = ""
+    if match.minute:
+        if match.minute < 45:
+            period = "1-й тайм"
+        elif match.minute < 90:
+            period = "2-й тайм"
+        else:
+            period = "Доп. время"
+    
+    # Проверяем наличие реальной статистики
+    has_stats = any([
+        home_stats.get('shots', 0) > 0,
+        away_stats.get('shots', 0) > 0,
+        home_stats.get('shots_on_target', 0) > 0,
+        away_stats.get('shots_on_target', 0) > 0
+    ])
+    
+    # Формируем чистое сообщение
+    message_lines = [
+        f"{emoji} **⚽ ПОТЕНЦИАЛЬНЫЙ ГОЛ!**",
+        f"⚔️ **{home_name} vs {away_name}**{league_info}",
+        f"📊 **Счет:** {current_score}",
+        f"⏱️ **Минута:** {match.minute or 0}' {period}",
+        "",
+        f"📈 **Вероятность гола:** {goal_prob*100:.1f}%",
+        f"🎯 **Уверенность:** {confidence}",
+    ]
+    
+    # Добавляем статистику ТОЛЬКО если она есть
+    if has_stats:
+        message_lines.extend([
             "",
-            f"📈 **Вероятность гола:** {goal_prob*100:.1f}%",
-            f"🎯 **Уверенность:** {confidence}",
-        ]
-        
-        if has_stats:
+            "📊 **СТАТИСТИКА:**",
+            f"  • Удары: {home_stats.get('shots', 0)} : {away_stats.get('shots', 0)}",
+            f"  • В створ: {home_stats.get('shots_on_target', 0)} : {away_stats.get('shots_on_target', 0)}",
+            f"  • xG: {home_stats.get('xg', 0):.2f} : {away_stats.get('xg', 0):.2f}",
+        ])
+    
+    # УБИРАЕМ блок "ФОРМА КОМАНД" полностью
+    # УБИРАЕМ ссылку на матч полностью
+    
+    # Добавляем информацию о голах в таймах (только если были)
+    if match.id in self.half_goals:
+        first = self.half_goals[match.id].get('first', 0)
+        second = self.half_goals[match.id].get('second', 0)
+        if first > 0 or second > 0:
             message_lines.extend([
                 "",
-                "📊 **СТАТИСТИКА МАТЧА:**",
-                f"  • Удары: {home_stats.get('shots', 0)} : {away_stats.get('shots', 0)}",
-                f"  • В створ: {home_stats.get('shots_on_target', 0)} : {away_stats.get('shots_on_target', 0)}",
-                f"  • xG: {home_stats.get('xg', 0):.2f} : {away_stats.get('xg', 0):.2f}",
-                f"  • Угловые: {home_stats.get('corners', 0)} : {away_stats.get('corners', 0)}",
-                f"  • Владение: {home_stats.get('possession', 50)}% : {away_stats.get('possession', 50)}%",
+                f"⚽️ **ГОЛЫ ПО ТАЙМАМ:**",
+                f"  • 1-й тайм: {first}",
+                f"  • 2-й тайм: {second}"
             ])
-        
-        # Добавляем форму команд
-        if home_form or away_form:
-            message_lines.extend(["", "📈 **ФОРМА КОМАНД:**"])
-            if home_form:
-                form_str = home_form.get('form_string', '')
-                ppg = home_form.get('points_per_game', 0)
-                message_lines.append(f"  • {home_name}: {form_str} ({ppg:.1f} о/м)")
-            if away_form:
-                form_str = away_form.get('form_string', '')
-                ppg = away_form.get('points_per_game', 0)
-                message_lines.append(f"  • {away_name}: {form_str} ({ppg:.1f} о/м)")
-        
-        # Добавляем информацию о голах в таймах
-        if match.id in self.half_goals:
-            first = self.half_goals[match.id].get('first', 0)
-            second = self.half_goals[match.id].get('second', 0)
-            if first > 0 or second > 0:
-                message_lines.extend([
-                    "",
-                    f"⚽️ **ГОЛЫ ПО ТАЙМАМ:**",
-                    f"  • 1-й тайм: {first}",
-                    f"  • 2-й тайм: {second}"
-                ])
-        
-        message_lines.extend(["", f"🔗 **Смотреть матч:** {match_url}"])
-        
-        signal = {
-            'emoji': emoji,
-            'message': "\n".join(message_lines),
-            'confidence': confidence,
-            'probability': goal_prob,
-            'match_id': match.id,
-            'current_score': current_score,
-            'match_url': match_url,
-            'stats': {'home': home_stats, 'away': away_stats},
-            'form': {'home': home_form, 'away': away_form},
-            'league_name': match.league_name,
-            'country_code': match.home_team.country_code if match.home_team else None,
-            'timestamp': datetime.now()
-        }
-        
-        return signal
+    
+    signal = {
+        'emoji': emoji,
+        'message': "\n".join(message_lines),
+        'confidence': confidence,
+        'probability': goal_prob,
+        'match_id': match.id,
+        'current_score': current_score,
+        'timestamp': datetime.now()
+    }
+    
+    return signal
     
     def analyze_live_match(self, match: Match) -> Optional[Dict]:
         """Анализирует live-матч и генерирует сигнал"""
