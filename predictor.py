@@ -368,65 +368,72 @@ class Predictor:
         
         # Победитель (если есть данные о матче)
         if match and hasattr(self, '_get_h2h_factor'):
-            h2h_factors = self._get_h2h_factor(match)
-            
-            # Простая оценка вероятности победы
-            home_win_prob = home_prob / (home_prob + away_prob) * 0.7 + 0.15
-            away_win_prob = away_prob / (home_prob + away_prob) * 0.7 + 0.15
-            draw_prob = 1 - home_win_prob - away_win_prob
-            
-            # Корректировка на H2H
-            home_win_prob *= h2h_factors.get('home', 1.0)
-            away_win_prob *= h2h_factors.get('away', 1.0)
-            
-            # Нормализация
-            total = home_win_prob + away_win_prob + draw_prob
-            home_win_prob /= total
-            away_win_prob /= total
-            draw_prob /= total
-            
-            if home_win_prob > 0.40:
-                confidence = 'HIGH' if home_win_prob > 0.55 else 'MEDIUM'
-                recommendations.append({
-                    'type': 'winner',
-                    'market': 'Победа хозяев',
-                    'probability': round(home_win_prob * 100, 1),
-                    'confidence': confidence
-                })
-            elif away_win_prob > 0.40:
-                confidence = 'HIGH' if away_win_prob > 0.55 else 'MEDIUM'
-                recommendations.append({
-                    'type': 'winner',
-                    'market': 'Победа гостей',
-                    'probability': round(away_win_prob * 100, 1),
-                    'confidence': confidence
-                })
-            
-            if draw_prob > 0.30:
-                recommendations.append({
-                    'type': 'draw',
-                    'market': 'Ничья',
-                    'probability': round(draw_prob * 100, 1),
-                    'confidence': 'MEDIUM' if draw_prob > 0.35 else 'LOW'
-                })
+            try:
+                h2h_factors = self._get_h2h_factor(match)
+                
+                # Простая оценка вероятности победы
+                home_win_prob = home_prob / (home_prob + away_prob) * 0.7 + 0.15
+                away_win_prob = away_prob / (home_prob + away_prob) * 0.7 + 0.15
+                draw_prob = 1 - home_win_prob - away_win_prob
+                
+                # Корректировка на H2H
+                home_win_prob *= h2h_factors.get('home', 1.0)
+                away_win_prob *= h2h_factors.get('away', 1.0)
+                
+                # Нормализация
+                total = home_win_prob + away_win_prob + draw_prob
+                if total > 0:
+                    home_win_prob /= total
+                    away_win_prob /= total
+                    draw_prob /= total
+                
+                if home_win_prob > 0.40:
+                    confidence = 'HIGH' if home_win_prob > 0.55 else 'MEDIUM'
+                    recommendations.append({
+                        'type': 'winner',
+                        'market': 'Победа хозяев',
+                        'probability': round(home_win_prob * 100, 1),
+                        'confidence': confidence
+                    })
+                elif away_win_prob > 0.40:
+                    confidence = 'HIGH' if away_win_prob > 0.55 else 'MEDIUM'
+                    recommendations.append({
+                        'type': 'winner',
+                        'market': 'Победа гостей',
+                        'probability': round(away_win_prob * 100, 1),
+                        'confidence': confidence
+                    })
+                
+                if draw_prob > 0.30:
+                    recommendations.append({
+                        'type': 'draw',
+                        'market': 'Ничья',
+                        'probability': round(draw_prob * 100, 1),
+                        'confidence': 'MEDIUM' if draw_prob > 0.35 else 'LOW'
+                    })
+            except Exception as e:
+                logger.debug(f"Ошибка расчета H2H фактора: {e}")
         
         # Обе забьют
-        both_score_prob = 1 - (total_probs.get('exact_0', 0) + 
-                               (self.stat_models.poisson_probability(home_lambda, 0) * 
-                                self.stat_models.poisson_probability(away_lambda, 1)) +
-                               (self.stat_models.poisson_probability(home_lambda, 1) * 
-                                self.stat_models.poisson_probability(away_lambda, 0)))
-        
-        if both_score_prob > 0.45:
-            confidence = 'HIGH' if both_score_prob > 0.60 else 'MEDIUM'
-            confidence = 'VERY_HIGH' if both_score_prob > 0.70 else confidence
+        try:
+            both_score_prob = 1 - (total_probs.get('exact_0', 0) + 
+                                   (self.stat_models.poisson_probability(home_lambda, 0) * 
+                                    self.stat_models.poisson_probability(away_lambda, 1)) +
+                                   (self.stat_models.poisson_probability(home_lambda, 1) * 
+                                    self.stat_models.poisson_probability(away_lambda, 0)))
             
-            recommendations.append({
-                'type': 'both_score',
-                'market': 'Обе забьют (ДА)',
-                'probability': round(both_score_prob * 100, 1),
-                'confidence': confidence
-            })
+            if both_score_prob > 0.45:
+                confidence = 'HIGH' if both_score_prob > 0.60 else 'MEDIUM'
+                confidence = 'VERY_HIGH' if both_score_prob > 0.70 else confidence
+                
+                recommendations.append({
+                    'type': 'both_score',
+                    'market': 'Обе забьют (ДА)',
+                    'probability': round(both_score_prob * 100, 1),
+                    'confidence': confidence
+                })
+        except Exception as e:
+            logger.debug(f"Ошибка расчета обе забьют: {e}")
         
         # Сортируем по вероятности
         recommendations = sorted(recommendations, key=lambda x: x['probability'], reverse=True)
@@ -543,39 +550,43 @@ class Predictor:
         if not match.home_team or not match.away_team:
             return {'home': 1.0, 'away': 1.0}
         
-        h2h_data = self.team_analyzer.get_head_to_head(
-            match.home_team.id,
-            match.away_team.id,
-            limit=5
-        )
-        
-        if h2h_data['matches_played'] == 0:
+        try:
+            h2h_data = self.team_analyzer.get_head_to_head(
+                match.home_team.id,
+                match.away_team.id,
+                limit=5
+            )
+            
+            if h2h_data['matches_played'] == 0:
+                return {'home': 1.0, 'away': 1.0}
+            
+            home_factor = 1.0
+            away_factor = 1.0
+            
+            home_advantage = (h2h_data['team1_wins'] - h2h_data['team2_wins']) / h2h_data['matches_played']
+            
+            if h2h_data['team1_avg_goals'] > h2h_data['team2_avg_goals']:
+                home_factor *= (1 + (h2h_data['team1_avg_goals'] - h2h_data['team2_avg_goals']) * 0.1)
+            else:
+                away_factor *= (1 + (h2h_data['team2_avg_goals'] - h2h_data['team1_avg_goals']) * 0.1)
+            
+            if h2h_data.get('trend', 0) > 0:
+                home_factor *= 1.1
+            elif h2h_data.get('trend', 0) < 0:
+                away_factor *= 1.1
+            
+            if h2h_data.get('last_result') == 'team1_win':
+                home_factor *= 1.15
+            elif h2h_data.get('last_result') == 'team2_win':
+                away_factor *= 1.15
+            
+            home_factor = max(0.8, min(1.2, home_factor))
+            away_factor = max(0.8, min(1.2, away_factor))
+            
+            return {'home': home_factor, 'away': away_factor}
+        except Exception as e:
+            logger.debug(f"Ошибка получения H2H данных: {e}")
             return {'home': 1.0, 'away': 1.0}
-        
-        home_factor = 1.0
-        away_factor = 1.0
-        
-        home_advantage = (h2h_data['team1_wins'] - h2h_data['team2_wins']) / h2h_data['matches_played']
-        
-        if h2h_data['team1_avg_goals'] > h2h_data['team2_avg_goals']:
-            home_factor *= (1 + (h2h_data['team1_avg_goals'] - h2h_data['team2_avg_goals']) * 0.1)
-        else:
-            away_factor *= (1 + (h2h_data['team2_avg_goals'] - h2h_data['team1_avg_goals']) * 0.1)
-        
-        if h2h_data.get('trend', 0) > 0:
-            home_factor *= 1.1
-        elif h2h_data.get('trend', 0) < 0:
-            away_factor *= 1.1
-        
-        if h2h_data.get('last_result') == 'team1_win':
-            home_factor *= 1.15
-        elif h2h_data.get('last_result') == 'team2_win':
-            away_factor *= 1.15
-        
-        home_factor = max(0.8, min(1.2, home_factor))
-        away_factor = max(0.8, min(1.2, away_factor))
-        
-        return {'home': home_factor, 'away': away_factor}
     
     def _get_league_factor(self, match: Match) -> float:
         """Фактор силы лиги"""
@@ -591,16 +602,20 @@ class Predictor:
     
     def _get_performance_vs_top(self, team_id: int) -> float:
         """Анализ против топ-команд"""
-        stats = self.team_analyzer.get_team_performance_vs_top_teams(team_id)
-        
-        if stats['matches_analyzed'] == 0:
-            return 1.0
-        
-        if stats['points_per_game'] > 1.5:
-            return 1.15
-        elif stats['points_per_game'] < 0.8:
-            return 0.85
-        else:
+        try:
+            stats = self.team_analyzer.get_team_performance_vs_top_teams(team_id)
+            
+            if stats['matches_analyzed'] == 0:
+                return 1.0
+            
+            if stats['points_per_game'] > 1.5:
+                return 1.15
+            elif stats['points_per_game'] < 0.8:
+                return 0.85
+            else:
+                return 1.0
+        except Exception as e:
+            logger.debug(f"Ошибка получения performance vs top: {e}")
             return 1.0
     
     def _calculate_goal_probability(self, stats: Dict, is_home: bool = True, 
@@ -611,6 +626,11 @@ class Predictor:
         """Вероятность гола с учетом статистики"""
         factors = []
         total_weight = 0
+        
+        # Проверяем, является ли stats словарем (а не LiveStats)
+        if hasattr(stats, '__dict__'):
+            # Если это объект LiveStats, конвертируем в словарь
+            stats = stats.__dict__
         
         has_real_stats = any([
             stats.get('shots', 0) > 0,
@@ -788,6 +808,12 @@ class Predictor:
             else:
                 period = "Доп. время"
         
+        # Убеждаемся, что home_stats и away_stats - словари
+        if hasattr(home_stats, '__dict__'):
+            home_stats = home_stats.__dict__
+        if hasattr(away_stats, '__dict__'):
+            away_stats = away_stats.__dict__
+        
         has_stats = any([
             home_stats.get('shots', 0) > 0,
             away_stats.get('shots', 0) > 0,
@@ -828,17 +854,6 @@ class Predictor:
                 "  • Статистика временно недоступна"
             ])
         
-        # Добавляем Пуассон-вероятности
-        if poisson_probs:
-            message_lines.extend([
-                "",
-                "📈 **ПУАССОН-МОДЕЛЬ:**",
-                f"  • П1: {poisson_probs.get('home_win', 0)*100:.1f}%",
-                f"  • X: {poisson_probs.get('draw', 0)*100:.1f}%",
-                f"  • П2: {poisson_probs.get('away_win', 0)*100:.1f}%",
-                f"  • ТБ 2.5: {poisson_probs.get('over_2.5', 0)*100:.1f}%"
-            ])
-        
         # Добавляем рекомендации по ставкам
         if betting_recommendations and betting_recommendations.get('recommendations'):
             message_lines.extend([
@@ -857,15 +872,6 @@ class Predictor:
                 message_lines.append(
                     f"  {rec_emoji} {rec['market']}: {rec['probability']}% ({rec['confidence']})"
                 )
-        
-        # Добавляем Монте-Карло результаты
-        if mc_results:
-            message_lines.extend([
-                "",
-                "🎲 **МОНТЕ-КАРЛО:**",
-                f"  • Средний тотал: {mc_results.get('total_mean', 0):.2f}",
-                f"  • VaR 95%: {mc_results.get('var_95', 0):.1f}"
-            ])
         
         # Добавляем форму команд
         if home_form or away_form:
@@ -1080,6 +1086,31 @@ class Predictor:
         if not match.stats:
             return stats
         
+        # Если match.stats уже является словарем, используем его
+        if isinstance(match.stats, dict):
+            team_id = match.home_team.id if is_home and match.home_team else None
+            if not team_id and not is_home and match.away_team:
+                team_id = match.away_team.id
+            
+            if team_id and 'statistics' in match.stats:
+                stats_data = match.stats.get('statistics', {})
+                stats['shots'] = stats_data.get('totalShotsHome' if is_home else 'totalShotsAway', 0)
+                stats['shots_on_target'] = stats_data.get('shotsOnGoalHome' if is_home else 'shotsOnGoalAway', 0)
+                stats['possession'] = stats_data.get('ballPossessionHome' if is_home else 'ballPossessionAway', 50)
+                stats['corners'] = stats_data.get('cornerKicksHome' if is_home else 'cornerKicksAway', 0)
+                stats['dangerous_attacks'] = stats_data.get('dangerousAttacksHome' if is_home else 'dangerousAttacksAway', 0)
+                
+                # Извлекаем xG из otherStats
+                other_stats = stats_data.get('otherStatsHome' if is_home else 'otherStatsAway', {})
+                if other_stats and 'Expected goals (xG)' in other_stats:
+                    try:
+                        stats['xg'] = float(other_stats['Expected goals (xG)'])
+                    except:
+                        pass
+            
+            return stats
+        
+        # Если match.stats - список (как в старой версии)
         team_id = match.home_team.id if is_home and match.home_team else None
         if not team_id and not is_home and match.away_team:
             team_id = match.away_team.id

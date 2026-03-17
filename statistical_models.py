@@ -1,11 +1,7 @@
 # statistical_models.py
 import numpy as np
-import pandas as pd
 from scipy import stats
 from scipy.special import comb
-import statsmodels.api as sm
-from statsmodels.discrete.discrete_model import Poisson
-from statsmodels.stats.outliers_influence import variance_inflation_factor
 from typing import Dict, List, Tuple, Optional, Any
 import logging
 from datetime import datetime, timedelta
@@ -25,111 +21,6 @@ class StatisticalModels:
         self.results_cache = {}
         self.feature_names = []
         
-    def fit_poisson_regression(self, X: np.ndarray, y: np.ndarray, 
-                                feature_names: List[str]) -> Dict:
-        """
-        Пуассон-регрессия для моделирования количества голов
-        
-        Args:
-            X: Матрица признаков
-            y: Целевая переменная (количество голов)
-            feature_names: Названия признаков
-            
-        Returns:
-            Dict с результатами модели
-        """
-        try:
-            # Добавляем константу
-            X_with_const = sm.add_constant(X)
-            
-            # Обучаем Пуассон-регрессию
-            poisson_model = sm.Poisson(y, X_with_const)
-            poisson_results = poisson_model.fit(disp=0)
-            
-            # Извлекаем статистику
-            results = {
-                'model': poisson_model,
-                'results': poisson_results,
-                'params': dict(zip(['const'] + feature_names, poisson_results.params)),
-                'pvalues': dict(zip(['const'] + feature_names, poisson_results.pvalues)),
-                'conf_int': poisson_results.conf_int().tolist(),
-                'aic': poisson_results.aic,
-                'bic': poisson_results.bic,
-                'log_likelihood': poisson_results.llf,
-                'pseudo_r_squared': 1 - poisson_results.llf / poisson_results.llnull,
-                'feature_names': ['const'] + feature_names,
-                'method': 'poisson'
-            }
-            
-            logger.info(f"✅ Пуассон-регрессия обучена: AIC={results['aic']:.2f}, "
-                       f"R²={results['pseudo_r_squared']:.3f}")
-            
-            return results
-            
-        except Exception as e:
-            logger.error(f"❌ Ошибка обучения Пуассон-регрессии: {e}")
-            return {}
-    
-    def fit_negative_binomial(self, X: np.ndarray, y: np.ndarray,
-                               feature_names: List[str]) -> Dict:
-        """
-        Отрицательное биномиальное распределение (лучше для передисперсии)
-        """
-        try:
-            from statsmodels.discrete.discrete_model import NegativeBinomial
-            
-            X_with_const = sm.add_constant(X)
-            nb_model = NegativeBinomial(y, X_with_const)
-            nb_results = nb_model.fit(disp=0)
-            
-            results = {
-                'model': nb_model,
-                'results': nb_results,
-                'params': dict(zip(['const'] + feature_names, nb_results.params)),
-                'pvalues': dict(zip(['const'] + feature_names, nb_results.pvalues)),
-                'aic': nb_results.aic,
-                'bic': nb_results.bic,
-                'log_likelihood': nb_results.llf,
-                'method': 'negative_binomial'
-            }
-            
-            logger.info(f"✅ Negative Binomial обучена: AIC={results['aic']:.2f}")
-            return results
-            
-        except Exception as e:
-            logger.error(f"❌ Ошибка Negative Binomial: {e}")
-            return {}
-    
-    def fit_zero_inflated_poisson(self, X: np.ndarray, y: np.ndarray,
-                                    feature_names: List[str]) -> Dict:
-        """
-        Zero-Inflated Poisson для матчей с избыточными нулями
-        """
-        try:
-            from statsmodels.discrete.count_model import ZeroInflatedPoisson
-            
-            X_with_const = sm.add_constant(X)
-            zip_model = ZeroInflatedPoisson(y, X_with_const, X_with_const)
-            zip_results = zip_model.fit(disp=0, maxiter=100)
-            
-            results = {
-                'model': zip_model,
-                'results': zip_results,
-                'params': dict(zip(['const'] + feature_names, zip_results.params[:len(feature_names)+1])),
-                'inflate_params': zip_results.params[len(feature_names)+1:],
-                'aic': zip_results.aic,
-                'bic': zip_results.bic,
-                'log_likelihood': zip_results.llf,
-                'method': 'zero_inflated_poisson'
-            }
-            
-            logger.info(f"✅ Zero-Inflated Poisson обучена: AIC={results['aic']:.2f}")
-            return results
-            
-        except Exception as e:
-            logger.error(f"❌ Ошибка ZIP: {e}")
-            return {}
-    
     def poisson_probability(self, lambda_: float, k: int) -> float:
         """
         Вероятность Пуассона P(X = k) = (e^{-λ} * λ^k) / k!
@@ -228,58 +119,6 @@ class StatisticalModels:
             'ci_95': (ci_lower, ci_upper),
             'sample_size': n
         }
-    
-    def calculate_vif(self, X: pd.DataFrame) -> pd.Series:
-        """
-        Расчет фактора инфляции дисперсии (VIF) для диагностики мультиколлинеарности
-        
-        Args:
-            X: Датафрейм с признаками
-            
-        Returns:
-            pd.Series: VIF для каждого признака
-        """
-        vif_data = pd.DataFrame()
-        vif_data["feature"] = X.columns
-        vif_data["VIF"] = [variance_inflation_factor(X.values, i) 
-                           for i in range(X.shape[1])]
-        return vif_data
-    
-    def granger_causality(self, data: pd.DataFrame, cause: str, effect: str, 
-                           max_lag: int = 5) -> Dict:
-        """
-        Тест Грэнджера на причинность для временных рядов
-        
-        Args:
-            data: Датафрейм с временными рядами
-            cause: Причина
-            effect: Следствие
-            max_lag: Максимальный лаг
-            
-        Returns:
-            Dict с результатами теста
-        """
-        from statsmodels.tsa.stattools import grangercausalitytests
-        
-        try:
-            test_data = data[[cause, effect]].dropna()
-            gc_result = grangercausalitytests(test_data, max_lag, verbose=False)
-            
-            results = {}
-            for lag in range(1, max_lag + 1):
-                p_value = gc_result[lag][0]['ssr_ftest'][1]
-                f_stat = gc_result[lag][0]['ssr_ftest'][0]
-                results[lag] = {
-                    'f_statistic': f_stat,
-                    'p_value': p_value,
-                    'significant': p_value < 0.05
-                }
-            
-            return results
-            
-        except Exception as e:
-            logger.error(f"Ошибка теста Грэнджера: {e}")
-            return {}
 
 
 class MonteCarloSimulator:
@@ -375,67 +214,6 @@ class TimeSeriesAnalyzer:
     def __init__(self):
         self.results = {}
         
-    def adf_test(self, series: np.ndarray, series_name: str = 'series') -> Dict:
-        """
-        Тест Дики-Фуллера на стационарность
-        
-        Args:
-            series: Временной ряд
-            series_name: Название ряда
-            
-        Returns:
-            Dict с результатами теста
-        """
-        from statsmodels.tsa.stattools import adfuller
-        
-        result = adfuller(series, autolag='AIC')
-        
-        return {
-            'series_name': series_name,
-            'adf_statistic': result[0],
-            'p_value': result[1],
-            'critical_values': result[4],
-            'is_stationary': result[1] < 0.05,
-            'used_lag': result[2],
-            'nobs': result[3]
-        }
-    
-    def autocorrelation(self, series: np.ndarray, lags: int = 20) -> Dict:
-        """
-        Расчет автокорреляции
-        
-        Args:
-            series: Временной ряд
-            lags: Количество лагов
-            
-        Returns:
-            Dict с автокорреляциями
-        """
-        n = len(series)
-        mean = np.mean(series)
-        var = np.var(series)
-        
-        autocorr = {}
-        for lag in range(1, min(lags, n) + 1):
-            if lag >= n:
-                autocorr[lag] = 0
-                continue
-                
-            cov = np.sum((series[:-lag] - mean) * (series[lag:] - mean)) / n
-            autocorr[lag] = cov / var
-        
-        # Тест Льюнга-Бокса
-        q_stat = n * (n + 2) * np.sum([autocorr[l]**2 / (n - l) 
-                                        for l in range(1, min(lags, n) + 1)])
-        p_value = 1 - stats.chi2.cdf(q_stat, df=min(lags, n))
-        
-        return {
-            'autocorrelations': autocorr,
-            'q_statistic': q_stat,
-            'p_value': p_value,
-            'significant': p_value < 0.05
-        }
-    
     def moving_average(self, series: np.ndarray, window: int = 5) -> np.ndarray:
         """
         Скользящее среднее
@@ -465,37 +243,3 @@ class TimeSeriesAnalyzer:
         for t in range(1, len(series)):
             ema[t] = alpha * series[t] + (1 - alpha) * ema[t-1]
         return ema
-    
-    def detect_seasonality(self, series: np.ndarray, period: int = 7) -> Dict:
-        """
-        Обнаружение сезонности
-        
-        Args:
-            series: Временной ряд
-            period: Предполагаемый период
-            
-        Returns:
-            Dict с результатами
-        """
-        from statsmodels.tsa.seasonal import seasonal_decompose
-        
-        if len(series) < period * 2:
-            return {'error': 'Недостаточно данных'}
-        
-        try:
-            decomposition = seasonal_decompose(series, model='additive', period=period)
-            
-            # Сила сезонности
-            seasonal_strength = np.std(decomposition.seasonal) / np.std(decomposition.resid + decomposition.seasonal)
-            
-            return {
-                'trend': decomposition.trend,
-                'seasonal': decomposition.seasonal,
-                'residual': decomposition.resid,
-                'seasonal_strength': seasonal_strength,
-                'has_seasonality': seasonal_strength > 0.3
-            }
-            
-        except Exception as e:
-            logger.error(f"Ошибка декомпозиции: {e}")
-            return {}

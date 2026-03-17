@@ -16,6 +16,7 @@ CHANNEL_ID = os.getenv('CHANNEL_ID', '-1001679913676')  # ID канала для
 USE_MOCK_API = os.getenv('USE_MOCK_API', 'False').lower() == 'true'
 SSTATS_TOKEN = os.getenv('SSTATS_TOKEN', 'k0f69qjmqx4gs8a8')
 RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', '')
+FOOTBALL_DATA_KEY = os.getenv('FOOTBALL_DATA_KEY', '5b1f5b1fbec540c1bc4b4a10d620d3ed')
 
 # Настройки мониторинга - УВЕЛИЧИВАЕМ ИНТЕРВАЛЫ
 CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', '600'))  # Увеличили до 600 секунд (10 минут)
