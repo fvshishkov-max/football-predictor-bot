@@ -7,18 +7,20 @@ __pycache__/
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
 
-# Data folders
-data/
+# Data folders - сохраняем структуру
+data/*
 !data/.gitkeep
-
-# Archives
-archives/
-*.zip
-*.rar
-*.7z
+!data/README.txt
+!data/predictions/.gitkeep
+!data/history/.gitkeep
+!data/stats/.gitkeep
+!data/logs/.gitkeep
+!data/backups/.gitkeep
+!data/models/.gitkeep
+!data/cache/.gitkeep
+archives/*
+!archives/.gitkeep
 
 # Logs
 *.log
@@ -29,30 +31,11 @@ archives/
 *.back
 *.bak
 
-# Temporary files
+# Temporary
 *.tmp
 *.temp
-*.swp
-*.swo
 *~
 
 # IDE
 .vscode/
 .idea/
-*.sublime-*
-
-# Test files
-test_*.py
-!test_telegram.py
-debug_*.py
-diagnose_*.py
-
-# Xray
-xray/
-xray.exe
-access.log
-error.log
-
-# Local configuration
-.env
-config.local.py
