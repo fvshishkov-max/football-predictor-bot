@@ -1,0 +1,103 @@
+{
+  "log": {
+    "loglevel": "error",
+    "access": "access.log",
+    "error": "error.log"
+  },
+  "inbounds": [
+    {
+      "port": 10808,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      },
+      "sniffing": {
+        "enabled": false
+      },
+      "tag": "socks"
+    },
+    {
+      "port": 10809,
+      "protocol": "http",
+      "tag": "http"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "n8premium.opngtr.nl",
+            "port": 443,
+            "users": [
+              {
+                "id": "7f9318c7-1581-4b25-bb4a-bc228c2478a7",
+                "encryption": "none",
+                "flow": ""
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "api.savesafe.space",
+          "fingerprint": "chrome",
+          "publicKey": "5Av_SlWtNUaS6ynWaJ4iOO9sRvB__zP5rfmI-ZUR-nU",
+          "shortId": "09f348252546a51a",
+          "show": false
+        },
+        "xhttpSettings": {
+          "mode": "auto",
+          "path": "/",
+          "host": "api.savesafe.space",
+          "extra": {
+            "xPaddingBytes": "100-1000",
+            "scMinPostsIntervalMs": 30,
+            "scMaxEachPostBytes": 1000000,
+            "scStreamUpServerSecs": "20-80",
+            "noGRPCHeader": false,
+            "xmux": {
+              "maxConcurrency": "16-32",
+              "cMaxReuseTimes": "64-128",
+              "hMaxReusableSecs": "3600",
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "1000",
+              "maxConnections": 0
+            }
+          }
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "AsIs"
+      },
+      "tag": "direct"
+    }
+  ],
+  "policy": {
+    "levels": {
+      "0": {
+        "bufferSize": 2,
+        "downlinkOnly": 2,
+        "handshake": 4,
+        "uplinkOnly": 2
+      }
+    }
+  },
+  "dns": {
+    "servers": [
+      "1.1.1.1"
+    ],
+    "disableCache": false,
+    "disableFallback": true,
+    "queryStrategy": "UseIP"
+  }
+}
