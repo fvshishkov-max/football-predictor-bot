@@ -1,0 +1,65 @@
+РУЧНОЕ ИСПРАВЛЕНИЕ PREDICTOR.PY
+================================
+
+1. Откройте файл predictor.py в любом редакторе (блокнот, VS Code)
+
+2. Найдите строку 636 (метод _should_analyze_match)
+
+3. Убедитесь, что метод выглядит ТОЧНО так:
+
+    def _should_analyze_match(self, match: Match) -> bool:
+        """Улучшенная проверка с использованием MatchFilter"""
+        
+        # Быстрая фильтрация (старая)
+        if match.minute and match.minute > 75:
+            return False
+        if abs((match.home_score or 0) - (match.away_score or 0)) >= 3:
+            return False
+        if (match.home_score or 0) >= 4 or (match.away_score or 0) >= 4:
+            return False
+        
+        # Новая, более умная фильтрация
+        should, reason = self.match_filter.should_analyze(match)
+        
+        if should:
+            # Дополнительный анализ потенциала
+            if hasattr(self, 'match_analyzer'):
+                home_stats = self._extract_team_stats(match, True)
+                away_stats = self._extract_team_stats(match, False)
+                analysis = self.match_analyzer.analyze_match_potential(
+                    match, home_stats, away_stats, None, None, None
+                )
+                
+                # Обновляем статистику фильтра после матча
+                if hasattr(match, 'total_goals'):
+                    self.match_filter.update_filter_stats(reason, match.total_goals > 0)
+                
+                return analysis['should_analyze']
+        
+        return False
+
+    def _extract_team_stats(self, match: Match, is_home: bool) -> Dict:
+        """Извлекает статистику команды"""
+        stats = {
+            'shots': 0, 'shots_on_target': 0,
+            'possession': 50, 'xg': 0.5,
+            'has_real_stats': False
+        }
+        
+        if not match.stats or not isinstance(match.stats, dict):
+            return stats
+        
+        prefix = 'home' if is_home else 'away'
+        stats['shots'] = match.stats.get(f'shots_{prefix}', 0)
+        stats['shots_on_target'] = match.stats.get(f'shots_ontarget_{prefix}', 0)
+        stats['possession'] = match.stats.get(f'possession_{prefix}', 50)
+        stats['xg'] = match.stats.get(f'xg_{prefix}', 0.5)
+        stats['has_real_stats'] = match.stats.get('has_real_stats', False)
+        
+        return stats
+
+4. ВАЖНО: Между методами должна быть ПУСТАЯ СТРОКА
+   После return False должна быть пустая строка, затем def _extract_team_stats
+
+5. Сохраните файл и запустите проверку:
+   python check_predictor.py

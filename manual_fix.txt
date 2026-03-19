@@ -1,0 +1,33 @@
+# НАЙДИТЕ В ФАЙЛЕ predictor.py метод _should_analyze_match
+# ПОЛНОСТЬЮ УДАЛИТЕ его и ВСТАВЬТЕ этот код:
+
+def _should_analyze_match(self, match: Match) -> bool:
+    """Улучшенная проверка с использованием MatchFilter"""
+    
+    # Быстрая фильтрация (старая)
+    if match.minute and match.minute > 75:
+        return False
+    if abs((match.home_score or 0) - (match.away_score or 0)) >= 3:
+        return False
+    if (match.home_score or 0) >= 4 or (match.away_score or 0) >= 4:
+        return False
+    
+    # Новая, более умная фильтрация
+    should, reason = self.match_filter.should_analyze(match)
+    
+    if should:
+        # Дополнительный анализ потенциала
+        if hasattr(self, 'match_analyzer'):
+            home_stats = self._extract_team_stats(match, True)
+            away_stats = self._extract_team_stats(match, False)
+            analysis = self.match_analyzer.analyze_match_potential(
+                match, home_stats, away_stats, None, None, None
+            )
+            
+            # Обновляем статистику фильтра после матча
+            if hasattr(match, 'total_goals'):
+                self.match_filter.update_filter_stats(reason, match.total_goals > 0)
+            
+            return analysis['should_analyze']
+    
+    return False

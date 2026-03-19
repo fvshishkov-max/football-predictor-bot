@@ -17,6 +17,7 @@ from models import Match
 from team_form import TeamFormAnalyzer
 from statistical_models import StatisticalModels, MonteCarloSimulator
 from feature_engineering import AdvancedFeatureEngineer
+from match_analyzer import MatchAnalyzer, MatchFilter  # Добавлено
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +27,7 @@ class Predictor:
     Отправляет сигналы только при вероятности >= 46%
     """
     
-    def __init__(self, model_path: str = None):
-        import config
-        
-        if model_path is None:
-            model_path = config.MODEL_PATH
-        
-        self.model_path = model_path
-        self.predictions_file = config.PREDICTIONS_FILE
+    def __init__(self, model_path: str = 'data/models/xgboost_model.pkl'):
         # Минимальная вероятность для отправки сигнала
         self.min_signal_probability = getattr(config, 'MIN_PROBABILITY_FOR_SIGNAL', 0.46)
         logger.info(f"🎯 Минимальная вероятность для сигнала: {self.min_signal_probability*100:.0f}%")
@@ -91,6 +85,10 @@ class Predictor:
         self.stat_models = StatisticalModels()
         self.monte_carlo = MonteCarloSimulator(n_simulations=10000)
         self.feature_engineer = AdvancedFeatureEngineer()
+        
+        # Новые анализаторы
+        self.match_analyzer = MatchAnalyzer()
+        self.match_filter = MatchFilter()
         
         self.league_levels = self._init_league_levels()
         self.learning_rate = 0.01
@@ -484,9 +482,8 @@ class Predictor:
         return False
     
     def _generate_signal(self, match: Match, goal_prob: float, confidence: str,
-                    home_stats: Dict, away_stats: Dict) -> Dict:
-        """Генерирует сигнал с переводом на русский и правильными флагами"""
-        
+                        home_stats: Dict, away_stats: Dict) -> Dict:
+        """Генерирует сигнал"""
         from translations import get_country_info, get_league_icon
         
         confidence_emojis = {
@@ -630,14 +627,35 @@ class Predictor:
             return None
     
     def _should_analyze_match(self, match: Match) -> bool:
-        """Проверяет, стоит ли анализировать матч"""
+        """Улучшенная проверка с использованием MatchFilter"""
+        
+        # Быстрая фильтрация (старая)
         if match.minute and match.minute > 75:
             return False
         if abs((match.home_score or 0) - (match.away_score or 0)) >= 3:
             return False
         if (match.home_score or 0) >= 4 or (match.away_score or 0) >= 4:
             return False
-        return True
+        
+        # Новая, более умная фильтрация
+        should, reason = self.match_filter.should_analyze(match)
+        
+        if should:
+            # Дополнительный анализ потенциала
+            if hasattr(self, 'match_analyzer'):
+                home_stats = self._extract_team_stats(match, True)
+                away_stats = self._extract_team_stats(match, False)
+                analysis = self.match_analyzer.analyze_match_potential(
+                    match, home_stats, away_stats, None, None, None
+                )
+                
+                # Обновляем статистику фильтра после матча
+                if hasattr(match, 'total_goals'):
+                    self.match_filter.update_filter_stats(reason, match.total_goals > 0)
+                
+                return analysis['should_analyze']
+        
+        return False
     
     def _extract_team_stats(self, match: Match, is_home: bool) -> Dict:
         """Извлекает статистику команды"""
@@ -809,7 +827,7 @@ class Predictor:
             'by_confidence': self.accuracy_stats['by_confidence']
         }
     
-    def save_predictions(self, filename: str = 'data/predictions.json'):
+    def save_predictions(self, filename: str = 'data/predictions/predictions.json'):
         """Сохраняет предсказания"""
         try:
             os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -873,7 +891,7 @@ class Predictor:
             except:
                 pass
     
-    def load_predictions(self, filename: str = 'data/predictions.json'):
+    def load_predictions(self, filename: str = 'data/predictions/predictions.json'):
         """Загружает предсказания"""
         try:
             if os.path.exists(filename):

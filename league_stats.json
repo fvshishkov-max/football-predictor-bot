@@ -1,0 +1,58 @@
+{
+  "premier_league": {
+    "name": "АПЛ",
+    "level": "top",
+    "avg_goals": 2.8,
+    "avg_xg": 2.6,
+    "goal_probability": 0.48,
+    "preferred": true
+  },
+  "la_liga": {
+    "name": "Ла Лига",
+    "level": "top",
+    "avg_goals": 2.5,
+    "avg_xg": 2.4,
+    "goal_probability": 0.46,
+    "preferred": true
+  },
+  "serie_a": {
+    "name": "Серия А",
+    "level": "top",
+    "avg_goals": 2.6,
+    "avg_xg": 2.5,
+    "goal_probability": 0.47,
+    "preferred": true
+  },
+  "bundesliga": {
+    "name": "Бундеслига",
+    "level": "top",
+    "avg_goals": 3.2,
+    "avg_xg": 3.0,
+    "goal_probability": 0.52,
+    "preferred": true
+  },
+  "ligue_1": {
+    "name": "Лига 1",
+    "level": "top",
+    "avg_goals": 2.7,
+    "avg_xg": 2.6,
+    "goal_probability": 0.47,
+    "preferred": true
+  },
+  "eredivisie": {
+    "name": "Эредивизи",
+    "level": "medium",
+    "avg_goals": 3.1,
+    "avg_xg": 2.9,
+    "goal_probability": 0.49,
+    "preferred": true
+  },
+  "primeira_liga": {
+    "name": "Примейра",
+    "level": "medium",
+    "avg_goals": 2.4,
+    "avg_xg": 2.3,
+    "goal_probability": 0.44,
+    "preferred": false
+  }
+}

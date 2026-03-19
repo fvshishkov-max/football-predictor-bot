@@ -10,7 +10,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# Data folders - СОХРАНЯЕМ СТРУКТУРУ
+# Data folders - сохраняем структуру
 data/*
 !data/.gitkeep
 !data/predictions/.gitkeep
@@ -47,6 +47,7 @@ archives/*
 # Test files
 test_*.py
 !test_telegram.py
+!test_analyzer.py
 debug_*.py
 diagnose_*.py
 
@@ -57,5 +58,10 @@ access.log
 error.log
 
 # Local configuration
+config.py
 .env
-config.local.py
+*.local.py
+
+# OS files
+Thumbs.db
+.DS_Store
