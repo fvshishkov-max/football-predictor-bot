@@ -8,12 +8,13 @@
 - 📈 Анализ статистики с самообучением
 - ⚽ Прогнозирование голов с учетом xG (Expected Goals)
 - 🤖 Автоматическая отправка сигналов в Telegram
-- 📊 Графический интерфейс на Tkinter
-- 🧠 Самообучение на основе результатов
+- 🧠 Самообучение на основе результатов (XGBoost)
+- 📊 Часовая статистика по завершенным матчам
+- 🌍 Поддержка перевода стран и лиг на русский с флагами
 
 ## 🚀 Установка
 
 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/ВАШ_АККАУНТ/football-predictor-bot.git
+git clone https://github.com/fvshishkov-max/football-predictor-bot.git
 cd football-predictor-bot

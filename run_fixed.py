@@ -27,10 +27,10 @@ def main():
         logger.info("🚀 Запуск AI Football Predictor...")
         
         # Импортируем здесь, чтобы избежать циклических импортов
-        from app import FootballApp
+        from app import FastFootballApp  # ИСПРАВЛЕНО: FastFootballApp вместо FootballApp
         
         # Создаем и запускаем приложение
-        app = FootballApp()
+        app = FastFootballApp()  # ИСПРАВЛЕНО: FastFootballApp вместо FootballApp
         app.start_monitoring()
         
         logger.info("✅ Приложение запущено")
@@ -43,6 +43,7 @@ def main():
         except KeyboardInterrupt:
             logger.info("👋 Получен сигнал завершения")
             app.stop_monitoring()
+            app.cleanup()
             logger.info("👋 Приложение остановлено")
             
     except Exception as e:

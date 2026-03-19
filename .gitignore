@@ -1,66 +1,58 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.so
 .Python
-*.egg-info/
-dist/
-build/
-
-# Virtual Environment
-venv/
 env/
+venv/
 ENV/
 env.bak/
 venv.bak/
-.env
-.venv
+
+# Data folders
+data/
+!data/.gitkeep
+
+# Archives
+archives/
+*.zip
+*.rar
+*.7z
+
+# Logs
+*.log
+*.log.*
+
+# Backups
+*.backup
+*.back
+*.bak
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-.DS_Store
+*.sublime-*
 
-# Logs and databases
-*.log
-*.db
-*.sqlite3
-*.db-journal
+# Test files
+test_*.py
+!test_telegram.py
+debug_*.py
+diagnose_*.py
 
-# Local data files
-bot_stats.json
-selected_matches.json
-football_bot.log
-football.log
-football_analyzer.log
-xg_stats.json
+# Xray
+xray/
+xray.exe
+access.log
+error.log
 
-# Backups and archives
-backups/
-*.zip
-*.tar
-*.gz
-*.rar
-football_project_backup.zip
-
-# History files
-predictions_history_*.csv
-predictions_history_*.json
-signals_history_*.csv
-analysis_*.zip
-
-# But keep latest signals
-!signals_history_latest.json
-
-# OS generated files
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Project specific
-*.db
-football.db
-.env.txt
+# Local configuration
+.env
+config.local.py
