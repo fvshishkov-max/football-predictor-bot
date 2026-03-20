@@ -1,0 +1,26 @@
+{
+  "daily_stats": {
+    "2026-03-13": {
+      "requests": 0,
+      "success": 0,
+      "cache_hits": 0,
+      "searches": 0,
+      "successful_searches": 0
+    },
+    "2026-03-14": {
+      "requests": 0,
+      "success": 0,
+      "cache_hits": 0,
+      "searches": 0,
+      "successful_searches": 0
+    },
+    "2026-03-17": {
+      "requests": 0,
+      "success": 0,
+      "cache_hits": 0,
+      "searches": 0,
+      "successful_searches": 0
+    }
+  },
+  "last_updated": "2026-03-17T15:30:03.320809"
+}

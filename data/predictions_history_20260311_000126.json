@@ -1,0 +1,1941 @@
+[
+  {
+    "timestamp": "2026-03-10T23:55:26.808433",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "live",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 76,
+    "attack_potential": 0.0,
+    "match_minute": 51,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 35% / 65%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~76'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:55:27.361333",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "prematch",
+    "predicted_total": 2.493755092,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 49,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:55:27.361333",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "live",
+    "predicted_total": 2.943357318048889,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": 74,
+    "attack_potential": 0.0,
+    "match_minute": 49,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 60% / 40%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~74'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:55:28.100081",
+    "match_id": 1385442,
+    "home_team": "Warrenpoint Town",
+    "away_team": "Newington Youth",
+    "type": "prematch",
+    "predicted_total": 2.5798743280000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 51,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:49.181835",
+    "match_id": 1514312,
+    "home_team": "Cruzeiro Arapiraca",
+    "away_team": "Dimensão Saúde",
+    "type": "prematch",
+    "predicted_total": 2.7203333333333335,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "2:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:49.845012",
+    "match_id": 1529016,
+    "home_team": "Hottin",
+    "away_team": "Al Ittihad",
+    "type": "prematch",
+    "predicted_total": 2.225,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "1:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:50.475292",
+    "match_id": 1395539,
+    "home_team": "Cwmbran Celtic",
+    "away_team": "Llantwit Major",
+    "type": "prematch",
+    "predicted_total": 2.993845428,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 64,
+    "current_score": "0:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Высокий"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:50.995013",
+    "match_id": 1395572,
+    "home_team": "Caerau (Ely)",
+    "away_team": "Treowen Stars",
+    "type": "prematch",
+    "predicted_total": 4.157,
+    "total_range": "4+ голов",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 66,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 4+ голов",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Высокий",
+      "🔥 Ожидается результативный матч"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:51.639714",
+    "match_id": 1418895,
+    "home_team": "El Gouna FC",
+    "away_team": "AL Masry",
+    "type": "prematch",
+    "predicted_total": 1.8027338896,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Низкий",
+    "match_minute": 64,
+    "current_score": "1:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 0-2 голов",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Низкий",
+      "🛡️ Прогнозируется низкая результативность"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:51.639714",
+    "match_id": 1418895,
+    "home_team": "El Gouna FC",
+    "away_team": "AL Masry",
+    "type": "live",
+    "predicted_total": 1.8027338896,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": 89,
+    "attack_potential": 0.0,
+    "match_minute": 64,
+    "current_score": "1:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 46% / 54%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~89'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:52.220158",
+    "match_id": 1524308,
+    "home_team": "Fgura United",
+    "away_team": "Balzan FC",
+    "type": "prematch",
+    "predicted_total": 2.67986882,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 66,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:52.220158",
+    "match_id": 1524308,
+    "home_team": "Fgura United",
+    "away_team": "Balzan FC",
+    "type": "live",
+    "predicted_total": 2.67986882,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 66,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 52% / 48%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:52.816657",
+    "match_id": 1382965,
+    "home_team": "Ayr Utd",
+    "away_team": "Queen's Park",
+    "type": "prematch",
+    "predicted_total": 2.8143241320000003,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 55,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:52.816657",
+    "match_id": 1382965,
+    "home_team": "Ayr Utd",
+    "away_team": "Queen's Park",
+    "type": "live",
+    "predicted_total": 1.9543917583333335,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": 35,
+    "attack_potential": 0.0,
+    "match_minute": 55,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 52% / 48%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~35'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:53.378873",
+    "match_id": 1383163,
+    "home_team": "Peterhead",
+    "away_team": "Alloa Athletic",
+    "type": "prematch",
+    "predicted_total": 2.7647762680000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 54,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:53.378873",
+    "match_id": 1383163,
+    "home_team": "Peterhead",
+    "away_team": "Alloa Athletic",
+    "type": "live",
+    "predicted_total": 3.70357023544,
+    "total_range": "4+ голов",
+    "first_goal_minute": 27,
+    "next_goal_minute": 79,
+    "attack_potential": 0.0,
+    "match_minute": 54,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 42% / 58%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~79'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:53.903965",
+    "match_id": 1383319,
+    "home_team": "Annan Athletic",
+    "away_team": "Elgin City",
+    "type": "prematch",
+    "predicted_total": 3.180213092,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 56,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:53.903965",
+    "match_id": 1383319,
+    "home_team": "Annan Athletic",
+    "away_team": "Elgin City",
+    "type": "live",
+    "predicted_total": 3.180213092,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 81,
+    "attack_potential": 0.0,
+    "match_minute": 56,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 49% / 51%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~81'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:54.428237",
+    "match_id": 1383345,
+    "home_team": "Dumbarton",
+    "away_team": "Stranraer",
+    "type": "prematch",
+    "predicted_total": 2.657401824,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 54,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:54.428237",
+    "match_id": 1383345,
+    "home_team": "Dumbarton",
+    "away_team": "Stranraer",
+    "type": "live",
+    "predicted_total": 2.657401824,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": 79,
+    "attack_potential": 0.0,
+    "match_minute": 54,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 45% / 55%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~79'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:55.028351",
+    "match_id": 1385193,
+    "home_team": "Crusaders FC",
+    "away_team": "Cliftonville FC",
+    "type": "prematch",
+    "predicted_total": 2.9465518160000004,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 51,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:55.028351",
+    "match_id": 1385193,
+    "home_team": "Crusaders FC",
+    "away_team": "Cliftonville FC",
+    "type": "live",
+    "predicted_total": 2.1116954681333335,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 35,
+    "attack_potential": 0.0,
+    "match_minute": 51,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 45% / 55%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~35'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:55.608125",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "prematch",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 54,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:55.608125",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "live",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 79,
+    "attack_potential": 0.0,
+    "match_minute": 54,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 35% / 65%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~79'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:56.135194",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "prematch",
+    "predicted_total": 2.493755092,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 51,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:56.135194",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "live",
+    "predicted_total": 2.9045655721733334,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": 76,
+    "attack_potential": 0.0,
+    "match_minute": 51,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 61% / 39%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~76'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:56.659151",
+    "match_id": 1385442,
+    "home_team": "Warrenpoint Town",
+    "away_team": "Newington Youth",
+    "type": "prematch",
+    "predicted_total": 2.5798743280000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 53,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:57.158803",
+    "match_id": 1385490,
+    "home_team": "Loughgall",
+    "away_team": "Ards",
+    "type": "prematch",
+    "predicted_total": 2.6901884,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 51,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:56:57.663688",
+    "match_id": 1385512,
+    "home_team": "H&W Welders",
+    "away_team": "Dundela",
+    "type": "prematch",
+    "predicted_total": 3.06,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 54,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:19.294751",
+    "match_id": 1514312,
+    "home_team": "Cruzeiro Arapiraca",
+    "away_team": "Dimensão Saúde",
+    "type": "prematch",
+    "predicted_total": 2.7203333333333335,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "2:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:19.864605",
+    "match_id": 1529016,
+    "home_team": "Hottin",
+    "away_team": "Al Ittihad",
+    "type": "prematch",
+    "predicted_total": 2.225,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "1:4",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:20.462253",
+    "match_id": 1395539,
+    "home_team": "Cwmbran Celtic",
+    "away_team": "Llantwit Major",
+    "type": "prematch",
+    "predicted_total": 2.993845428,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 65,
+    "current_score": "0:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Высокий"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:21.002424",
+    "match_id": 1395572,
+    "home_team": "Caerau (Ely)",
+    "away_team": "Treowen Stars",
+    "type": "prematch",
+    "predicted_total": 4.157,
+    "total_range": "4+ голов",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 67,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 4+ голов",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Высокий",
+      "🔥 Ожидается результативный матч"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:21.681082",
+    "match_id": 1418895,
+    "home_team": "El Gouna FC",
+    "away_team": "AL Masry",
+    "type": "prematch",
+    "predicted_total": 1.8027338896,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Низкий",
+    "match_minute": 65,
+    "current_score": "1:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 0-2 голов",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Низкий",
+      "🛡️ Прогнозируется низкая результативность"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:21.681082",
+    "match_id": 1418895,
+    "home_team": "El Gouna FC",
+    "away_team": "AL Masry",
+    "type": "live",
+    "predicted_total": 1.8027338896,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": 90,
+    "attack_potential": 0.0,
+    "match_minute": 65,
+    "current_score": "1:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 46% / 54%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~90'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:22.230769",
+    "match_id": 1524308,
+    "home_team": "Fgura United",
+    "away_team": "Balzan FC",
+    "type": "prematch",
+    "predicted_total": 2.67986882,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 67,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:22.230769",
+    "match_id": 1524308,
+    "home_team": "Fgura United",
+    "away_team": "Balzan FC",
+    "type": "live",
+    "predicted_total": 2.67986882,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 67,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 54% / 46%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:22.771652",
+    "match_id": 1382965,
+    "home_team": "Ayr Utd",
+    "away_team": "Queen's Park",
+    "type": "prematch",
+    "predicted_total": 2.8143241320000003,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 56,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:22.771652",
+    "match_id": 1382965,
+    "home_team": "Ayr Utd",
+    "away_team": "Queen's Park",
+    "type": "live",
+    "predicted_total": 1.938756624266667,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": 35,
+    "attack_potential": 0.0,
+    "match_minute": 56,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 52% / 48%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~35'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:23.314711",
+    "match_id": 1383163,
+    "home_team": "Peterhead",
+    "away_team": "Alloa Athletic",
+    "type": "prematch",
+    "predicted_total": 2.7647762680000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 55,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:23.319962",
+    "match_id": 1383163,
+    "home_team": "Peterhead",
+    "away_team": "Alloa Athletic",
+    "type": "live",
+    "predicted_total": 3.682066420022222,
+    "total_range": "4+ голов",
+    "first_goal_minute": 27,
+    "next_goal_minute": 80,
+    "attack_potential": 0.0,
+    "match_minute": 55,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 42% / 58%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~80'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:23.932399",
+    "match_id": 1383319,
+    "home_team": "Annan Athletic",
+    "away_team": "Elgin City",
+    "type": "prematch",
+    "predicted_total": 3.180213092,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 57,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:23.932399",
+    "match_id": 1383319,
+    "home_team": "Annan Athletic",
+    "away_team": "Elgin City",
+    "type": "live",
+    "predicted_total": 3.180213092,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 82,
+    "attack_potential": 0.0,
+    "match_minute": 57,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 49% / 51%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~82'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:24.562490",
+    "match_id": 1383345,
+    "home_team": "Dumbarton",
+    "away_team": "Stranraer",
+    "type": "prematch",
+    "predicted_total": 2.657401824,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 55,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:24.562490",
+    "match_id": 1383345,
+    "home_team": "Dumbarton",
+    "away_team": "Stranraer",
+    "type": "live",
+    "predicted_total": 2.657401824,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": 80,
+    "attack_potential": 0.0,
+    "match_minute": 55,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 45% / 55%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~80'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:25.178023",
+    "match_id": 1385193,
+    "home_team": "Crusaders FC",
+    "away_team": "Cliftonville FC",
+    "type": "prematch",
+    "predicted_total": 2.9465518160000004,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 52,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:25.178023",
+    "match_id": 1385193,
+    "home_team": "Crusaders FC",
+    "away_team": "Cliftonville FC",
+    "type": "live",
+    "predicted_total": 2.0953257358222226,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 35,
+    "attack_potential": 0.0,
+    "match_minute": 52,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 46% / 54%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~35'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:25.793751",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "prematch",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 54,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:25.793751",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "live",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 79,
+    "attack_potential": 0.0,
+    "match_minute": 54,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 35% / 65%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~79'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:26.369763",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "prematch",
+    "predicted_total": 2.493755092,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 53,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:26.373615",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "live",
+    "predicted_total": 2.8657738262977777,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": 78,
+    "attack_potential": 0.0,
+    "match_minute": 53,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 61% / 39%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~78'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:26.934433",
+    "match_id": 1385442,
+    "home_team": "Warrenpoint Town",
+    "away_team": "Newington Youth",
+    "type": "prematch",
+    "predicted_total": 2.5798743280000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 54,
+    "current_score": "1:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:27.545745",
+    "match_id": 1385490,
+    "home_team": "Loughgall",
+    "away_team": "Ards",
+    "type": "prematch",
+    "predicted_total": 2.6901884,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 53,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:58:28.087991",
+    "match_id": 1385512,
+    "home_team": "H&W Welders",
+    "away_team": "Dundela",
+    "type": "prematch",
+    "predicted_total": 3.06,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 55,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:49.288116",
+    "match_id": 1514312,
+    "home_team": "Cruzeiro Arapiraca",
+    "away_team": "Dimensão Saúde",
+    "type": "prematch",
+    "predicted_total": 2.7203333333333335,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "2:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:49.909601",
+    "match_id": 1529016,
+    "home_team": "Hottin",
+    "away_team": "Al Ittihad",
+    "type": "prematch",
+    "predicted_total": 2.225,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "1:4",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:50.475148",
+    "match_id": 1395539,
+    "home_team": "Cwmbran Celtic",
+    "away_team": "Llantwit Major",
+    "type": "prematch",
+    "predicted_total": 2.993845428,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 67,
+    "current_score": "0:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Высокий"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:50.989648",
+    "match_id": 1395572,
+    "home_team": "Caerau (Ely)",
+    "away_team": "Treowen Stars",
+    "type": "prematch",
+    "predicted_total": 4.157,
+    "total_range": "4+ голов",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 69,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 4+ голов",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Высокий",
+      "🔥 Ожидается результативный матч"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:51.549776",
+    "match_id": 1418895,
+    "home_team": "El Gouna FC",
+    "away_team": "AL Masry",
+    "type": "prematch",
+    "predicted_total": 1.8027338896,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Низкий",
+    "match_minute": 67,
+    "current_score": "1:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 0-2 голов",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Низкий",
+      "🛡️ Прогнозируется низкая результативность"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:51.549776",
+    "match_id": 1418895,
+    "home_team": "El Gouna FC",
+    "away_team": "AL Masry",
+    "type": "live",
+    "predicted_total": 1.8027338896,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 67,
+    "current_score": "1:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 45% / 55%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:52.104420",
+    "match_id": 1524308,
+    "home_team": "Fgura United",
+    "away_team": "Balzan FC",
+    "type": "prematch",
+    "predicted_total": 2.67986882,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 69,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:52.104420",
+    "match_id": 1524308,
+    "home_team": "Fgura United",
+    "away_team": "Balzan FC",
+    "type": "live",
+    "predicted_total": 2.67986882,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 69,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 53% / 47%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:52.795585",
+    "match_id": 1382965,
+    "home_team": "Ayr Utd",
+    "away_team": "Queen's Park",
+    "type": "prematch",
+    "predicted_total": 2.8143241320000003,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 58,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:52.795585",
+    "match_id": 1382965,
+    "home_team": "Ayr Utd",
+    "away_team": "Queen's Park",
+    "type": "live",
+    "predicted_total": 1.9074863561333335,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": 35,
+    "attack_potential": 0.0,
+    "match_minute": 58,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 52% / 48%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~35'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:53.415518",
+    "match_id": 1383163,
+    "home_team": "Peterhead",
+    "away_team": "Alloa Athletic",
+    "type": "prematch",
+    "predicted_total": 2.7647762680000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 57,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:53.415518",
+    "match_id": 1383163,
+    "home_team": "Peterhead",
+    "away_team": "Alloa Athletic",
+    "type": "live",
+    "predicted_total": 3.6390587891866666,
+    "total_range": "4+ голов",
+    "first_goal_minute": 27,
+    "next_goal_minute": 82,
+    "attack_potential": 0.0,
+    "match_minute": 57,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 42% / 58%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~82'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:54.058061",
+    "match_id": 1383319,
+    "home_team": "Annan Athletic",
+    "away_team": "Elgin City",
+    "type": "prematch",
+    "predicted_total": 3.180213092,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 60,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:54.058061",
+    "match_id": 1383319,
+    "home_team": "Annan Athletic",
+    "away_team": "Elgin City",
+    "type": "live",
+    "predicted_total": 3.180213092,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 85,
+    "attack_potential": 0.0,
+    "match_minute": 60,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 49% / 51%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~85'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:54.634605",
+    "match_id": 1383345,
+    "home_team": "Dumbarton",
+    "away_team": "Stranraer",
+    "type": "prematch",
+    "predicted_total": 2.657401824,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 57,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:54.634605",
+    "match_id": 1383345,
+    "home_team": "Dumbarton",
+    "away_team": "Stranraer",
+    "type": "live",
+    "predicted_total": 2.657401824,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": 82,
+    "attack_potential": 0.0,
+    "match_minute": 57,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 45% / 55%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~82'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:55.156718",
+    "match_id": 1385193,
+    "home_team": "Crusaders FC",
+    "away_team": "Cliftonville FC",
+    "type": "prematch",
+    "predicted_total": 2.9465518160000004,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 54,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:55.156718",
+    "match_id": 1385193,
+    "home_team": "Crusaders FC",
+    "away_team": "Cliftonville FC",
+    "type": "live",
+    "predicted_total": 2.0625862712000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 35,
+    "attack_potential": 0.0,
+    "match_minute": 54,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 45% / 55%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~35'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:55.783432",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "prematch",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 56,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:55.783432",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "live",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 81,
+    "attack_potential": 0.0,
+    "match_minute": 56,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 35% / 65%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~81'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:56.386202",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "prematch",
+    "predicted_total": 2.493755092,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 55,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:56.386202",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "live",
+    "predicted_total": 2.493755092,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": 80,
+    "attack_potential": 0.0,
+    "match_minute": 55,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 60% / 40%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~80'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:56.891789",
+    "match_id": 1385442,
+    "home_team": "Warrenpoint Town",
+    "away_team": "Newington Youth",
+    "type": "prematch",
+    "predicted_total": 2.5798743280000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 56,
+    "current_score": "1:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:57.411803",
+    "match_id": 1385490,
+    "home_team": "Loughgall",
+    "away_team": "Ards",
+    "type": "prematch",
+    "predicted_total": 2.6901884,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 54,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:59:57.973148",
+    "match_id": 1385512,
+    "home_team": "H&W Welders",
+    "away_team": "Dundela",
+    "type": "prematch",
+    "predicted_total": 3.06,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 57,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:19.416495",
+    "match_id": 1514312,
+    "home_team": "Cruzeiro Arapiraca",
+    "away_team": "Dimensão Saúde",
+    "type": "prematch",
+    "predicted_total": 2.7203333333333335,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "2:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:20.086461",
+    "match_id": 1529016,
+    "home_team": "Hottin",
+    "away_team": "Al Ittihad",
+    "type": "prematch",
+    "predicted_total": 2.225,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "1:4",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:20.710912",
+    "match_id": 1395539,
+    "home_team": "Cwmbran Celtic",
+    "away_team": "Llantwit Major",
+    "type": "prematch",
+    "predicted_total": 2.993845428,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 68,
+    "current_score": "0:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Высокий"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:21.312087",
+    "match_id": 1395572,
+    "home_team": "Caerau (Ely)",
+    "away_team": "Treowen Stars",
+    "type": "prematch",
+    "predicted_total": 4.157,
+    "total_range": "4+ голов",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 70,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 4+ голов",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Высокий",
+      "🔥 Ожидается результативный матч"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:21.952241",
+    "match_id": 1418895,
+    "home_team": "El Gouna FC",
+    "away_team": "AL Masry",
+    "type": "prematch",
+    "predicted_total": 1.8027338896,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Низкий",
+    "match_minute": 68,
+    "current_score": "1:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 0-2 голов",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Низкий",
+      "🛡️ Прогнозируется низкая результативность"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:21.952241",
+    "match_id": 1418895,
+    "home_team": "El Gouna FC",
+    "away_team": "AL Masry",
+    "type": "live",
+    "predicted_total": 1.8027338896,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 68,
+    "current_score": "1:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 45% / 55%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:22.537046",
+    "match_id": 1524308,
+    "home_team": "Fgura United",
+    "away_team": "Balzan FC",
+    "type": "prematch",
+    "predicted_total": 2.67986882,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 70,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:22.538077",
+    "match_id": 1524308,
+    "home_team": "Fgura United",
+    "away_team": "Balzan FC",
+    "type": "live",
+    "predicted_total": 2.67986882,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 70,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 54% / 46%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:23.126269",
+    "match_id": 1382965,
+    "home_team": "Ayr Utd",
+    "away_team": "Queen's Park",
+    "type": "prematch",
+    "predicted_total": 2.8143241320000003,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 59,
+    "current_score": "0:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:23.126269",
+    "match_id": 1382965,
+    "home_team": "Ayr Utd",
+    "away_team": "Queen's Park",
+    "type": "live",
+    "predicted_total": 2.391851222066667,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": 84,
+    "attack_potential": 0.0,
+    "match_minute": 59,
+    "current_score": "0:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 52% / 48%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~84'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:23.741061",
+    "match_id": 1383163,
+    "home_team": "Peterhead",
+    "away_team": "Alloa Athletic",
+    "type": "prematch",
+    "predicted_total": 2.7647762680000003,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 58,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:23.746263",
+    "match_id": 1383163,
+    "home_team": "Peterhead",
+    "away_team": "Alloa Athletic",
+    "type": "live",
+    "predicted_total": 3.617554973768889,
+    "total_range": "4+ голов",
+    "first_goal_minute": 27,
+    "next_goal_minute": 83,
+    "attack_potential": 0.0,
+    "match_minute": 58,
+    "current_score": "3:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 42% / 58%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~83'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:24.307125",
+    "match_id": 1383319,
+    "home_team": "Annan Athletic",
+    "away_team": "Elgin City",
+    "type": "prematch",
+    "predicted_total": 3.180213092,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 60,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:24.307125",
+    "match_id": 1383319,
+    "home_team": "Annan Athletic",
+    "away_team": "Elgin City",
+    "type": "live",
+    "predicted_total": 3.180213092,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 85,
+    "attack_potential": 0.0,
+    "match_minute": 60,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 49% / 51%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~85'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:25.014821",
+    "match_id": 1383345,
+    "home_team": "Dumbarton",
+    "away_team": "Stranraer",
+    "type": "prematch",
+    "predicted_total": 2.657401824,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 58,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:25.014821",
+    "match_id": 1383345,
+    "home_team": "Dumbarton",
+    "away_team": "Stranraer",
+    "type": "live",
+    "predicted_total": 2.657401824,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": 83,
+    "attack_potential": 0.0,
+    "match_minute": 58,
+    "current_score": "2:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 45% / 55%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~83'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:25.595021",
+    "match_id": 1385193,
+    "home_team": "Crusaders FC",
+    "away_team": "Cliftonville FC",
+    "type": "prematch",
+    "predicted_total": 2.9465518160000004,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 55,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:25.595021",
+    "match_id": 1385193,
+    "home_team": "Crusaders FC",
+    "away_team": "Cliftonville FC",
+    "type": "live",
+    "predicted_total": 2.0462165388888893,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 35,
+    "attack_potential": 0.0,
+    "match_minute": 55,
+    "current_score": "0:0",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 44% / 56%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~35'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:26.197794",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "prematch",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 58,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:26.197794",
+    "match_id": 1385318,
+    "home_team": "Bangor",
+    "away_team": "Glentoran",
+    "type": "live",
+    "predicted_total": 2.8564849104,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": 83,
+    "attack_potential": 0.0,
+    "match_minute": 58,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 35% / 65%",
+      "🔥 Низкая активность, мало моментов",
+      "⚽ Следующий гол ожидается ~83'"
+    ]
+  },
+  {
+    "timestamp": "2026-03-11T00:01:26.766232",
+    "match_id": 1385322,
+    "home_team": "Linfield",
+    "away_team": "Portadown",
+    "type": "prematch",
+    "predicted_total": 2.493755092,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 30,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 55,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 30'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  }
+]

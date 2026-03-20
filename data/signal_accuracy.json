@@ -1,0 +1,52 @@
+{
+  "stats": {
+    "total_signals": 200,
+    "correct_signals": 50,
+    "accuracy_rate": 100.0,
+    "avg_time_error": 0.0,
+    "goals_predicted": 200,
+    "goals_actual": 124,
+    "xg_accuracy": 0,
+    "signals_by_time": {
+      "15": {
+        "total": 0,
+        "correct": 0
+      },
+      "45": {
+        "total": 0,
+        "correct": 0
+      },
+      "60": {
+        "total": 0,
+        "correct": 0
+      },
+      "75": {
+        "total": 0,
+        "correct": 0
+      },
+      "90": {
+        "total": 0,
+        "correct": 0
+      }
+    },
+    "league_stats": {},
+    "team_stats": {}
+  },
+  "params": {
+    "shots_per_goal": 9.5,
+    "ontarget_per_goal": 3.8,
+    "corners_per_goal": 5.2,
+    "dangerous_attack_per_goal": 2.5,
+    "xg_per_goal": 1.2,
+    "min_minutes_for_analysis": 5,
+    "probability_threshold": 0.5,
+    "high_probability_threshold": 0.7,
+    "learning_rate": 0.05,
+    "min_confidence": 0.3,
+    "max_confidence": 0.95,
+    "xg_weight_decay": 0.98,
+    "use_xg": true,
+    "min_send_probability": 50.0
+  },
+  "last_updated": "2026-03-14T01:00:19.889599"
+}

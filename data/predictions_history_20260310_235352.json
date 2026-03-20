@@ -1,0 +1,192 @@
+[
+  {
+    "timestamp": "2026-03-10T23:53:49.348104",
+    "match_id": 1392772,
+    "home_team": "Patro Eisden",
+    "away_team": "Liège",
+    "type": "prematch",
+    "predicted_total": 2.912516332,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:49.348104",
+    "match_id": 1392772,
+    "home_team": "Patro Eisden",
+    "away_team": "Liège",
+    "type": "live",
+    "predicted_total": 2.456258166,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 90,
+    "current_score": "1:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 51% / 49%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:49.985689",
+    "match_id": 1392773,
+    "home_team": "Beerschot VA",
+    "away_team": "RSC Anderlecht II",
+    "type": "prematch",
+    "predicted_total": 2.610357052,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "4:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:49.985689",
+    "match_id": 1392773,
+    "home_team": "Beerschot VA",
+    "away_team": "RSC Anderlecht II",
+    "type": "live",
+    "predicted_total": 4.983107115599999,
+    "total_range": "4+ голов",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 90,
+    "current_score": "4:2",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 46% / 54%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:50.613501",
+    "match_id": 1392774,
+    "home_team": "AS Eupen",
+    "away_team": "K. Lierse S.K.",
+    "type": "prematch",
+    "predicted_total": 2.951196436,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "0:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:50.613501",
+    "match_id": 1392774,
+    "home_team": "AS Eupen",
+    "away_team": "K. Lierse S.K.",
+    "type": "live",
+    "predicted_total": 1.975598218,
+    "total_range": "0-2 голов",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": 0.0,
+    "match_minute": 90,
+    "current_score": "0:1",
+    "recommendations": [
+      "📊 Статистика: 0 ударов, 0 в створ",
+      "📈 Владение: 56% / 44%",
+      "🔥 Низкая активность, мало моментов"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:51.125846",
+    "match_id": 1514312,
+    "home_team": "Cruzeiro Arapiraca",
+    "away_team": "Dimensão Saúde",
+    "type": "prematch",
+    "predicted_total": 2.7203333333333335,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 88,
+    "current_score": "2:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:51.666015",
+    "match_id": 1526047,
+    "home_team": "Blackburn Rovers U18",
+    "away_team": "Burnley U18",
+    "type": "prematch",
+    "predicted_total": 3.0025,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 32,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 90,
+    "current_score": "2:1",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 32'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:52.260045",
+    "match_id": 1529016,
+    "home_team": "Hottin",
+    "away_team": "Al Ittihad",
+    "type": "prematch",
+    "predicted_total": 2.225,
+    "total_range": "2-3 гола",
+    "first_goal_minute": 35,
+    "next_goal_minute": null,
+    "attack_potential": "Средний",
+    "match_minute": 89,
+    "current_score": "1:3",
+    "recommendations": [
+      "📊 Прогноз тотала: 2-3 гола",
+      "⏱️ Ожидаемая минута первого гола: 35'",
+      "⚽ Атакующий потенциал: Средний"
+    ]
+  },
+  {
+    "timestamp": "2026-03-10T23:53:52.867547",
+    "match_id": 1395539,
+    "home_team": "Cwmbran Celtic",
+    "away_team": "Llantwit Major",
+    "type": "prematch",
+    "predicted_total": 2.993845428,
+    "total_range": "3-4 гола",
+    "first_goal_minute": 27,
+    "next_goal_minute": null,
+    "attack_potential": "Высокий",
+    "match_minute": 61,
+    "current_score": "0:2",
+    "recommendations": [
+      "📊 Прогноз тотала: 3-4 гола",
+      "⏱️ Ожидаемая минута первого гола: 27'",
+      "⚽ Атакующий потенциал: Высокий"
+    ]
+  }
+]
