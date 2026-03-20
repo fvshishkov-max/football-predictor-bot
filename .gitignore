@@ -23,7 +23,10 @@ data/*
 archives/*
 !archives/.gitkeep
 
-# Logs
+# Data files (игнорируем содержимое, но не структуру)
+*.db
+*.json
+!config.example.json
 *.log
 *.log.*
 
@@ -47,7 +50,6 @@ archives/*
 # Test files
 test_*.py
 !test_telegram.py
-!test_analyzer.py
 debug_*.py
 diagnose_*.py
 

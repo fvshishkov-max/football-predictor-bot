@@ -185,10 +185,25 @@ class MatchAnalyzer:
         # Чем выше результативность лиги, тем выше фактор
         return min(goal_rate / 3, 1.2)
     
+    
     def _calculate_time_factor(self, minute: int) -> float:
-        """Рассчитывает фактор оставшегося времени"""
+        """Рассчитывает фактор оставшегося времени (оптимизированный)"""
         if not minute:
             return 1.0
+        if minute < 15:
+            return 0.5   # Начало матча - низкая вероятность
+        elif minute < 30:
+            return 0.8   # Первые минуты разогрева
+        elif minute < 45:
+            return 1.0   # Пик первого тайма
+        elif minute < 60:
+            return 0.9   # После перерыва
+        elif minute < 75:
+            return 1.1   # Середина второго тайма
+        elif minute < 90:
+            return 1.4   # Концовка - самое опасное время
+        else:
+            return 0.6   # Добавленное время - рискованно
         
         # Пик активности: 70-85 минуты
         if minute < 45:

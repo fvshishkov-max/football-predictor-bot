@@ -17,8 +17,7 @@ from models import Match
 from team_form import TeamFormAnalyzer
 from statistical_models import StatisticalModels, MonteCarloSimulator
 from feature_engineering import AdvancedFeatureEngineer
-from match_analyzer import MatchAnalyzer, MatchFilter
-from signal_validator import SignalValidator
+from match_analyzer import MatchAnalyzer, MatchFilter  # Добавлено
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +89,6 @@ class Predictor:
         # Новые анализаторы
         self.match_analyzer = MatchAnalyzer()
         self.match_filter = MatchFilter()
-        self.signal_validator = SignalValidator()
         
         self.league_levels = self._init_league_levels()
         self.learning_rate = 0.01
@@ -456,49 +454,32 @@ class Predictor:
         
         return base
     
-    def _should_send_signal(self, prediction: Dict, match=None) -> bool:
-        """Улучшенная проверка с валидатором"""
+    def _should_send_signal(self, prediction: Dict) -> bool:
+        """Определяет, нужно ли отправлять сигнал"""
         if prediction.get('error', False):
             return False
         
         prob = prediction.get('goal_probability', 0)
+        conf = prediction.get('confidence_level', 'LOW')
         
-        # 1. БАЗОВЫЙ ФИЛЬТР (46%)
-        if prob < self.min_signal_probability:
-            logger.debug(f"⏳ Сигнал: {prob*100:.1f}% - НИЖЕ ПОРОГА")
+        if prob >= self.min_signal_probability:
+            if conf in ['VERY_HIGH', 'HIGH']:
+                logger.debug(f"✅ Сигнал: {prob*100:.1f}% ({conf}) - ОТПРАВЛЯЕМ")
+                return True
+            if conf == 'MEDIUM' and prob >= self.min_signal_probability + 0.02:
+                logger.debug(f"✅ Сигнал: {prob*100:.1f}% (MEDIUM) - ОТПРАВЛЯЕМ")
+                return True
+            if conf == 'LOW' and prob >= self.min_signal_probability + 0.09:
+                logger.debug(f"✅ Сигнал: {prob*100:.1f}% (LOW) - ОТПРАВЛЯЕМ")
+                return True
+            else:
+                logger.debug(f"⏳ Сигнал: {prob*100:.1f}% ({conf}) - ПРОПУСК")
+                self.accuracy_stats['signals_filtered_out'] += 1
+        else:
+            logger.debug(f"⏳ Сигнал: {prob*100:.1f}% - ПРОПУСК")
             self.accuracy_stats['signals_filtered_out'] += 1
-            return False
         
-        # 2. ЖЕСТКАЯ ВАЛИДАЦИЯ
-        if hasattr(self, 'signal_validator'):
-            valid, reason, score = self.signal_validator.validate_signal(prediction, match)
-            
-            if not valid:
-                logger.debug(f"⏳ Сигнал отклонен валидатором: {reason} (score: {score:.2f})")
-                self.accuracy_stats['signals_filtered_out'] += 1
-                return False
-            
-            # Динамический порог на основе confidence score
-            if score < 0.6 and prob < 0.52:
-                logger.debug(f"⏳ Сигнал: низкий confidence score ({score:.2f}) при {prob*100:.1f}%")
-                self.accuracy_stats['signals_filtered_out'] += 1
-                return False
-        
-        # 3. ПРОВЕРКА ПО ИСТОРИИ (если есть данные)
-        if hasattr(self, 'accuracy_stats') and self.accuracy_stats['total_predictions'] > 50:
-            conf = prediction.get('confidence_level', 'MEDIUM')
-            conf_stats = self.accuracy_stats['by_confidence'].get(conf, {'total': 0, 'correct': 0})
-            
-            # Если по данному уровню уверенности статистика плохая
-            if conf_stats['total'] > 10:
-                conf_accuracy = conf_stats['correct'] / conf_stats['total']
-                if conf_accuracy < 0.4 and prob < 0.55:
-                    logger.debug(f"⏳ Сигнал: низкая точность для {conf} ({conf_accuracy*100:.1f}%)")
-                    self.accuracy_stats['signals_filtered_out'] += 1
-                    return False
-        
-        logger.debug(f"✅ Сигнал: {prob*100:.1f}% - ПРОШЕЛ ВСЕ ПРОВЕРКИ")
-        return True
+        return False
     
     def _generate_signal(self, match: Match, goal_prob: float, confidence: str,
                         home_stats: Dict, away_stats: Dict) -> Dict:
@@ -624,7 +605,7 @@ class Predictor:
             
             prediction = self.predict_match(match)
             
-            if self._should_send_signal(prediction, match):
+            if self._should_send_signal(prediction):
                 half = "1-й тайм" if match.minute and match.minute < 45 else "2-й тайм"
                 
                 self.match_last_signal[match.id] = datetime.now()
@@ -771,12 +752,6 @@ class Predictor:
                     total = self.accuracy_stats['correct_predictions'] + self.accuracy_stats['incorrect_predictions']
                     if total > 0:
                         self.accuracy_stats['accuracy_rate'] = self.accuracy_stats['correct_predictions'] / total
-                    
-                    # Записываем результат в валидатор
-                    if pred.get('signal') and hasattr(self, 'signal_validator'):
-                        match = pred.get('match')
-                        if match:
-                            self.signal_validator.record_signal_result(pred, match, had_goal)
                     
                     break
         except Exception as e:

@@ -11,7 +11,7 @@ import sys
 import config
 from api_client import UnifiedFastClient
 from predictor import Predictor
-from telegram_bot import TelegramBot
+from telegram_bot_ultimate import TelegramBot
 from team_form import TeamFormAnalyzer
 from stats_reporter import StatsReporter
 
