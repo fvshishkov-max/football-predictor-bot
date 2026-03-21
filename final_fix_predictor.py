@@ -1,82 +1,302 @@
 # final_fix_predictor.py
 """
-Окончательное исправление отступов в predictor.py
+Создание исправленной версии predictor.py
 """
 
-def final_fix():
-    """Исправляет отступы в методе _should_analyze_match"""
-    
-    with open('predictor.py', 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    print("🔧 ИСПРАВЛЕНИЕ ОТСТУПОВ")
-    print("="*50)
-    
-    # Находим метод _should_analyze_match
-    start_line = -1
-    for i, line in enumerate(lines):
-        if 'def _should_analyze_match' in line:
-            start_line = i
-            print(f"✅ Найден метод на строке {i+1}")
-            break
-    
-    if start_line == -1:
-        print("❌ Метод не найден")
-        return
-    
-    # Исправляем отступы в методе
-    fixed_lines = []
-    i = start_line
-    
-    # Добавляем заголовок метода
-    fixed_lines.append(lines[i])  # def _should_analyze_match...
-    i += 1
-    
-    # Исправляем докстринг (должен иметь отступ в 4 пробела)
-    if i < len(lines) and '"""' in lines[i]:
-        fixed_lines.append('    ' + lines[i].lstrip())
-        i += 1
-    else:
-        fixed_lines.append('    """Улучшенная проверка с использованием MatchFilter"""\n')
-    
-    # Добавляем пустую строку с отступом
-    fixed_lines.append('    \n')
-    
-    # Копируем остальные строки метода с правильными отступами
-    while i < len(lines):
-        line = lines[i]
-        
-        # Если нашли следующий метод на том же уровне - выходим
-        if line.strip().startswith('def ') and not line.startswith('    def '):
-            break
-        
-        # Добавляем строку с отступом 4 пробела
-        if line.strip():
-            fixed_lines.append('    ' + line.lstrip())
-        else:
-            fixed_lines.append('    \n')
-        
-        i += 1
-    
-    # Добавляем пустую строку после метода
-    fixed_lines.append('\n')
-    
-    # Собираем новый файл
-    new_lines = lines[:start_line] + fixed_lines + lines[i:]
-    
-    # Записываем обратно
-    with open('predictor.py', 'w', encoding='utf-8') as f:
-        f.writelines(new_lines)
-    
-    print("✅ Отступы исправлены")
-    
-    # Проверяем синтаксис
-    import py_compile
-    try:
-        py_compile.compile('predictor.py', doraise=True)
-        print("✅ Синтаксис в порядке!")
-    except py_compile.PyCompileError as e:
-        print(f"❌ Ошибка: {e}")
+final_predictor = '''import numpy as np
+from datetime import datetime
+import logging
+from typing import Dict, Optional, Any
+from collections import defaultdict
+import json
+import os
+import random
+import traceback
 
-if __name__ == "__main__":
-    final_fix()
+import config
+from models import Match
+from team_form import TeamFormAnalyzer
+from match_analyzer import MatchAnalyzer, MatchFilter
+
+logger = logging.getLogger(__name__)
+
+class Predictor:
+    def __init__(self, model_path: str = 'data/models/xgboost_model.pkl'):
+        self.min_signal_probability = getattr(config, 'MIN_PROBABILITY_FOR_SIGNAL', 0.46)
+        logger.info(f"Min probability for signal: {self.min_signal_probability*100:.0f}%")
+        
+        self.weights = {
+            'xg': 0.28, 'shots_ontarget': 0.18, 'team_form': 0.15,
+            'dangerous_attacks': 0.12, 'shots': 0.10, 'corners': 0.09,
+            'possession': 0.05, 'h2h': 0.03
+        }
+        
+        self.thresholds = {'low': 0.15, 'medium': 0.25, 'high': 0.40, 'very_high': 0.55}
+        
+        self.predictions_history = []
+        self.max_history_size = 1000
+        
+        self.accuracy_stats = {
+            'total_predictions': 0, 'total_signals': 0, 'signals_sent_46plus': 0,
+            'signals_filtered_out': 0, 'correct_predictions': 0, 'incorrect_predictions': 0,
+            'accuracy_rate': 0.0, 'calibration_data': [], 'feature_importance': {},
+            'by_confidence': {'VERY_HIGH': {'total': 0, 'correct': 0}, 'HIGH': {'total': 0, 'correct': 0},
+                            'MEDIUM': {'total': 0, 'correct': 0}, 'LOW': {'total': 0, 'correct': 0},
+                            'VERY_LOW': {'total': 0, 'correct': 0}},
+            'by_minute': defaultdict(lambda: {'total': 0, 'correct': 0}),
+            'by_league': defaultdict(lambda: {'total': 0, 'correct': 0}),
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        self.team_analyzer = TeamFormAnalyzer()
+        self.match_analyzer = MatchAnalyzer()
+        self.match_filter = MatchFilter()
+        
+        self.league_levels = self._init_league_levels()
+        self.model_path = model_path
+        
+        self.half_goals = {}
+        self.match_last_signal = {}
+        self.match_signal_count = {}
+        self.max_signals_per_match = 3
+        self.min_time_between_signals = 600
+        
+        self.league_averages = defaultdict(lambda: {
+            'shots': 10, 'shots_on_target': 3.5, 'xg': 1.2, 'corners': 4.5,
+            'possession': 50, 'dangerous_attacks': 20, 'passes': 400, 'fouls': 12, 'yellow_cards': 2
+        })
+        
+        logger.info("Predictor initialized")
+    
+    def _init_league_levels(self) -> Dict:
+        top_leagues = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2}
+        return defaultdict(lambda: 2, top_leagues)
+    
+    def predict_match(self, match: Match) -> Dict:
+        try:
+            home_stats = self._extract_team_stats(match, is_home=True)
+            away_stats = self._extract_team_stats(match, is_home=False)
+            
+            # Simple probability calculation
+            base_prob = 0.35
+            
+            minute = match.minute or 0
+            if minute > 75:
+                base_prob += 0.15
+            elif minute > 60:
+                base_prob += 0.10
+            elif minute > 45:
+                base_prob += 0.05
+            
+            home_score = match.home_score or 0
+            away_score = match.away_score or 0
+            if home_score == away_score:
+                base_prob += 0.05
+            if home_score + away_score < 2:
+                base_prob += 0.05
+            
+            if home_stats.get('shots', 0) + away_stats.get('shots', 0) > 15:
+                base_prob += 0.05
+            
+            goal_probability = min(0.85, max(0.25, base_prob))
+            
+            if goal_probability >= 0.55:
+                confidence_level = "VERY_HIGH"
+            elif goal_probability >= 0.50:
+                confidence_level = "HIGH"
+            elif goal_probability >= 0.45:
+                confidence_level = "MEDIUM"
+            elif goal_probability >= 0.35:
+                confidence_level = "LOW"
+            else:
+                confidence_level = "VERY_LOW"
+            
+            signal = None
+            if goal_probability >= self.min_signal_probability:
+                signal = self._generate_signal(match, goal_probability, confidence_level, home_stats, away_stats)
+            
+            result = {
+                'match_id': match.id,
+                'match': match,
+                'home_team': match.home_team.name if match.home_team else 'Unknown',
+                'away_team': match.away_team.name if match.away_team else 'Unknown',
+                'goal_probability': round(goal_probability, 3),
+                'confidence_level': confidence_level,
+                'signal': signal,
+                'home_stats': home_stats,
+                'away_stats': away_stats,
+                'minute': match.minute,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            self._add_to_history(result)
+            return result
+            
+        except Exception as e:
+            logger.error(f"Prediction error: {e}")
+            return self._get_default_prediction(match)
+    
+    def _generate_signal(self, match: Match, goal_prob: float, confidence: str,
+                        home_stats: Dict, away_stats: Dict) -> Dict:
+        from translations import get_country_info, get_league_icon
+        
+        confidence_emojis = {"VERY_HIGH": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🟢", "VERY_LOW": "⚪"}
+        confidence_text = {"VERY_HIGH": "VERY HIGH", "HIGH": "HIGH", "MEDIUM": "MEDIUM", "LOW": "LOW", "VERY_LOW": "VERY LOW"}
+        
+        emoji = confidence_emojis.get(confidence, "⚪")
+        conf_text = confidence_text.get(confidence, confidence)
+        
+        home_name = match.home_team.name if match.home_team else "Home"
+        away_name = match.away_team.name if match.away_team else "Away"
+        
+        country_info = {'flag': '🌍', 'name': ''}
+        if match.home_team and match.home_team.country_code:
+            country_info = get_country_info(match.home_team.country_code)
+        
+        league_icon = get_league_icon(match.league_name) if match.league_name else '🏆'
+        
+        location_parts = []
+        if country_info['name']:
+            location_parts.append(f"{country_info['flag']} {country_info['name']}")
+        if match.league_name:
+            location_parts.append(f"{league_icon} {match.league_name}")
+        
+        location_str = f" | {' | '.join(location_parts)}" if location_parts else ""
+        
+        current_score = f"{match.home_score or 0}:{match.away_score or 0}"
+        
+        period = ""
+        if match.minute:
+            if match.minute < 45:
+                period = "1st half"
+            elif match.minute < 90:
+                period = "2nd half"
+            else:
+                period = "Extra time"
+        
+        message = f"{emoji} ⚽ POTENTIAL GOAL!\\n"
+        message += f"━━━━━━━━━━━━━━━━━━━━━\\n\\n"
+        message += f"🏟 {home_name}  vs  {away_name}{location_str}\\n"
+        message += f"📊 Score: {current_score}\\n"
+        message += f"⏱ Minute: {match.minute or 0}' {period}\\n\\n"
+        message += f"📈 Goal Probability: {goal_prob*100:.1f}%\\n"
+        message += f"🎯 Confidence: {conf_text}"
+        
+        return {
+            'emoji': emoji,
+            'message': message,
+            'confidence': confidence,
+            'probability': goal_prob,
+            'match_id': match.id,
+            'current_score': current_score,
+            'timestamp': datetime.now()
+        }
+    
+    def analyze_live_match(self, match: Match) -> Optional[Dict]:
+        try:
+            if match.id in self.match_signal_count and self.match_signal_count[match.id] >= self.max_signals_per_match:
+                return None
+            if match.id in self.match_last_signal:
+                if (datetime.now() - self.match_last_signal[match.id]).total_seconds() < self.min_time_between_signals:
+                    return None
+            
+            if match.minute and match.minute > 75:
+                return None
+            if abs((match.home_score or 0) - (match.away_score or 0)) >= 3:
+                return None
+            if (match.home_score or 0) >= 4 or (match.away_score or 0) >= 4:
+                return None
+            
+            prediction = self.predict_match(match)
+            prob = prediction.get('goal_probability', 0)
+            
+            if prob >= self.min_signal_probability:
+                half = "1st half" if match.minute and match.minute < 45 else "2nd half"
+                self.match_last_signal[match.id] = datetime.now()
+                self.match_signal_count[match.id] = self.match_signal_count.get(match.id, 0) + 1
+                self.accuracy_stats['signals_sent_46plus'] += 1
+                logger.info(f"SIGNAL SENT! Match {match.id} ({half}) - {prob*100:.1f}%")
+                return prediction.get('signal')
+            
+            return None
+        except Exception as e:
+            logger.error(f"Analysis error: {e}")
+            return None
+    
+    def _extract_team_stats(self, match: Match, is_home: bool) -> Dict:
+        stats = {'shots': 0, 'shots_on_target': 0, 'possession': 50, 'xg': 0.5, 'has_real_stats': False}
+        if not match.stats or not isinstance(match.stats, dict):
+            return stats
+        
+        prefix = 'home' if is_home else 'away'
+        stats['shots'] = match.stats.get(f'shots_{prefix}', 0)
+        stats['shots_on_target'] = match.stats.get(f'shots_ontarget_{prefix}', 0)
+        stats['possession'] = match.stats.get(f'possession_{prefix}', 50)
+        stats['xg'] = match.stats.get(f'xg_{prefix}', 0.5)
+        stats['has_real_stats'] = match.stats.get('has_real_stats', False)
+        return stats
+    
+    def _add_to_history(self, prediction: Dict):
+        self.predictions_history.append(prediction)
+        if len(self.predictions_history) > self.max_history_size:
+            self.predictions_history = self.predictions_history[-self.max_history_size:]
+    
+    def _get_default_prediction(self, match: Match) -> Dict:
+        return {
+            'match_id': match.id, 'match': match,
+            'home_team': match.home_team.name if match.home_team else 'Unknown',
+            'away_team': match.away_team.name if match.away_team else 'Unknown',
+            'goal_probability': 0.3, 'confidence_level': 'LOW', 'signal': None,
+            'home_stats': {}, 'away_stats': {}, 'error': True,
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    def save_predictions(self, filename: str = 'data/predictions/predictions.json'):
+        try:
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            predictions_serializable = []
+            for p in self.predictions_history[-100:]:
+                p_copy = {k: v for k, v in p.items() if k != 'match'}
+                predictions_serializable.append(p_copy)
+            
+            data = {
+                'predictions': predictions_serializable,
+                'accuracy_stats': self.accuracy_stats,
+                'thresholds': self.thresholds,
+                'half_goals': dict(self.half_goals),
+                'match_signal_count': dict(self.match_signal_count),
+                'min_signal_probability': self.min_signal_probability
+            }
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+            logger.info(f"Saved {len(predictions_serializable)} predictions")
+        except Exception as e:
+            logger.error(f"Save error: {e}")
+    
+    def get_statistics(self) -> Dict:
+        if not self.predictions_history:
+            return {'total_predictions': 0, 'avg_probability': 0, 'signals_sent': self.accuracy_stats['total_signals'],
+                    'signals_sent_46plus': self.accuracy_stats.get('signals_sent_46plus', 0),
+                    'signals_filtered_out': self.accuracy_stats.get('signals_filtered_out', 0),
+                    'accuracy_rate': self.accuracy_stats['accuracy_rate'],
+                    'feature_importance': self.accuracy_stats['feature_importance'],
+                    'by_confidence': self.accuracy_stats['by_confidence']}
+        
+        probs = [p.get('goal_probability', 0) for p in self.predictions_history]
+        return {
+            'total_predictions': len(self.predictions_history),
+            'avg_probability': np.mean(probs),
+            'signals_sent': self.accuracy_stats['total_signals'],
+            'signals_sent_46plus': self.accuracy_stats.get('signals_sent_46plus', 0),
+            'signals_filtered_out': self.accuracy_stats.get('signals_filtered_out', 0),
+            'accuracy_rate': self.accuracy_stats['accuracy_rate'],
+            'feature_importance': self.accuracy_stats['feature_importance'],
+            'by_confidence': self.accuracy_stats['by_confidence']
+        }
+'''
+
+with open('predictor.py', 'w', encoding='utf-8') as f:
+    f.write(final_predictor)
+
+print("✅ predictor.py replaced with corrected version")
+print("\nNow run: python run_fixed.py")

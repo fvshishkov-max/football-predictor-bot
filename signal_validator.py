@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# signal_validator.py
 """
 signal_validator.py - Жесткий валидатор сигналов
 """
@@ -104,7 +104,7 @@ class SignalValidator:
                 if bin_data['total'] > 0:
                     bin_data['accuracy'] = bin_data['correct'] / bin_data['total']
         except Exception as e:
-            logger.error(f"Ошибка: {e}")
+            logger.error(f"Ошибка обновления статистики: {e}")
     
     def validate_signal(self, prediction: Dict, match) -> Tuple[bool, str, float]:
         prob = prediction.get('goal_probability', 0)

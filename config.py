@@ -19,7 +19,7 @@ FOOTBALL_DATA_KEY = os.getenv('FOOTBALL_DATA_KEY', '5b1f5b1fbec540c1bc4b4a10d620
 RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', '95e0af3487b211aa87b65f87a96f5646')
 
 # Настройки API
-USE_MOCK_API = os.getenv('USE_MOCK_API', 'False').lower() == 'true'  # Добавлено!
+USE_MOCK_API = os.getenv('USE_MOCK_API', 'False').lower() == 'true'
 
 # Настройки мониторинга
 CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', '60'))
@@ -44,7 +44,7 @@ MODEL_PATH = os.path.join(MODELS_DIR, 'xgboost_model.pkl')
 LOG_FILE = os.path.join(LOGS_DIR, 'app.log')
 
 # Настройки сигналов
-MIN_PROBABILITY_FOR_SIGNAL = float(os.getenv('MIN_PROBABILITY_FOR_SIGNAL', '0.46'))
+MIN_PROBABILITY_FOR_SIGNAL = float(os.getenv('MIN_PROBABILITY_FOR_SIGNAL', '0.48'))
 SIGNAL_COOLDOWN = int(os.getenv('SIGNAL_COOLDOWN', '300'))
 
 # Настройки анализа формы
@@ -69,16 +69,23 @@ def validate_config():
         errors.append("TELEGRAM_TOKEN not set")
     
     if not errors:
-        print("✅ Configuration loaded successfully")
-        print(f"📁 Data directory: {DATA_DIR}")
-        print(f"📊 Stats directory: {STATS_DIR}")
-        print(f"📜 Logs directory: {LOGS_DIR}")
-        print(f"🎭 USE_MOCK_API: {USE_MOCK_API}")
+        print("Configuration loaded successfully")
+        print(f"Data directory: {DATA_DIR}")
+        print(f"Stats directory: {STATS_DIR}")
+        print(f"Logs directory: {LOGS_DIR}")
+        print(f"USE_MOCK_API: {USE_MOCK_API}")
         return True
     else:
         for error in errors:
-            print(f"❌ {error}")
+            print(f"Error: {error}")
         return False
 
 if __name__ != "__main__":
     validate_config()
+# Дополнительные настройки фильтрации
+MIN_SIGNAL_PROBABILITY_HIGH = float(os.getenv('MIN_SIGNAL_PROBABILITY_HIGH', '0.52'))  # Для MEDIUM и LOW уверенности
+EXCLUDE_MINUTES = os.getenv('EXCLUDE_MINUTES', '0-10,85-90')  # Минуты для исключения
+USE_FORM_FACTOR = os.getenv('USE_FORM_FACTOR', 'True').lower() == 'true'
+
+# Odds-API ключ
+ODDS_API_KEY = os.getenv('ODDS_API_KEY', 'dc4a34c30f63bf408f6ef335db7da322f69c4f5d6dab99dd7e2767df8313948e')

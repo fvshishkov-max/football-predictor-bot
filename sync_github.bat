@@ -1,13 +1,11 @@
 @echo off
-chcp 1251 >nul
+chcp 65001 >nul
 title Синхронизация с GitHub
 color 0A
 
 echo ========================================
-====
 echo 🔄 СИНХРОНИЗАЦИЯ С GITHUB
 echo ========================================
-====
 echo.
 
 echo 1. Проверка статуса Git...
@@ -28,10 +26,10 @@ echo.
 
 echo 4. Введите комментарий к коммиту:
 echo ---------------------------------
-set /p COMMIT="> "
+set /p "COMMIT=> "
 
 if "%COMMIT%"=="" (
-    set COMMIT="Update: Sync project with GitHub %date% %time%"
+    set COMMIT=Update: Sync project with GitHub %date% %time%
 )
 
 echo.
@@ -46,8 +44,6 @@ git push origin main
 echo.
 
 echo ========================================
-====
 echo ✅ СИНХРОНИЗАЦИЯ ЗАВЕРШЕНА
 echo ========================================
-====
 pause
